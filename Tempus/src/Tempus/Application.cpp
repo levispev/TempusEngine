@@ -3,11 +3,12 @@
 #include "Application.h"
 #include <iostream>
 
+
 namespace Tempus {
 
 	Tempus::Application::Application()
 	{
-
+		
 	}
 
 	Tempus::Application::~Application()
@@ -17,7 +18,10 @@ namespace Tempus {
 	void Application::Run()
 	{
 		std::cout << "Hello World!" << std::endl;
-		while (true);
+
+		m_Window = glfwCreateWindow(1920, 1080, "Sandbox", glfwGetPrimaryMonitor(), nullptr);
+
+		std::cin.get();
 	}
 
 

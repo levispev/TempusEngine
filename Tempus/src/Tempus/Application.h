@@ -5,6 +5,8 @@
 #include "Core.h"
 
 #include "vulkan/vulkan.h"
+#include "glfw3.h"
+
 
 namespace Tempus {
 
@@ -15,7 +17,9 @@ namespace Tempus {
 		virtual ~Application();
 		void Run();
 
-		VkInstance Instance = nullptr;
+		VkInstance m_Instance = nullptr;
+
+		GLFWwindow* m_Window;
 
 	};
 

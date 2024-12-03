@@ -27,12 +27,14 @@ project "Tempus"
 
     includedirs
     {
-        path.join(os.getenv("VULKAN_SDK"), "Include")
+        path.join(os.getenv("VULKAN_SDK"), "Include"),
+        "vendor/include/glfw/include/GLFW/"
     }
 
     libdirs
     {
-        path.join(os.getenv("VULKAN_SDK"), "Lib")
+        path.join(os.getenv("VULKAN_SDK"), "Lib"),
+        "vendor/bin/glfw/lib-vc2022/"
     }
 
     filter "system:windows"
@@ -84,12 +86,14 @@ project "Sandbox"
     includedirs
     {
         "Tempus/src",
-        path.join(os.getenv("VULKAN_SDK"), "Include")
+        path.join(os.getenv("VULKAN_SDK"), "Include"),
+        "vendor/include/glfw/include/GLFW/"
     }
 
     libdirs
     {
-        path.join(os.getenv("VULKAN_SDK"), "Lib")
+        path.join(os.getenv("VULKAN_SDK"), "Lib"),
+        "vendor/bin/glfw/lib-vc2022/"
     }
 
     links
