@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Tempus">
+      <UniqueIdentifier>{C3B531D3-AF57-5CA9-9812-70FD8453E3F9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Tempus.h" />
+    <ClInclude Include="src\Tempus\Application.h">
+      <Filter>Tempus</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Tempus\Core.h">
+      <Filter>Tempus</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Tempus\Application.cpp">
+      <Filter>Tempus</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Tempus\main.cpp">
+      <Filter>Tempus</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
