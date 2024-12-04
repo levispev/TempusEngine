@@ -27,3 +27,8 @@
 
 /bin/
 /bin-int/
+
+# MacOS Files
+.DS_Store
+
+Makefile

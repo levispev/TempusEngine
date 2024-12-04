@@ -8,7 +8,6 @@
 #define SDL_MAIN_HANDLED
 #include "sdl/SDL.h"
 
-
 namespace Tempus {
 
 	class TEMPUS_API Application

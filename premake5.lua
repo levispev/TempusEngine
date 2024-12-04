@@ -28,21 +28,13 @@ project "Tempus"
     includedirs
     {
         path.join(os.getenv("VULKAN_SDK"), "Include"),
-        "%{prj.name}/vendor/include",
+        "%{prj.name}/vendor/include"
     }
 
     libdirs
     {
         path.join(os.getenv("VULKAN_SDK"), "Lib"),
-        "%{prj.name}/vendor/bin/glfw/lib-vc2022/",
         "%{prj.name}/vendor/bin/sdl/"
-    }
-
-    links
-    {
-        "vulkan-1",
-        "SDL2",
-        "SDL2main"
     }
 
     filter "system:windows"
@@ -50,11 +42,17 @@ project "Tempus"
         staticruntime "On"
         systemversion "latest"
 
+        links
+        {
+            "vulkan-1",
+            "SDL2",
+            "SDL2main"
+        }
+
         defines
         {
             "TPS_PLATFORM_WINDOWS",
-            "TPS_BUILD_DLL",
-            "GLFW_INCLUDE_NONE"
+            "TPS_BUILD_DLL"
         }
 
         buildoptions
@@ -67,6 +65,46 @@ project "Tempus"
             "{RMDIR} ../bin/" .. outputdir .. "/Sandbox",
             "{MKDIR} ../bin/" .. outputdir .. "/Sandbox",
             "{COPYFILE} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox",
+        }
+
+    filter "system:macosx"
+        cppdialect "C++17"
+        staticruntime "On"
+        systemversion "14"
+        toolset "clang"
+
+        links
+        {
+            "vulkan.1",
+            "SDL2.framework"
+        }
+
+        linkoptions 
+        {
+            "-rpath /Library/Frameworks",
+            "-rpath " .. path.join(os.getenv("VULKAN_SDK"), "Lib")
+        }
+
+        frameworkdirs
+        {
+            "/Library/Frameworks"
+        }
+
+        defines
+        {
+            "TPS_PLATFORM_MAC",
+            "TPS_BUILD_DLL"
+        }
+
+        postbuildcommands
+        {
+            "{RMDIR} ../bin/" .. outputdir .. "/Sandbox",
+            "{MKDIR} ../bin/" .. outputdir .. "/Sandbox"
+        }
+
+        externalincludedirs
+        {
+            "%{prj.name}/vendor/include"
         }
 
     filter "configurations:Debug"
@@ -116,8 +154,7 @@ project "Sandbox"
 
         defines
         {
-            "TPS_PLATFORM_WINDOWS",
-            "GLFW_INCLUDE_NONE"
+            "TPS_PLATFORM_WINDOWS"
         }
 
         buildoptions
@@ -129,6 +166,19 @@ project "Sandbox"
         {
             "{COPYFILE} %{wks.location}/Tempus/vendor/bin/sdl/SDL2.dll %{cfg.targetdir}"
         }
+
+    
+    filter "system:macosx"
+        cppdialect "C++17"
+        staticruntime "On"
+        systemversion "14"
+        toolset "clang"
+
+        defines
+        {
+            "TPS_PLATFORM_MAC"
+        }
+
 
     filter "configurations:Debug"
         defines "TPS_DEBUG"

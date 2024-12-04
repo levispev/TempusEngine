@@ -25,13 +25,15 @@ namespace Tempus {
 
 		SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
-		m_Window = SDL_CreateWindow("Cool Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1920, 1080, 0);
+		m_Window = SDL_CreateWindow("Cool Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, 0);
 
 		SDL_Renderer* renderer = SDL_CreateRenderer(m_Window, -1, 0);
 
 		SDL_SetRenderDrawColor(renderer, 19, 61, 102, 255);
 
 		SDL_Event event;
+
+		std::cout << "Number of threads: " << std::thread::hardware_concurrency() << std::endl;
 
 		while (true) {
 			SDL_RenderClear(renderer);
@@ -42,7 +44,7 @@ namespace Tempus {
 			if (event.type == SDL_QUIT) {
 				break;
 			}
-			std::cout << "Number of threads: " << std::thread::hardware_concurrency() << std::endl;
+			
 		}
 
 	}

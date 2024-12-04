@@ -8,6 +8,11 @@
 	#else
 		#define TEMPUS_API __declspec(dllimport)
 	#endif
-#else
-	#error Tempus only supports Windows!
+#elif TPS_PLATFORM_MAC
+	#ifdef TPS_BUILD_DLL
+		#define TEMPUS_API __attribute__((visibility("default")))
+	#else
+    	#define TEMPUS_API
+	#endif
 #endif
+
