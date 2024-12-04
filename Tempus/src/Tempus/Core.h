@@ -14,5 +14,7 @@
 	#else
     	#define TEMPUS_API
 	#endif
+#else
+#error Tempus only supports Windows and Mac!
 #endif
 

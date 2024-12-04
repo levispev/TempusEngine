@@ -147,6 +147,11 @@ project "Sandbox"
         "Tempus:shared"
     }
 
+    dependson
+    {
+        "Tempus"
+    }
+
     filter "system:windows"
         cppdialect "C++17"
         staticruntime "On"
@@ -178,7 +183,6 @@ project "Sandbox"
         {
             "TPS_PLATFORM_MAC"
         }
-
 
     filter "configurations:Debug"
         defines "TPS_DEBUG"
