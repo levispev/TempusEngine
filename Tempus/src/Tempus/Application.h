@@ -5,7 +5,8 @@
 #include "Core.h"
 
 #include "vulkan/vulkan.h"
-#include "glfw3.h"
+#define SDL_MAIN_HANDLED
+#include "sdl/SDL.h"
 
 
 namespace Tempus {
@@ -19,7 +20,7 @@ namespace Tempus {
 
 		VkInstance m_Instance = nullptr;
 
-		GLFWwindow* m_Window;
+		SDL_Window* m_Window = nullptr;
 
 	};
 

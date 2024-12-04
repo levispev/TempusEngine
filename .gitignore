@@ -21,6 +21,7 @@
 *.xcworkspace
 *.vsconfig
 *.vcxproj
+*.filters
 
 # Binaries / Intermediates
 

@@ -28,13 +28,21 @@ project "Tempus"
     includedirs
     {
         path.join(os.getenv("VULKAN_SDK"), "Include"),
-        "vendor/include/glfw/include/GLFW/"
+        "%{prj.name}/vendor/include",
     }
 
     libdirs
     {
         path.join(os.getenv("VULKAN_SDK"), "Lib"),
-        "vendor/bin/glfw/lib-vc2022/"
+        "%{prj.name}/vendor/bin/glfw/lib-vc2022/",
+        "%{prj.name}/vendor/bin/sdl/"
+    }
+
+    links
+    {
+        "vulkan-1",
+        "SDL2",
+        "SDL2main"
     }
 
     filter "system:windows"
@@ -45,14 +53,20 @@ project "Tempus"
         defines
         {
             "TPS_PLATFORM_WINDOWS",
-            "TPS_BUILD_DLL"
+            "TPS_BUILD_DLL",
+            "GLFW_INCLUDE_NONE"
+        }
+
+        buildoptions
+        {
+            "/utf-8"
         }
 
         postbuildcommands
         {
             "{RMDIR} ../bin/" .. outputdir .. "/Sandbox",
             "{MKDIR} ../bin/" .. outputdir .. "/Sandbox",
-            "{COPYFILE} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox"
+            "{COPYFILE} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox",
         }
 
     filter "configurations:Debug"
@@ -87,13 +101,7 @@ project "Sandbox"
     {
         "Tempus/src",
         path.join(os.getenv("VULKAN_SDK"), "Include"),
-        "vendor/include/glfw/include/GLFW/"
-    }
-
-    libdirs
-    {
-        path.join(os.getenv("VULKAN_SDK"), "Lib"),
-        "vendor/bin/glfw/lib-vc2022/"
+        "Tempus/vendor/include"
     }
 
     links
@@ -109,6 +117,17 @@ project "Sandbox"
         defines
         {
             "TPS_PLATFORM_WINDOWS",
+            "GLFW_INCLUDE_NONE"
+        }
+
+        buildoptions
+        {
+            "/utf-8"
+        }
+
+        postbuildcommands
+        {
+            "{COPYFILE} %{wks.location}/Tempus/vendor/bin/sdl/SDL2.dll %{cfg.targetdir}"
         }
 
     filter "configurations:Debug"

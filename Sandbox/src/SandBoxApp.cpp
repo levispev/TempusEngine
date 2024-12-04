@@ -1,7 +1,6 @@
 // Copyright Levi Spevakow (C) 2024
 
 #include "Tempus.h"
-#include <iostream>
 
 class SandBox : public Tempus::Application
 {
@@ -22,4 +21,6 @@ int main()
 	SandBox* sandbox = new SandBox();
 	sandbox->Run();
 	delete sandbox;
+
+	return 0;
 }
