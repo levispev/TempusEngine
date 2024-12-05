@@ -16,11 +16,7 @@ public:
 	}
 };
 
-int main() 
+Tempus::Application* Tempus::CreateApplication()
 {
-	SandBox* sandbox = new SandBox();
-	sandbox->Run();
-	delete sandbox;
-
-	return 0;
+	return new SandBox();
 }

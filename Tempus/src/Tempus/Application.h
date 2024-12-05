@@ -23,5 +23,7 @@ namespace Tempus {
 
 	};
 
+	Application* CreateApplication();
+
 }
 

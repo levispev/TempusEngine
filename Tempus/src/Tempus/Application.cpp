@@ -1,8 +1,8 @@
 // Copyright Levi Spevakow (C) 2024
 
 #include "Application.h"
-#include <iostream>
 #include <thread>
+#include "Log.h"
 
 namespace Tempus {
 
@@ -17,13 +17,15 @@ namespace Tempus {
 
 	void Application::Run()
 	{
-		std::cout << "Hello World!" << std::endl;
+
+		Log::Init();
+		Log::GetCoreLogger()->log(spdlog::level::trace, "Hello World!");
 
 		SDL_SetMainReady();
 
 		SDL_Init(SDL_INIT_VIDEO);
 
-		SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
+		//SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
 		m_Window = SDL_CreateWindow("Cool Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, 0);
 
@@ -33,7 +35,6 @@ namespace Tempus {
 
 		SDL_Event event;
 
-		std::cout << "Number of threads: " << std::thread::hardware_concurrency() << std::endl;
 
 		while (true) {
 			SDL_RenderClear(renderer);
