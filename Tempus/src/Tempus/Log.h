@@ -32,4 +32,18 @@ namespace Tempus {
 
 }
 
+// Core log macros
+#define TPS_CORE_TRACE(...)      ::Tempus::Log::GetCoreLogger()->trace(__VA_ARGS__)
+#define TPS_CORE_WARN(...)       ::Tempus::Log::GetCoreLogger()->info(__VA_ARGS__)
+#define TPS_CORE_INFO(...)       ::Tempus::Log::GetCoreLogger()->warn(__VA_ARGS__)
+#define TPS_CORE_ERROR(...)      ::Tempus::Log::GetCoreLogger()->error(__VA_ARGS__)
+#define TPS_CORE_FATAL(...)      ::Tempus::Log::GetCoreLogger()->fatal(__VA_ARGS__)
+
+// Client log macros
+#define TPS_TRACE(...)           ::Tempus::Log::GetClientLogger()->trace(__VA_ARGS__)
+#define TPS_WARN(...)            ::Tempus::Log::GetClientLogger()->info(__VA_ARGS__)
+#define TPS_INFO(...)            ::Tempus::Log::GetClientLogger()->warn(__VA_ARGS__)
+#define TPS_ERROR(...)           ::Tempus::Log::GetClientLogger()->error(__VA_ARGS__)
+#define TPS_FATAL(...)           ::Tempus::Log::GetClientLogger()->fatal(__VA_ARGS__)
+
 

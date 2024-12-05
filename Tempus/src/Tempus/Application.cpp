@@ -19,13 +19,15 @@ namespace Tempus {
 	{
 
 		Log::Init();
-		Log::GetCoreLogger()->log(spdlog::level::trace, "Hello World!");
+
+		int num = 42;
+		TPS_CORE_ERROR("Cool number: {0}", num);
 
 		SDL_SetMainReady();
 
 		SDL_Init(SDL_INIT_VIDEO);
 
-		//SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
+		SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
 		m_Window = SDL_CreateWindow("Cool Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, 0);
 
@@ -34,7 +36,6 @@ namespace Tempus {
 		SDL_SetRenderDrawColor(renderer, 19, 61, 102, 255);
 
 		SDL_Event event;
-
 
 		while (true) {
 			SDL_RenderClear(renderer);
