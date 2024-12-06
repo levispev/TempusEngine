@@ -19,8 +19,9 @@ namespace Tempus {
 		s_ClientLogger = spdlog::stdout_color_mt("APP");
 		s_ClientLogger->set_level(spdlog::level::trace);
 
-		TPS_CORE_WARN("Core log initialized!");
+		TPS_CORE_INFO("Core log initialized!");
 		TPS_INFO("Client log initialized!");
+
 	}
 
 	Tempus::Log::Log()
