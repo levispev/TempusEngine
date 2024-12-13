@@ -3,6 +3,7 @@
 #include "Application.h"
 #include <thread>
 #include "Log.h"
+#include <random>
 
 namespace Tempus {
 
@@ -27,7 +28,7 @@ namespace Tempus {
 
 		SDL_Init(SDL_INIT_VIDEO);
 
-		//SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
+		SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
 		m_Window = SDL_CreateWindow("Cool Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, 0);
 
@@ -53,11 +54,24 @@ namespace Tempus {
 			if (event.type == SDL_QUIT) {
 				break;
 			}
+			else if (event.type == SDL_KEYDOWN) {
+				
+				if (event.key.keysym.scancode == SDL_SCANCODE_A) {
+
+					TPS_WARN("Colour Change!");
+
+					std::random_device rd;
+					std::mt19937 gen(rd());
+					std::uniform_int_distribution<> dis(0, 255);
+
+					SDL_SetRenderDrawColor(renderer, dis(gen), dis(gen), dis(gen), 255);
+
+				}
+			}
 			
 		}
 
 	}
-
 
 }
 

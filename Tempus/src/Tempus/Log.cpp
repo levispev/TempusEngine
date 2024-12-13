@@ -11,7 +11,7 @@ namespace Tempus {
 	void Log::Init() 
 	{
 		// Set log print formatting
-		spdlog::set_pattern("%^[%T] [%l] %n: %v%$");
+		spdlog::set_pattern("%^[%T] [%l] %n:%$ %v");
 
 		s_CoreLogger = spdlog::stdout_color_mt("TEMPUS");
 		s_CoreLogger->set_level(spdlog::level::trace);
