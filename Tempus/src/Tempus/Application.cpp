@@ -5,14 +5,18 @@
 #include "Log.h"
 #include <random>
 
+#include "Window.h"
+#include "Renderer.h"
+
 namespace Tempus {
 
-	Tempus::Application::Application()
+	Application::Application()
 	{
-		
+		m_Window = new Window();
+		m_Renderer = new Renderer();
 	}
 
-	Tempus::Application::~Application()
+	Application::~Application()
 	{
 	}
 
@@ -21,33 +25,31 @@ namespace Tempus {
 
 		Log::Init();
 
-		int num = 42;
-		TPS_CORE_TRACE("Cool number: {0}", num);
-
+		// SDL Initialization
 		SDL_SetMainReady();
 
-		SDL_Init(SDL_INIT_VIDEO);
+		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) 
+		{
+			TPS_CORE_CRITICAL("Failed to initialize SDL: {0}", SDL_GetError());
+			return;
+		}
 
 		SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
-		m_Window = SDL_CreateWindow("Cool Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, 0);
-
-		SDL_Renderer* renderer = SDL_CreateRenderer(m_Window, -1, 0);
-
-		SDL_SetRenderDrawColor(renderer, 19, 61, 102, 255);
+		// Window creation
+		if (!InitWindow()) 
+		{
+			return;
+		}
+		// Renderer creation
+		if (!InitRenderer()) 
+		{
+			return;
+		}
 
 		SDL_Event event;
 
-		TPS_CORE_TRACE("Trace Log");
-		TPS_CORE_INFO("Info Log");
-		TPS_CORE_WARN("Warn Log");
-		TPS_CORE_ERROR("Error Log");
-		TPS_CORE_CRITICAL("Critical Log");
-
 		while (true) {
-
-			SDL_RenderClear(renderer);
-			SDL_RenderPresent(renderer);
 
 			SDL_PollEvent(&event);
 
@@ -64,14 +66,45 @@ namespace Tempus {
 					std::mt19937 gen(rd());
 					std::uniform_int_distribution<> dis(0, 255);
 
-					SDL_SetRenderDrawColor(renderer, dis(gen), dis(gen), dis(gen), 255);
-
+					m_Renderer->SetRenderDrawColor(dis(gen), dis(gen), dis(gen), 255);
 				}
 			}
-			
+
+			m_Renderer->RenderClear();
+			m_Renderer->RenderPresent();
+
 		}
+	}
+
+	bool Application::InitWindow()
+	{
+		// Window creation
+		if (!m_Window || !m_Window->Init("Cool Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN))
+		{
+			TPS_CORE_CRITICAL("Failed to initialize window!");
+			return false;
+		}
+
+		TPS_CORE_INFO("Window successfully created!");
+
+		return true;
 
 	}
 
-}
+	bool Application::InitRenderer()
+	{
 
+		// Renderer creation
+		if (!m_Renderer || !m_Renderer->Init(m_Window))
+		{
+			TPS_CORE_CRITICAL("Failed to initialize renderer!");
+			return false;
+		}
+
+		m_Renderer->SetRenderDrawColor(19, 16, 102, 255);
+
+		TPS_CORE_INFO("Renderer successfully created!");
+
+		return true;
+	}
+}

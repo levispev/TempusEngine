@@ -18,3 +18,5 @@
 #error Tempus only supports Windows and Mac!
 #endif
 
+#define BIT(x) (1 << x)
+

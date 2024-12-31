@@ -4,6 +4,8 @@
 
 #include "Core.h"
 
+#include "sdl/SDL.h"
+
 namespace Tempus {
 
 	class TEMPUS_API Renderer {
@@ -14,10 +16,15 @@ namespace Tempus {
 		Renderer();
 		~Renderer();
 
+		bool Init(class Window* window);
+
+		int RenderClear();
+		void RenderPresent();
+		int SetRenderDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
+
 	private:
 
-		bool Init();
-
+		SDL_Renderer* m_Renderer = nullptr;
 
 	};
 

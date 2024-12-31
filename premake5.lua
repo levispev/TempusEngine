@@ -28,7 +28,8 @@ project "Tempus"
     includedirs
     {
         path.join(os.getenv("VULKAN_SDK"), "Include"),
-        "%{prj.name}/vendor/include"
+        "%{prj.name}/vendor/include",
+        "%{prj.name}/src/"
     }
 
     libdirs

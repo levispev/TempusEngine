@@ -13,13 +13,21 @@ namespace Tempus {
 	class TEMPUS_API Application
 	{
 	public:
+
 		Application();
 		virtual ~Application();
 		void Run();
 
-		VkInstance m_Instance = nullptr;
+	private:
 
-		SDL_Window* m_Window = nullptr;
+		bool InitWindow();
+		bool InitRenderer();
+
+	private:
+
+		VkInstance m_Instance = nullptr;
+		class Window* m_Window = nullptr;
+		class Renderer* m_Renderer = nullptr;
 
 	};
 
