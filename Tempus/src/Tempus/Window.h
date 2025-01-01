@@ -1,3 +1,5 @@
+// Copyright Levi Spevakow (C) 2024
+
 #pragma once
 
 #include "Tempus/Core.h"

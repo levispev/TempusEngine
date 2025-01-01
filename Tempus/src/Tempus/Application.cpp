@@ -8,9 +8,11 @@
 #include "Window.h"
 #include "Renderer.h"
 
+#include "sdl/SDL_vulkan.h"
+
 namespace Tempus {
 
-	Application::Application()
+	Application::Application() : CurrentEvent(SDL_Event())
 	{
 		m_Window = new Window();
 		m_Renderer = new Renderer();
@@ -26,60 +28,36 @@ namespace Tempus {
 		Log::Init();
 
 		// SDL Initialization
-		SDL_SetMainReady();
-
-		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) 
+		if (!InitSDL()) 
 		{
-			TPS_CORE_CRITICAL("Failed to initialize SDL: {0}", SDL_GetError());
 			return;
 		}
-
-		SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
 		// Window creation
 		if (!InitWindow()) 
 		{
 			return;
 		}
+
 		// Renderer creation
 		if (!InitRenderer()) 
 		{
 			return;
 		}
 
-		SDL_Event event;
-
-		while (true) {
-
-			SDL_PollEvent(&event);
-
-			if (event.type == SDL_QUIT) {
-				break;
-			}
-			else if (event.type == SDL_KEYDOWN) {
-				
-				if (event.key.keysym.scancode == SDL_SCANCODE_A) {
-
-					TPS_WARN("Colour Change!");
-
-					std::random_device rd;
-					std::mt19937 gen(rd());
-					std::uniform_int_distribution<> dis(0, 255);
-
-					m_Renderer->SetRenderDrawColor(dis(gen), dis(gen), dis(gen), 255);
-				}
-			}
-
-			m_Renderer->RenderClear();
-			m_Renderer->RenderPresent();
-
+		while (!bShouldQuit) 
+		{
+			CoreUpdate();
 		}
+
+		Cleanup();
+
 	}
 
 	bool Application::InitWindow()
 	{
 		// Window creation
-		if (!m_Window || !m_Window->Init("Cool Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN))
+		if (!m_Window || !m_Window->Init("Sandbox", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN))
 		{
 			TPS_CORE_CRITICAL("Failed to initialize window!");
 			return false;
@@ -106,5 +84,75 @@ namespace Tempus {
 		TPS_CORE_INFO("Renderer successfully created!");
 
 		return true;
+	}
+
+	bool Application::InitSDL()
+	{
+		SDL_SetMainReady();
+
+		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0)
+		{
+			TPS_CORE_CRITICAL("Failed to initialize SDL: {0}", SDL_GetError());
+			return false;
+		}
+
+		SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
+
+		SDL_version version;
+		SDL_GetVersion(&version);
+		TPS_CORE_INFO("Initialized SDL version {0}.{1}.{2}", version.major, version.minor, version.patch);
+
+		if (SDL_Vulkan_LoadLibrary(nullptr)) 
+		{
+			TPS_CORE_CRITICAL("Failed to load Vulkan library: {0}", SDL_GetError());
+			return false;
+		}
+
+		return true;
+	}
+
+	void Application::CoreUpdate()
+	{
+
+		SDL_PollEvent(&CurrentEvent);
+
+		if (CurrentEvent.type == SDL_QUIT)
+		{
+			bShouldQuit = true;
+			return;
+		}
+
+		Update();
+
+		m_Renderer->Update();
+
+	}
+
+	void Application::Update()
+	{
+	}
+
+	void Application::Cleanup()
+	{
+
+		if (m_Window) 
+		{
+			delete m_Window;
+		}
+
+		if (m_Renderer) 
+		{
+			delete m_Renderer;
+		}
+
+		SDL_Vulkan_UnloadLibrary();
+		SDL_Quit();
+
+		TPS_CORE_INFO("Application Cleaned");
+	}
+
+	void Application::SetRenderColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
+	{
+		m_Renderer->SetRenderDrawColor(r, g, b, a);
 	}
 }

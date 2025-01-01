@@ -5,6 +5,7 @@
 #include "Core.h"
 
 #include "sdl/SDL.h"
+#include <vector>
 
 namespace Tempus {
 
@@ -16,6 +17,8 @@ namespace Tempus {
 		Renderer();
 		~Renderer();
 
+		void Update();
+
 		bool Init(class Window* window);
 
 		int RenderClear();
@@ -24,7 +27,24 @@ namespace Tempus {
 
 	private:
 
+		bool CreateVulkanInstance();
+		bool CheckValidationLayerSupport();
+		std::vector<const char*> GetRequiredExtensions();
+
+	private:
+
 		SDL_Renderer* m_Renderer = nullptr;
+
+		// Standard validation layer
+		const std::vector<const char*> validationLayers = {
+			"VK_LAYER_KHRONOS_validation"
+		};
+
+#ifdef TPS_DEBUG
+		const bool m_bEnableValidationLayers = false;
+#else
+		const bool m_bEnableValidationLayers = true;
+#endif
 
 	};
 

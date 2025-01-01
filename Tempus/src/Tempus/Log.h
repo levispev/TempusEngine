@@ -9,6 +9,8 @@
 
 namespace Tempus {
 
+	template class TEMPUS_API std::shared_ptr<spdlog::logger>;
+
 	class TEMPUS_API Log
 	{
 
@@ -28,7 +30,6 @@ namespace Tempus {
 		static std::shared_ptr<spdlog::logger> s_ClientLogger;
 
 	};
-
 
 }
 

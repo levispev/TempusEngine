@@ -1,3 +1,5 @@
+// Copyright Levi Spevakow (C) 2024
+
 #include "Window.h"
 
 namespace Tempus {
@@ -8,6 +10,10 @@ namespace Tempus {
 
 	Window::~Window()
 	{
+		if (m_Window) 
+		{
+			SDL_DestroyWindow(m_Window);
+		}
 	}
 
 	bool Window::Init(const char* title,
