@@ -76,7 +76,7 @@ project "Tempus"
 
         links
         {
-            "vulkan.1",
+            "MoltenVK",
             "SDL2.framework"
         }
 

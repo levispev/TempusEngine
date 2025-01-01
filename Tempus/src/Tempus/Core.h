@@ -18,6 +18,10 @@
 	#else
     	#define TEMPUS_API
 	#endif
+
+	#define VK_USE_PLATFORM_MACOS_MVK
+	#define PLATFORM_SURFACE_EXTENSION_NAME VK_MVK_MACOS_SURFACE_EXTENSION_NAME
+	
 #else
 #error Tempus only supports Windows and Mac!
 #endif

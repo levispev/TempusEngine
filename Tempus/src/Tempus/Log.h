@@ -9,7 +9,9 @@
 
 namespace Tempus {
 
+#ifdef TPS_PLATFORM_WINDOWS
 	template class TEMPUS_API std::shared_ptr<spdlog::logger>;
+#endif
 
 	class TEMPUS_API Log
 	{
