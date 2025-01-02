@@ -33,8 +33,17 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 	m_Renderer = SDL_CreateRenderer(window->GetNativeWindow(), -1, 0);
 	SDL_SetRenderDrawColor(m_Renderer, 19, 61, 102, 255);
 
-	CreateVulkanInstance();
-	PickPhysicalDevice();
+	
+	if(!CreateVulkanInstance())
+	{
+		return false;
+	}
+
+	if(!PickPhysicalDevice())
+	{
+		return false;
+	}
+
 	//CreateSurface(window);
 
 	return m_Renderer;
@@ -167,6 +176,12 @@ bool Tempus::Renderer::CreateSurface(Tempus::Window* window)
 
 bool Tempus::Renderer::IsDeviceSuitable(VkPhysicalDevice device)
 {
+
+// @TODO Implement proper checks for macOS devices
+#ifdef TPS_PLATFORM_MAC
+	return true;
+#endif
+
 	VkPhysicalDeviceProperties deviceProperties;
 	VkPhysicalDeviceFeatures deviceFeatures;
 	vkGetPhysicalDeviceProperties(device, &deviceProperties);
@@ -185,7 +200,7 @@ bool Tempus::Renderer::CheckValidationLayerSupport()
 	std::vector<VkLayerProperties> availableLayers(layerCount);
 	vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
-	// Check if enumerated validation layers contain desired layer ("VK_LAYER_KHRONOS_validation")
+	// Check if enumerated validation layers contain desired layer
 	for (const char* layerName : m_validationLayers) 
 	{
 		bool layerFound = false;
