@@ -6,6 +6,7 @@
 
 #include "sdl/SDL.h"
 #include <vector>
+#include "vulkan/vulkan.h"
 
 namespace Tempus {
 
@@ -28,22 +29,31 @@ namespace Tempus {
 	private:
 
 		bool CreateVulkanInstance();
+		bool PickPhysicalDevice();
+		bool CreateSurface(class Window* window);
+		bool IsDeviceSuitable(VkPhysicalDevice device);
 		bool CheckValidationLayerSupport();
 		std::vector<const char*> GetRequiredExtensions();
+		void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+		void LogExtensionsAndLayers();
 
 	private:
 
+		// Will be replaced with proper Vulkan instantiation
 		SDL_Renderer* m_Renderer = nullptr;
+		VkInstance m_vkInstance;
+		VkSurfaceKHR m_vkSurface;
+		VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
 
 		// Standard validation layer
-		const std::vector<const char*> validationLayers = {
+		const std::vector<const char*> m_validationLayers = {
 			"VK_LAYER_KHRONOS_validation"
 		};
 
 #ifdef TPS_DEBUG
-		const bool m_bEnableValidationLayers = false;
-#else
 		const bool m_bEnableValidationLayers = true;
+#else
+		const bool m_bEnableValidationLayers = false;
 #endif
 
 	};
