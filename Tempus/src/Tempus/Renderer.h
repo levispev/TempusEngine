@@ -43,6 +43,7 @@ namespace Tempus {
 		};
 
 		bool CreateVulkanInstance();
+		bool SetupDebugMessenger();
 		bool PickPhysicalDevice();
 		bool CreateLogicalDevice();
 		bool CreateSurface(class Window* window);
@@ -63,6 +64,8 @@ namespace Tempus {
 		VkInstance m_vkInstance = VK_NULL_HANDLE;
 		VkSurfaceKHR m_vkSurface = VK_NULL_HANDLE;
 		VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
+		VkDevice m_device = VK_NULL_HANDLE;
+		VkQueue m_graphicsQueue = VK_NULL_HANDLE;
 
 		// Standard validation layer
 		const std::vector<const char*> m_validationLayers = 

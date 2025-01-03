@@ -31,11 +31,20 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 	}
 
 	// Will be replaced with proper Vulkan instantiation
-	m_Renderer = SDL_CreateRenderer(window->GetNativeWindow(), -1, 0);
-	SDL_SetRenderDrawColor(m_Renderer, 19, 61, 102, 255);
-
+	//m_Renderer = SDL_CreateRenderer(window->GetNativeWindow(), -1, 0);
+	//SDL_SetRenderDrawColor(m_Renderer, 19, 61, 102, 255);
 	
 	if(!CreateVulkanInstance())
+	{
+		return false;
+	}
+
+	if(!SetupDebugMessenger())
+	{
+		return false;
+	}
+
+	if(!CreateSurface(window))
 	{
 		return false;
 	}
@@ -45,14 +54,12 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 		return false;
 	}
 
-	//if (!CreateLogicalDevice()) 
-	//{
-	//	return false;
-	//}
+	if (!CreateLogicalDevice()) 
+	{
+		return false;
+	}
 
-	//CreateSurface(window);
-
-	return m_Renderer;
+	return true;
 
 }
 
@@ -99,9 +106,6 @@ bool Tempus::Renderer::CreateVulkanInstance()
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	createInfo.ppEnabledExtensionNames = extensions.data();
 
-	// @TODO Implement debug messenger
-	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
-
 	if (m_bEnableValidationLayers) 
 	{
 		createInfo.enabledLayerCount = static_cast<uint32_t>(m_validationLayers.size());
@@ -126,6 +130,14 @@ bool Tempus::Renderer::CreateVulkanInstance()
 
 	return true;
 
+}
+
+bool Tempus::Renderer::SetupDebugMessenger()
+{
+	// @TODO Implement debug messenger
+	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+
+    return true;
 }
 
 bool Tempus::Renderer::PickPhysicalDevice()
@@ -187,10 +199,41 @@ bool Tempus::Renderer::CreateLogicalDevice()
 	VkDeviceQueueCreateInfo queueCreateInfo{};
 	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 	queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
+	// Currently only requesting 1 queue, however the priority must still be specified
 	queueCreateInfo.queueCount = 1;
 	queueCreateInfo.pQueuePriorities = &queuePriority;
 
+	VkPhysicalDeviceFeatures deviceFeatures{};
 
+	VkDeviceCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	createInfo.pQueueCreateInfos = &queueCreateInfo;
+	createInfo.queueCreateInfoCount = 1;
+	createInfo.pEnabledFeatures = &deviceFeatures;
+
+	// Modern Vulkan makes no distinction between instance and device extensions, but it is still good
+	// to set these values for compatibility
+	createInfo.enabledExtensionCount = 0;
+
+	if (m_bEnableValidationLayers) 
+	{
+		createInfo.enabledLayerCount = static_cast<uint32_t>(m_validationLayers.size());
+		createInfo.ppEnabledLayerNames = m_validationLayers.data();
+	} 
+	else 
+	{
+		createInfo.enabledLayerCount = 0;
+	}
+
+	if (vkCreateDevice(m_physicalDevice, &createInfo, nullptr, &m_device) != VK_SUCCESS) 
+	{
+		TPS_CORE_CRITICAL("Failed to create logical device!");
+    	return false;
+	}
+
+	// Retrieve reference to devices graphics queue, index 0 because we only have 1 queue
+	vkGetDeviceQueue(m_device, indices.graphicsFamily.value(), 0, &m_graphicsQueue);
+	
 	return true;
 }
 
@@ -300,7 +343,7 @@ std::vector<const char*> Tempus::Renderer::GetRequiredExtensions()
 		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	}
 
-	std::string enabledExtensions = "\nDesired extensions: \n";
+	std::string enabledExtensions = "\nDesired instance extensions: \n";
 	for (const char* extension : extensions)
 	{
 		enabledExtensions += '\t';
@@ -330,7 +373,7 @@ void Tempus::Renderer::LogExtensionsAndLayers()
 	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, enumExtensions.data());
 
 
-	std::cout << "Available extensions: \n";
+	std::cout << "Available instance extensions: \n";
 
 	for (const auto& extension : enumExtensions)
 		std::cout << '\t' << extension.extensionName << '\n';
@@ -360,6 +403,7 @@ void Tempus::Renderer::LogExtensionsAndLayers()
 
 void Tempus::Renderer::Cleanup()
 {
+	vkDestroyDevice(m_device, nullptr);
 	vkDestroySurfaceKHR(m_vkInstance, m_vkSurface, nullptr);
 	vkDestroyInstance(m_vkInstance, nullptr);
 }
