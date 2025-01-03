@@ -13,6 +13,7 @@ Tempus::Renderer::Renderer()
 
 Tempus::Renderer::~Renderer()
 {
+	Cleanup();
 }
 
 void Tempus::Renderer::Update()
@@ -43,6 +44,11 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 	{
 		return false;
 	}
+
+	//if (!CreateLogicalDevice()) 
+	//{
+	//	return false;
+	//}
 
 	//CreateSurface(window);
 
@@ -81,18 +87,19 @@ bool Tempus::Renderer::CreateVulkanInstance()
 	appInfo.applicationVersion = VK_MAKE_API_VERSION(1, 0, 0, 0);
 	appInfo.pEngineName = "Tempus Engine";
 	appInfo.engineVersion = VK_MAKE_API_VERSION(0, 0, 1, 0);
-	appInfo.apiVersion = VK_API_VERSION_1_0;
+	appInfo.apiVersion = VK_API_VERSION_1_3;
 
 	VkInstanceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &appInfo;
 
-	// Retrieving required extensions for SDL surface
+	// Retrieving minimum platform specific required extensions for SDL surface
 	auto extensions = GetRequiredExtensions();
 
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	createInfo.ppEnabledExtensionNames = extensions.data();
 
+	// @TODO Implement debug messenger
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 
 	if (m_bEnableValidationLayers) 
@@ -109,6 +116,13 @@ bool Tempus::Renderer::CreateVulkanInstance()
 	}
 
 	LogExtensionsAndLayers();
+
+	uint32_t instanceVersion = 0;
+
+	if (vkEnumerateInstanceVersion(&instanceVersion) == VK_SUCCESS) 
+	{
+		TPS_CORE_INFO("Vulkan version: {0}.{1}.{2}", VK_VERSION_MAJOR(instanceVersion), VK_VERSION_MINOR(instanceVersion), VK_VERSION_PATCH(instanceVersion));
+	}
 
 	return true;
 
@@ -130,6 +144,7 @@ bool Tempus::Renderer::PickPhysicalDevice()
 	std::vector<VkPhysicalDevice> devices(deviceCount);
 	vkEnumeratePhysicalDevices(m_vkInstance, &deviceCount, devices.data());
 
+	// Check if device is suitable
 	for (const auto& device : devices) 
 	{
 		if (IsDeviceSuitable(device)) 
@@ -162,6 +177,23 @@ bool Tempus::Renderer::PickPhysicalDevice()
 	return true;
 }
 
+bool Tempus::Renderer::CreateLogicalDevice()
+{
+
+	QueueFamilyIndices indices = FindQueueFamilies(m_physicalDevice);
+
+	float queuePriority = 1.0f;
+
+	VkDeviceQueueCreateInfo queueCreateInfo{};
+	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
+	queueCreateInfo.queueCount = 1;
+	queueCreateInfo.pQueuePriorities = &queuePriority;
+
+
+	return true;
+}
+
 bool Tempus::Renderer::CreateSurface(Tempus::Window* window)
 {
 
@@ -174,20 +206,46 @@ bool Tempus::Renderer::CreateSurface(Tempus::Window* window)
 
 }
 
+Tempus::Renderer::QueueFamilyIndices Tempus::Renderer::FindQueueFamilies(VkPhysicalDevice device)
+{
+	QueueFamilyIndices indices;
+
+	// Retrieve queue family count
+	uint32_t queueFamilyCount = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+	// Retrieve queue families
+	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+	int i = 0;
+	for (const auto& queueFamily : queueFamilies)
+	{
+		// Checking if any queue families supports graphics commands
+		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+		{
+			indices.graphicsFamily = i;
+		}
+
+		// Early break if all desired queue families have been found
+		if (indices.IsComplete()) 
+		{
+			break;
+		}
+
+		i++;
+	}
+
+	return indices;
+}
+
 bool Tempus::Renderer::IsDeviceSuitable(VkPhysicalDevice device)
 {
+	QueueFamilyIndices indices = FindQueueFamilies(device);
 
-// @TODO Implement proper checks for macOS devices
-#ifdef TPS_PLATFORM_MAC
-	return true;
-#endif
+	// If this optional variable has a value then the device supports graphics family queue
+	return indices.IsComplete();
 
-	VkPhysicalDeviceProperties deviceProperties;
-	VkPhysicalDeviceFeatures deviceFeatures;
-	vkGetPhysicalDeviceProperties(device, &deviceProperties);
-	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
-
-	return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader;
 }
 
 bool Tempus::Renderer::CheckValidationLayerSupport()
@@ -298,4 +356,10 @@ void Tempus::Renderer::LogExtensionsAndLayers()
 
 	std::cout << std::endl;
 
+}
+
+void Tempus::Renderer::Cleanup()
+{
+	vkDestroySurfaceKHR(m_vkInstance, m_vkSurface, nullptr);
+	vkDestroyInstance(m_vkInstance, nullptr);
 }
