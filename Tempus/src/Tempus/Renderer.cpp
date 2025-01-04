@@ -108,12 +108,12 @@ bool Tempus::Renderer::CreateVulkanInstance()
 
 	if (m_bEnableValidationLayers) 
 	{
-		createInfo.enabledLayerCount = static_cast<uint32_t>(m_validationLayers.size());
-		createInfo.ppEnabledLayerNames = m_validationLayers.data();
+		createInfo.enabledLayerCount = static_cast<uint32_t>(m_ValidationLayers.size());
+		createInfo.ppEnabledLayerNames = m_ValidationLayers.data();
 	}
 
 	// Creating instance
-	if (vkCreateInstance(&createInfo, nullptr, &m_vkInstance) != VK_SUCCESS) 
+	if (vkCreateInstance(&createInfo, nullptr, &m_VkInstance) != VK_SUCCESS) 
 	{
 		TPS_CORE_CRITICAL("Failed to create Vulkan instance!");
 		return false;
@@ -144,7 +144,7 @@ bool Tempus::Renderer::PickPhysicalDevice()
 {
 	// Get device count
 	uint32_t deviceCount = 0;
-	vkEnumeratePhysicalDevices(m_vkInstance, &deviceCount, nullptr);
+	vkEnumeratePhysicalDevices(m_VkInstance, &deviceCount, nullptr);
 
 	if (deviceCount == 0) 
 	{
@@ -154,19 +154,19 @@ bool Tempus::Renderer::PickPhysicalDevice()
 
 	// Get physical devices
 	std::vector<VkPhysicalDevice> devices(deviceCount);
-	vkEnumeratePhysicalDevices(m_vkInstance, &deviceCount, devices.data());
+	vkEnumeratePhysicalDevices(m_VkInstance, &deviceCount, devices.data());
 
 	// Check if device is suitable
 	for (const auto& device : devices) 
 	{
 		if (IsDeviceSuitable(device)) 
 		{
-			m_physicalDevice = device;
+			m_PhysicalDevice = device;
 			break;
 		}
 	}
 
-	if (m_physicalDevice == VK_NULL_HANDLE) 
+	if (m_PhysicalDevice == VK_NULL_HANDLE) 
 	{
 		TPS_CORE_CRITICAL("Failed to find suitable GPU!");
 		return false;
@@ -175,8 +175,8 @@ bool Tempus::Renderer::PickPhysicalDevice()
 	// Logging of device information
 	VkPhysicalDeviceProperties deviceProperties;
 	VkPhysicalDeviceFeatures deviceFeatures;
-	vkGetPhysicalDeviceProperties(m_physicalDevice, &deviceProperties);
-	vkGetPhysicalDeviceFeatures(m_physicalDevice, &deviceFeatures);
+	vkGetPhysicalDeviceProperties(m_PhysicalDevice, &deviceProperties);
+	vkGetPhysicalDeviceFeatures(m_PhysicalDevice, &deviceFeatures);
 
 	std::cout << "Device Info:" << '\n';
 	std::cout << '\t' << "Name: " << deviceProperties.deviceName << '\n';
@@ -192,15 +192,15 @@ bool Tempus::Renderer::PickPhysicalDevice()
 bool Tempus::Renderer::CreateLogicalDevice()
 {
 
-	QueueFamilyIndices indices = FindQueueFamilies(m_physicalDevice);
+	QueueFamilyIndices indices = FindQueueFamilies(m_PhysicalDevice);
 
 	float queuePriority = 1.0f;
 
 	VkDeviceQueueCreateInfo queueCreateInfo{};
 	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 	queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
-	// Currently only requesting 1 queue, however the priority must still be specified
 	queueCreateInfo.queueCount = 1;
+	// Currently only creating 1 queue, however the priority must still be specified
 	queueCreateInfo.pQueuePriorities = &queuePriority;
 
 	VkPhysicalDeviceFeatures deviceFeatures{};
@@ -210,29 +210,27 @@ bool Tempus::Renderer::CreateLogicalDevice()
 	createInfo.pQueueCreateInfos = &queueCreateInfo;
 	createInfo.queueCreateInfoCount = 1;
 	createInfo.pEnabledFeatures = &deviceFeatures;
-
-	// Modern Vulkan makes no distinction between instance and device extensions, but it is still good
-	// to set these values for compatibility
 	createInfo.enabledExtensionCount = 0;
 
+	// Modern Vulkan makes no distinction between instance and device layers, but it is still good to set these values for compatibility
 	if (m_bEnableValidationLayers) 
 	{
-		createInfo.enabledLayerCount = static_cast<uint32_t>(m_validationLayers.size());
-		createInfo.ppEnabledLayerNames = m_validationLayers.data();
+		createInfo.enabledLayerCount = static_cast<uint32_t>(m_ValidationLayers.size());
+		createInfo.ppEnabledLayerNames = m_ValidationLayers.data();
 	} 
 	else 
 	{
 		createInfo.enabledLayerCount = 0;
 	}
 
-	if (vkCreateDevice(m_physicalDevice, &createInfo, nullptr, &m_device) != VK_SUCCESS) 
+	if (vkCreateDevice(m_PhysicalDevice, &createInfo, nullptr, &m_Device) != VK_SUCCESS) 
 	{
 		TPS_CORE_CRITICAL("Failed to create logical device!");
     	return false;
 	}
 
 	// Retrieve reference to devices graphics queue, index 0 because we only have 1 queue
-	vkGetDeviceQueue(m_device, indices.graphicsFamily.value(), 0, &m_graphicsQueue);
+	vkGetDeviceQueue(m_Device, indices.graphicsFamily.value(), 0, &m_GraphicsQueue);
 	
 	return true;
 }
@@ -245,7 +243,7 @@ bool Tempus::Renderer::CreateSurface(Tempus::Window* window)
 		return false;
 	}
 
-	return SDL_Vulkan_CreateSurface(window->GetNativeWindow(), m_vkInstance, &m_vkSurface);
+	return SDL_Vulkan_CreateSurface(window->GetNativeWindow(), m_VkInstance, &m_VkSurface);
 
 }
 
@@ -264,13 +262,21 @@ Tempus::Renderer::QueueFamilyIndices Tempus::Renderer::FindQueueFamilies(VkPhysi
 	int i = 0;
 	for (const auto& queueFamily : queueFamilies)
 	{
-		// Checking if any queue families supports graphics commands
+		// Checking if device supports graphics queue
 		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
 		{
 			indices.graphicsFamily = i;
 		}
 
-		// Early break if all desired queue families have been found
+		// Check if device supports present queue
+		VkBool32 presentSupport = false;
+		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, m_VkSurface, &presentSupport);
+
+		if (presentSupport) 
+		{
+			indices.presentFamily = i;
+		}
+
 		if (indices.IsComplete()) 
 		{
 			break;
@@ -302,7 +308,7 @@ bool Tempus::Renderer::CheckValidationLayerSupport()
 	vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
 	// Check if enumerated validation layers contain desired layer
-	for (const char* layerName : m_validationLayers) 
+	for (const char* layerName : m_ValidationLayers) 
 	{
 		bool layerFound = false;
 
@@ -359,8 +365,6 @@ void Tempus::Renderer::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCre
 {
 	createInfo = {};
 	//createInfo.sType = 
-
-
 }
 
 void Tempus::Renderer::LogExtensionsAndLayers()
@@ -403,7 +407,7 @@ void Tempus::Renderer::LogExtensionsAndLayers()
 
 void Tempus::Renderer::Cleanup()
 {
-	vkDestroyDevice(m_device, nullptr);
-	vkDestroySurfaceKHR(m_vkInstance, m_vkSurface, nullptr);
-	vkDestroyInstance(m_vkInstance, nullptr);
+	vkDestroyDevice(m_Device, nullptr);
+	vkDestroySurfaceKHR(m_VkInstance, m_VkSurface, nullptr);
+	vkDestroyInstance(m_VkInstance, nullptr);
 }

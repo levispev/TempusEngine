@@ -35,10 +35,11 @@ namespace Tempus {
 		{
 			// Optional value to represent if queue family exists
 			std::optional<uint32_t> graphicsFamily;
+			std::optional<uint32_t> presentFamily;
 
 			bool IsComplete() 
 			{
-				return graphicsFamily.has_value();
+				return graphicsFamily.has_value() && presentFamily.has_value();
 			}
 		};
 
@@ -61,14 +62,15 @@ namespace Tempus {
 		// Will be replaced with proper Vulkan instantiation
 		SDL_Renderer* m_Renderer = nullptr;
 
-		VkInstance m_vkInstance = VK_NULL_HANDLE;
-		VkSurfaceKHR m_vkSurface = VK_NULL_HANDLE;
-		VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
-		VkDevice m_device = VK_NULL_HANDLE;
-		VkQueue m_graphicsQueue = VK_NULL_HANDLE;
+		VkInstance m_VkInstance = VK_NULL_HANDLE;
+		VkSurfaceKHR m_VkSurface = VK_NULL_HANDLE;
+		VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
+		VkDevice m_Device = VK_NULL_HANDLE;
+		VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
+		VkQueue m_PresentQueue = VK_NULL_HANDLE;
 
 		// Standard validation layer
-		const std::vector<const char*> m_validationLayers = 
+		const std::vector<const char*> m_ValidationLayers = 
 		{
 			DESIRED_VK_LAYER
 		};
