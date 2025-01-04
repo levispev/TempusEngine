@@ -39,7 +39,7 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 		return false;
 	}
 
-	if(!SetupDebugMessenger())
+	if(m_bEnableValidationLayers && !SetupDebugMessenger())
 	{
 		return false;
 	}
@@ -134,8 +134,19 @@ bool Tempus::Renderer::CreateVulkanInstance()
 
 bool Tempus::Renderer::SetupDebugMessenger()
 {
-	// @TODO Implement debug messenger
-	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+
+	VkDebugUtilsMessengerCreateInfoEXT createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+	createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+	createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+	createInfo.pfnUserCallback = DebugCallback;
+	createInfo.pUserData = nullptr;
+
+	if (CreateDebugUtilsMessengerEXT(m_VkInstance, &createInfo, nullptr, &m_DebugMessenger) != VK_SUCCESS) 
+	{
+    	TPS_CORE_CRITICAL("Failed to set up debug messenger!");
+		return false;
+	}		
 
     return true;
 }
@@ -376,18 +387,15 @@ void Tempus::Renderer::LogExtensionsAndLayers()
 	std::vector<VkExtensionProperties> enumExtensions(extensionCount);
 	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, enumExtensions.data());
 
-
 	std::cout << "Available instance extensions: \n";
 
 	for (const auto& extension : enumExtensions)
 		std::cout << '\t' << extension.extensionName << '\n';
 
-
 	//std::cout << '\n' << "Enabled extensions: \n";
 
 	//for (const auto& extension : extensions)
 		//std::cout << '\t' << extension << '\n';
-
 
 	uint32_t layerCount = 0;
 	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);

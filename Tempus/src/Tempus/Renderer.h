@@ -8,6 +8,7 @@
 #include <vector>
 #include "vulkan/vulkan.h"
 #include <optional>
+#include "Log.h"
 
 namespace Tempus {
 
@@ -80,6 +81,32 @@ namespace Tempus {
 #else
 		const bool m_bEnableValidationLayers = false;
 #endif
+
+		VkDebugUtilsMessengerEXT m_DebugMessenger;
+
+		// Callback function for validation layer debug messages
+		static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback( VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+		VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+		void* pUserData) 
+		{
+			TPS_CORE_INFO("Validation Layer: ", pCallbackData->pMessage);
+
+			return VK_FALSE;
+		}
+
+		VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+		 const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) 
+		{
+			auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+			if (func != nullptr) 
+			{
+				return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+			} 
+			else 
+			{
+				return VK_ERROR_EXTENSION_NOT_PRESENT;
+			}
+		}
 
 	};
 
