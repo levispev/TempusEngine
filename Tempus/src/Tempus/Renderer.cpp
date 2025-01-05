@@ -61,6 +61,18 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 		return false;
 	}
 
+	uint32_t extensionCount = 0;
+	vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionCount, nullptr);
+
+	std::vector<VkExtensionProperties> extensions(extensionCount);
+	vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionCount,
+	extensions.data());
+
+	std::cout << "Available Device Extensions:\n";
+	for (const auto& extension : extensions) {
+		std::cout << "\t" << extension.extensionName << "\n";
+	}
+
 	return true;
 
 }
@@ -134,13 +146,6 @@ bool Tempus::Renderer::CreateVulkanInstance()
 	}
 
 	LogExtensionsAndLayers();
-
-	uint32_t instanceVersion = 0;
-
-	if (vkEnumerateInstanceVersion(&instanceVersion) == VK_SUCCESS) 
-	{
-		TPS_CORE_INFO("Vulkan version: {0}.{1}.{2}", VK_VERSION_MAJOR(instanceVersion), VK_VERSION_MINOR(instanceVersion), VK_VERSION_PATCH(instanceVersion));
-	}
 
 	return true;
 
@@ -406,15 +411,6 @@ std::vector<const char*> Tempus::Renderer::GetRequiredExtensions()
 		// Adding debug extension if validation layers are enabled
 		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	}
-
-	std::string enabledExtensions = "\nDesired instance extensions: \n";
-	for (const char* extension : extensions)
-	{
-		enabledExtensions += '\t';
-		enabledExtensions += extension;
-		enabledExtensions += '\n';
-	}
-	TPS_CORE_INFO(enabledExtensions);
 	
 	return extensions;
 }
@@ -438,10 +434,28 @@ void Tempus::Renderer::LogExtensionsAndLayers()
 	std::vector<VkExtensionProperties> enumExtensions(extensionCount);
 	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, enumExtensions.data());
 
-	std::cout << "Available instance extensions: \n";
+	auto enabledExtensions = GetRequiredExtensions();
+
+	std::stringstream ss;
+
+	ss << "\nInstance extensions: \n";
 
 	for (const auto& extension : enumExtensions)
-		std::cout << '\t' << extension.extensionName << '\n';
+	{
+		bool isEnabled = false;
+
+		if (std::find_if(enabledExtensions.begin(), enabledExtensions.end(), 
+			[extension](const char* str) 
+			{ 
+				return std::strcmp(str, extension.extensionName) == 0; 
+			}
+			) != enabledExtensions.end())
+		{
+			isEnabled = true;
+		}
+
+		ss << (isEnabled ? (std::string("[ACTIVE]") + COLOR_GREEN) : "\t") << extension.extensionName << COLOR_RESET << '\n';
+	}
 
 	uint32_t layerCount = 0;
 	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -449,13 +463,29 @@ void Tempus::Renderer::LogExtensionsAndLayers()
 	std::vector<VkLayerProperties> layers(layerCount);
 	vkEnumerateInstanceLayerProperties(&layerCount, layers.data());
 
-	std::cout << '\n' << "Available Layers: \n";
+	ss << '\n' << "Validation Layers: \n";
 
-	for (const auto& layer : layers) {
-		std::cout << '\t' << layer.layerName << '\n';
+	for (const auto& layer : layers) 
+	{
+		bool isEnabled = false;
+
+		if(m_bEnableValidationLayers)
+		{
+			if (std::find_if(m_ValidationLayers.begin(), m_ValidationLayers.end(), 
+				[layer](const char* str) 
+				{ 
+					return std::strcmp(str, layer.layerName) == 0; 
+				}
+				) != m_ValidationLayers.end())
+			{
+				isEnabled = true;
+			}
+		}
+
+		ss << (isEnabled ? (std::string("[ACTIVE]") + COLOR_GREEN) : "\t") << layer.layerName << COLOR_RESET << '\n';
 	}
 
-	std::cout << std::endl;
+	TPS_CORE_INFO(ss.str());
 
 }
 

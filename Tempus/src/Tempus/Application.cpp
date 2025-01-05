@@ -107,6 +107,13 @@ namespace Tempus {
 			TPS_CORE_CRITICAL("Failed to load Vulkan library: {0}", SDL_GetError());
 			return false;
 		}
+		
+		uint32_t instanceVersion = 0;
+
+		if (vkEnumerateInstanceVersion(&instanceVersion) == VK_SUCCESS) 
+		{
+			TPS_CORE_INFO("Loaded Vulkan version: {0}.{1}.{2}", VK_VERSION_MAJOR(instanceVersion), VK_VERSION_MINOR(instanceVersion), VK_VERSION_PATCH(instanceVersion));
+		}
 
 		return true;
 	}
