@@ -31,31 +31,32 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 		return false;
 	}
 
-	// Will be replaced with proper Vulkan instantiation
-	//m_Renderer = SDL_CreateRenderer(window->GetNativeWindow(), -1, 0);
-	//SDL_SetRenderDrawColor(m_Renderer, 19, 61, 102, 255);
-	
-	if(!CreateVulkanInstance())
+	if (!CreateVulkanInstance())
 	{
 		return false;
 	}
 
-	if(m_bEnableValidationLayers && !SetupDebugMessenger())
+	if (m_bEnableValidationLayers && !SetupDebugMessenger())
 	{
 		return false;
 	}
 
-	if(!CreateSurface(window))
+	if (!CreateSurface(window))
 	{
 		return false;
 	}
 
-	if(!PickPhysicalDevice())
+	if (!PickPhysicalDevice())
 	{
 		return false;
 	}
 
 	if (!CreateLogicalDevice()) 
+	{
+		return false;
+	}
+
+	if (!CreateSwapChain()) 
 	{
 		return false;
 	}
@@ -239,7 +240,8 @@ bool Tempus::Renderer::CreateLogicalDevice()
 	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 	createInfo.pQueueCreateInfos = queueCreateInfos.data();
 	createInfo.pEnabledFeatures = &deviceFeatures;
-	createInfo.enabledExtensionCount = 0;
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(m_DeviceExtensions.size());
+	createInfo.ppEnabledExtensionNames = m_DeviceExtensions.data();
 
 	// Modern Vulkan makes no distinction between instance and device layers, but it is still good to set these values for compatibility
 	if (m_bEnableValidationLayers) 
@@ -262,6 +264,11 @@ bool Tempus::Renderer::CreateLogicalDevice()
 	vkGetDeviceQueue(m_Device, indices.graphicsFamily.value(), 0, &m_GraphicsQueue);
 	vkGetDeviceQueue(m_Device, indices.presentFamily.value(), 0, &m_PresentQueue);
 	
+	return true;
+}
+
+bool Tempus::Renderer::CreateSwapChain()
+{
 	return true;
 }
 
@@ -371,11 +378,6 @@ bool Tempus::Renderer::CheckDeviceExtensionSupport(VkPhysicalDevice device)
 
 	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
 	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
-
-	std::cout << "Available device extensions: \n";
-
-	for (const auto& extension : availableExtensions)
-		std::cout << '\t' << extension.extensionName << '\n';
 
 	std::set<std::string> requiredExtensions(m_DeviceExtensions.begin(), m_DeviceExtensions.end());
 

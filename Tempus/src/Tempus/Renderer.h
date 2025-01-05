@@ -48,6 +48,7 @@ namespace Tempus {
 		bool SetupDebugMessenger();
 		bool PickPhysicalDevice();
 		bool CreateLogicalDevice();
+		bool CreateSwapChain();
 		bool CreateSurface(class Window* window);
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 		bool IsDeviceSuitable(VkPhysicalDevice device);
