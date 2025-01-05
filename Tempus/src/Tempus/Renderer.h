@@ -52,6 +52,7 @@ namespace Tempus {
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 		bool IsDeviceSuitable(VkPhysicalDevice device);
 		bool CheckValidationLayerSupport();
+		bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
 		std::vector<const char*> GetRequiredExtensions();
 		void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 		void LogExtensionsAndLayers();
@@ -76,24 +77,47 @@ namespace Tempus {
 			DESIRED_VK_LAYER
 		};
 
+		// Required device extensions
+		const std::vector<const char*> m_DeviceExtensions =
+		{
+			VK_KHR_SWAPCHAIN_EXTENSION_NAME
+		};
+
 #ifdef TPS_DEBUG
 		const bool m_bEnableValidationLayers = true;
 #else
 		const bool m_bEnableValidationLayers = false;
 #endif
 
-		VkDebugUtilsMessengerEXT m_DebugMessenger;
+		VkDebugUtilsMessengerEXT m_DebugMessenger = VK_NULL_HANDLE;
+
+	private:
 
 		// Callback function for validation layer debug messages
 		static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback( VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-		VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-		void* pUserData) 
+		VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) 
 		{
-			TPS_CORE_INFO("Validation Layer: ", pCallbackData->pMessage);
+
+			switch (messageSeverity) 
+			{
+			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+				//TPS_CORE_INFO("Validation Layer: {0}", pCallbackData->pMessage);
+				break;
+			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+				TPS_CORE_INFO("Validation Layer: {0}", pCallbackData->pMessage);
+				break;
+			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+				TPS_CORE_WARN("Validation Layer: {0}", pCallbackData->pMessage);
+				break;
+			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+				TPS_CORE_ERROR("Validation Layer: {0}", pCallbackData->pMessage);
+				break;
+			}
 
 			return VK_FALSE;
 		}
 
+		// These functions are apart of extensions and therefore must be manually loaded
 		VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
 		 const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) 
 		{
@@ -105,6 +129,16 @@ namespace Tempus {
 			else 
 			{
 				return VK_ERROR_EXTENSION_NOT_PRESENT;
+			}
+		}
+
+		void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) 
+		{
+			auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+
+			if (func != nullptr) 
+			{
+				func(instance, debugMessenger, pAllocator);
 			}
 		}
 

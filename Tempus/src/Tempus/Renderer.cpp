@@ -6,6 +6,7 @@
 #include "Log.h"
 #include "sdl/SDL_vulkan.h"
 #include <iostream>
+#include <set>
 
 Tempus::Renderer::Renderer()
 {
@@ -106,10 +107,22 @@ bool Tempus::Renderer::CreateVulkanInstance()
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	createInfo.ppEnabledExtensionNames = extensions.data();
 
+
+	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 	if (m_bEnableValidationLayers) 
 	{
 		createInfo.enabledLayerCount = static_cast<uint32_t>(m_ValidationLayers.size());
 		createInfo.ppEnabledLayerNames = m_ValidationLayers.data();
+
+		// This must be set in order to have debug callback support for the creation and destruction of instance
+		PopulateDebugMessengerCreateInfo(debugCreateInfo);
+		createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+
+	}
+	else 
+	{
+		createInfo.enabledLayerCount = 0;
+		createInfo.pNext = nullptr;
 	}
 
 	// Creating instance
@@ -136,11 +149,7 @@ bool Tempus::Renderer::SetupDebugMessenger()
 {
 
 	VkDebugUtilsMessengerCreateInfoEXT createInfo{};
-	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-	createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-	createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-	createInfo.pfnUserCallback = DebugCallback;
-	createInfo.pUserData = nullptr;
+	PopulateDebugMessengerCreateInfo(createInfo);
 
 	if (CreateDebugUtilsMessengerEXT(m_VkInstance, &createInfo, nullptr, &m_DebugMessenger) != VK_SUCCESS) 
 	{
@@ -205,21 +214,30 @@ bool Tempus::Renderer::CreateLogicalDevice()
 
 	QueueFamilyIndices indices = FindQueueFamilies(m_PhysicalDevice);
 
+	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+	// Set of all unique queue families
+	std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+
 	float queuePriority = 1.0f;
 
-	VkDeviceQueueCreateInfo queueCreateInfo{};
-	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
-	queueCreateInfo.queueCount = 1;
-	// Currently only creating 1 queue, however the priority must still be specified
-	queueCreateInfo.pQueuePriorities = &queuePriority;
+	for (uint32_t queueFamily : uniqueQueueFamilies) 
+	{
+		VkDeviceQueueCreateInfo queueCreateInfo{};
+		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		queueCreateInfo.queueFamilyIndex = queueFamily;
+		queueCreateInfo.queueCount = 1;
+		// Currently only creating 1 queue, however the priority must still be specified
+		queueCreateInfo.pQueuePriorities = &queuePriority;
+		// Pushing into list of queue create infos
+		queueCreateInfos.push_back(queueCreateInfo);
+	}
 
 	VkPhysicalDeviceFeatures deviceFeatures{};
-
+	
 	VkDeviceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	createInfo.pQueueCreateInfos = &queueCreateInfo;
-	createInfo.queueCreateInfoCount = 1;
+	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+	createInfo.pQueueCreateInfos = queueCreateInfos.data();
 	createInfo.pEnabledFeatures = &deviceFeatures;
 	createInfo.enabledExtensionCount = 0;
 
@@ -242,6 +260,7 @@ bool Tempus::Renderer::CreateLogicalDevice()
 
 	// Retrieve reference to devices graphics queue, index 0 because we only have 1 queue
 	vkGetDeviceQueue(m_Device, indices.graphicsFamily.value(), 0, &m_GraphicsQueue);
+	vkGetDeviceQueue(m_Device, indices.presentFamily.value(), 0, &m_PresentQueue);
 	
 	return true;
 }
@@ -301,10 +320,13 @@ Tempus::Renderer::QueueFamilyIndices Tempus::Renderer::FindQueueFamilies(VkPhysi
 
 bool Tempus::Renderer::IsDeviceSuitable(VkPhysicalDevice device)
 {
+	// Check if physical device supports desired queue families
 	QueueFamilyIndices indices = FindQueueFamilies(device);
+	// Check if physical device supports desired extensions
+	bool extensionsSupported = CheckDeviceExtensionSupport(device);
 
 	// If this optional variable has a value then the device supports graphics family queue
-	return indices.IsComplete();
+	return indices.IsComplete() && extensionsSupported;
 
 }
 
@@ -342,6 +364,29 @@ bool Tempus::Renderer::CheckValidationLayerSupport()
 	return true;
 }
 
+bool Tempus::Renderer::CheckDeviceExtensionSupport(VkPhysicalDevice device)
+{
+	uint32_t extensionCount;
+	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+	std::cout << "Available device extensions: \n";
+
+	for (const auto& extension : availableExtensions)
+		std::cout << '\t' << extension.extensionName << '\n';
+
+	std::set<std::string> requiredExtensions(m_DeviceExtensions.begin(), m_DeviceExtensions.end());
+
+	for (const auto& extension : availableExtensions) 
+	{
+		requiredExtensions.erase(extension.extensionName);
+	}
+
+	return requiredExtensions.empty();
+}
+
 std::vector<const char*> Tempus::Renderer::GetRequiredExtensions()
 {
 	uint32_t extensionCount = 0;
@@ -374,8 +419,12 @@ std::vector<const char*> Tempus::Renderer::GetRequiredExtensions()
 
 void Tempus::Renderer::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
 {
-	createInfo = {};
-	//createInfo.sType = 
+	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+	createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+	createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+	createInfo.pfnUserCallback = DebugCallback;
+	// Can be used to pass application pointer
+	createInfo.pUserData = nullptr;
 }
 
 void Tempus::Renderer::LogExtensionsAndLayers()
@@ -391,11 +440,6 @@ void Tempus::Renderer::LogExtensionsAndLayers()
 
 	for (const auto& extension : enumExtensions)
 		std::cout << '\t' << extension.extensionName << '\n';
-
-	//std::cout << '\n' << "Enabled extensions: \n";
-
-	//for (const auto& extension : extensions)
-		//std::cout << '\t' << extension << '\n';
 
 	uint32_t layerCount = 0;
 	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -415,6 +459,12 @@ void Tempus::Renderer::LogExtensionsAndLayers()
 
 void Tempus::Renderer::Cleanup()
 {
+
+	if (m_bEnableValidationLayers) 
+	{
+		DestroyDebugUtilsMessengerEXT(m_VkInstance, m_DebugMessenger, nullptr);
+	}
+
 	vkDestroyDevice(m_Device, nullptr);
 	vkDestroySurfaceKHR(m_VkInstance, m_VkSurface, nullptr);
 	vkDestroyInstance(m_VkInstance, nullptr);
