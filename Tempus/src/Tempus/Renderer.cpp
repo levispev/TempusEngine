@@ -7,6 +7,7 @@
 #include "sdl/SDL_vulkan.h"
 #include <iostream>
 #include <set>
+#include <sstream>
 
 Tempus::Renderer::Renderer()
 {
@@ -59,18 +60,6 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 	if (!CreateSwapChain()) 
 	{
 		return false;
-	}
-
-	uint32_t extensionCount = 0;
-	vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionCount, nullptr);
-
-	std::vector<VkExtensionProperties> extensions(extensionCount);
-	vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionCount,
-	extensions.data());
-
-	std::cout << "Available Device Extensions:\n";
-	for (const auto& extension : extensions) {
-		std::cout << "\t" << extension.extensionName << "\n";
 	}
 
 	return true;
@@ -454,7 +443,7 @@ void Tempus::Renderer::LogExtensionsAndLayers()
 			isEnabled = true;
 		}
 
-		ss << (isEnabled ? (std::string("[ACTIVE]") + COLOR_GREEN) : "\t") << extension.extensionName << COLOR_RESET << '\n';
+		ss << (isEnabled ? (COLOR_YELLOW + std::string("[ACTIVE]") + COLOR_GREEN) : "\t") << extension.extensionName << COLOR_RESET << '\n';
 	}
 
 	uint32_t layerCount = 0;
@@ -482,7 +471,7 @@ void Tempus::Renderer::LogExtensionsAndLayers()
 			}
 		}
 
-		ss << (isEnabled ? (std::string("[ACTIVE]") + COLOR_GREEN) : "\t") << layer.layerName << COLOR_RESET << '\n';
+		ss << (isEnabled ? (COLOR_YELLOW + std::string("[ACTIVE]") + COLOR_GREEN) : "\t") << layer.layerName << COLOR_RESET << '\n';
 	}
 
 	TPS_CORE_INFO(ss.str());

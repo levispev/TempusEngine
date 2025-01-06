@@ -10,6 +10,7 @@
 #include <optional>
 #include "Log.h"
 
+
 namespace Tempus {
 
 	class TEMPUS_API Renderer {
@@ -113,9 +114,7 @@ namespace Tempus {
 			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
 				TPS_CORE_ERROR("Validation Layer: {0}", pCallbackData->pMessage);
 				break;
-
 			default:
-
 				break;
 			}
 
