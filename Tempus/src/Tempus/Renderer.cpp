@@ -8,6 +8,9 @@
 #include <iostream>
 #include <set>
 #include <sstream>
+#include <cstdint> 
+#include <limits> 
+#include <algorithm> 
 
 Tempus::Renderer::Renderer()
 {
@@ -27,7 +30,9 @@ void Tempus::Renderer::Update()
 bool Tempus::Renderer::Init(Tempus::Window* window)
 {
 
-	if (!window) 
+	m_Window = window;
+
+	if (!m_Window) 
 	{
 		return false;
 	}
@@ -42,7 +47,7 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 		return false;
 	}
 
-	if (!CreateSurface(window))
+	if (!CreateSurface(m_Window))
 	{
 		return false;
 	}
@@ -264,6 +269,69 @@ bool Tempus::Renderer::CreateLogicalDevice()
 
 bool Tempus::Renderer::CreateSwapChain()
 {
+	SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(m_PhysicalDevice);
+
+    VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
+    VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
+    VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities);
+
+	// Amount of images in the swapchain (min + 1)
+	uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+
+	// Ensure value doesn't exceed maximum. maxImageCount = 0 denotes there is no maximum
+	if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) 
+	{
+    	imageCount = swapChainSupport.capabilities.maxImageCount;
+	}
+
+
+	VkSwapchainCreateInfoKHR createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	createInfo.surface = m_VkSurface;
+	createInfo.minImageCount = imageCount;
+	createInfo.imageFormat = surfaceFormat.format;
+	createInfo.imageColorSpace = surfaceFormat.colorSpace;
+	createInfo.imageExtent = extent;
+	// Specifies amount of layers each image consists of. Always 1 for traditional rendering
+	createInfo.imageArrayLayers = 1;
+	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	// No transform modifications (eg. horizonal flip)
+	createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+	// Ignoring alpha channel
+	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	createInfo.presentMode = presentMode;
+	// Ignore the pixels that are occluded. Best performance
+	// Would probably need to disable this if doing some sort of screen space rendering
+	createInfo.clipped = VK_TRUE;
+	// When a swap chain is invalidated and a new one is created, the old one must be provided
+	createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+	QueueFamilyIndices indices = FindQueueFamilies(m_PhysicalDevice);
+	uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+
+	// If our graphics queue and presentation queue reside in different queue families, we must specify
+	// how the swap chain will handle these images
+	if (indices.graphicsFamily != indices.presentFamily) 
+	{
+		// Images can be shared between queue families without explicit ownership transferrence
+		createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		createInfo.queueFamilyIndexCount = 2;
+		createInfo.pQueueFamilyIndices = queueFamilyIndices;
+	} 
+	else 
+	{
+		// Explicit ownership by a queue family, best performance
+		createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		createInfo.queueFamilyIndexCount = 0; // Optional
+		createInfo.pQueueFamilyIndices = nullptr; // Optional
+	}
+
+	if (vkCreateSwapchainKHR(m_Device, &createInfo, nullptr, &m_SwapChain) != VK_SUCCESS) 
+	{
+		TPS_CORE_CRITICAL("Failed to create swap chain!");
+		return false;
+	}
+
 	return true;
 }
 
@@ -326,7 +394,7 @@ Tempus::Renderer::SwapChainSupportDetails Tempus::Renderer::QuerySwapChainSuppor
 
 	SwapChainSupportDetails details;
 
-	// Query capabilities
+	// Query surface capabilities
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, m_VkSurface, &details.capabilities);
 
 	// Query supported formats
@@ -350,6 +418,63 @@ Tempus::Renderer::SwapChainSupportDetails Tempus::Renderer::QuerySwapChainSuppor
 	}
 
     return details;
+}
+
+VkPresentModeKHR Tempus::Renderer::ChooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes)
+{
+    for (const auto& availablePresentMode : availablePresentModes) 
+	{
+		// Mailbox is desired if available
+        if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) 
+		{
+            return availablePresentMode;
+        }
+    }
+
+	// This present mode is guaranteed to exist
+    return VK_PRESENT_MODE_FIFO_KHR;
+}
+
+VkSurfaceFormatKHR Tempus::Renderer::ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats)
+{
+	for (const auto& availableFormat : availableFormats) 
+	{
+		// BGRA 32 bits per pixel
+		// SRGB
+		if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) 
+		{
+			return availableFormat;
+		}
+	}
+
+    return availableFormats[0];
+}
+
+VkExtent2D Tempus::Renderer::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities)
+{
+	// Special value check
+	if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) 
+	{
+		return capabilities.currentExtent;
+	} 
+	else 
+	{
+		int width, height;
+		// The drawable size (pixels) may differ from the window size (screen coordinates) on high DPI displays (Mac Retina)
+		// Vulkan wants exact pixel size, not screen coordinates
+		SDL_Vulkan_GetDrawableSize(m_Window->GetNativeWindow(), &width, &height);
+
+		VkExtent2D actualExtent = 
+		{
+			static_cast<uint32_t>(width),
+			static_cast<uint32_t>(height)
+		};
+
+		actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+		actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
+
+		return actualExtent;	
+	}
 }
 
 bool Tempus::Renderer::IsDeviceSuitable(VkPhysicalDevice device)
@@ -527,6 +652,7 @@ void Tempus::Renderer::Cleanup()
 		DestroyDebugUtilsMessengerEXT(m_VkInstance, m_DebugMessenger, nullptr);
 	}
 
+	vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);
 	vkDestroyDevice(m_Device, nullptr);
 	vkDestroySurfaceKHR(m_VkInstance, m_VkSurface, nullptr);
 	vkDestroyInstance(m_VkInstance, nullptr);

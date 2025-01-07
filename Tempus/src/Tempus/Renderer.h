@@ -10,6 +10,11 @@
 #include <optional>
 #include "Log.h"
 
+#ifdef TPS_PLATFORM_MAC
+#include "vulkan/vulkan_macos.h"
+#include "vulkan/vulkan_metal.h"
+#endif
+
 
 namespace Tempus {
 
@@ -48,6 +53,7 @@ namespace Tempus {
 		struct SwapChainSupportDetails 
 		{
 			VkSurfaceCapabilitiesKHR capabilities;
+			// Colour format and bits per pixel
 			std::vector<VkSurfaceFormatKHR> formats;
 			std::vector<VkPresentModeKHR> presentModes;
 		};
@@ -60,13 +66,18 @@ namespace Tempus {
 		bool CreateSwapChain();
 
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
-		SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
 		bool IsDeviceSuitable(VkPhysicalDevice device);
 		bool CheckValidationLayerSupport();
 		bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
 		std::vector<const char*> GetRequiredExtensions();
 		void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
-		
+
+		// Swap chain support checks
+		SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
+		VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+		VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+		VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+
 		void LogExtensionsAndLayers();
 
 		void Cleanup();
@@ -80,8 +91,10 @@ namespace Tempus {
 		VkSurfaceKHR m_VkSurface = VK_NULL_HANDLE;
 		VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
 		VkDevice m_Device = VK_NULL_HANDLE;
+		VkSwapchainKHR m_SwapChain = VK_NULL_HANDLE;
 		VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
 		VkQueue m_PresentQueue = VK_NULL_HANDLE;
+		Window* m_Window;
 
 		// Standard validation layer
 		const std::vector<const char*> m_ValidationLayers = 

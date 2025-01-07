@@ -5,7 +5,7 @@
   <h3 align="center" style="font-size:6vw; font-weight: bold;">Tempus</h3>
 
   <p align="center">
-    A cross-platform 3D Vulkan engine written entirely in C++
+    A cross-platform 3D Vulkan game engine written entirely in C++
     <br />
     Created by Levi Spevakow
     <br />
