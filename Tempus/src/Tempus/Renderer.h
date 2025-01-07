@@ -45,18 +45,28 @@ namespace Tempus {
 			}
 		};
 
+		struct SwapChainSupportDetails 
+		{
+			VkSurfaceCapabilitiesKHR capabilities;
+			std::vector<VkSurfaceFormatKHR> formats;
+			std::vector<VkPresentModeKHR> presentModes;
+		};
+
 		bool CreateVulkanInstance();
 		bool SetupDebugMessenger();
+		bool CreateSurface(class Window* window);
 		bool PickPhysicalDevice();
 		bool CreateLogicalDevice();
 		bool CreateSwapChain();
-		bool CreateSurface(class Window* window);
+
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
+		SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
 		bool IsDeviceSuitable(VkPhysicalDevice device);
 		bool CheckValidationLayerSupport();
 		bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
 		std::vector<const char*> GetRequiredExtensions();
 		void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+		
 		void LogExtensionsAndLayers();
 
 		void Cleanup();

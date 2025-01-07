@@ -237,7 +237,8 @@ bool Tempus::Renderer::CreateLogicalDevice()
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(m_DeviceExtensions.size());
 	createInfo.ppEnabledExtensionNames = m_DeviceExtensions.data();
 
-	// Modern Vulkan makes no distinction between instance and device layers, but it is still good to set these values for compatibility
+	// Modern Vulkan makes no distinction between instance and device layers and therefore ignores this data,
+	// however it is still good to set these values for compatibility
 	if (m_bEnableValidationLayers) 
 	{
 		createInfo.enabledLayerCount = static_cast<uint32_t>(m_ValidationLayers.size());
@@ -293,13 +294,14 @@ Tempus::Renderer::QueueFamilyIndices Tempus::Renderer::FindQueueFamilies(VkPhysi
 	int i = 0;
 	for (const auto& queueFamily : queueFamilies)
 	{
-		// Checking if device supports graphics queue
+		// Checking if queue family supports graphics queue
 		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
 		{
 			indices.graphicsFamily = i;
 		}
 
-		// Check if device supports present queue
+		// Check if queue family supports present queue
+		// These capabilities may reside in the same queue family
 		VkBool32 presentSupport = false;
 		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, m_VkSurface, &presentSupport);
 
@@ -319,6 +321,37 @@ Tempus::Renderer::QueueFamilyIndices Tempus::Renderer::FindQueueFamilies(VkPhysi
 	return indices;
 }
 
+Tempus::Renderer::SwapChainSupportDetails Tempus::Renderer::QuerySwapChainSupport(VkPhysicalDevice device)
+{
+
+	SwapChainSupportDetails details;
+
+	// Query capabilities
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, m_VkSurface, &details.capabilities);
+
+	// Query supported formats
+	uint32_t formatCount;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_VkSurface, &formatCount, nullptr);
+
+	if (formatCount != 0) 
+	{
+		details.formats.resize(formatCount);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_VkSurface, &formatCount, details.formats.data());
+	}
+
+	// Query supported presentation modes
+	uint32_t presentModeCount;
+	vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_VkSurface, &presentModeCount, nullptr);
+
+	if (presentModeCount != 0) 
+	{
+		details.presentModes.resize(presentModeCount);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_VkSurface, &presentModeCount, details.presentModes.data());
+	}
+
+    return details;
+}
+
 bool Tempus::Renderer::IsDeviceSuitable(VkPhysicalDevice device)
 {
 	// Check if physical device supports desired queue families
@@ -326,8 +359,16 @@ bool Tempus::Renderer::IsDeviceSuitable(VkPhysicalDevice device)
 	// Check if physical device supports desired extensions
 	bool extensionsSupported = CheckDeviceExtensionSupport(device);
 
-	// If this optional variable has a value then the device supports graphics family queue
-	return indices.IsComplete() && extensionsSupported;
+	// Check if devices swap chain has adequate support
+	bool swapChainAdequate = false;
+	// Only query if extension support exists
+	if (extensionsSupported) 
+	{
+		SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(device);
+		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
+	}
+
+	return indices.IsComplete() && extensionsSupported && swapChainAdequate;
 
 }
 
