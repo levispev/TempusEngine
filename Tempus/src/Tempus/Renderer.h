@@ -79,22 +79,26 @@ namespace Tempus {
 		VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
 		void LogExtensionsAndLayers();
+		void LogDeviceInfo(VkPhysicalDevice device);
 
 		void Cleanup();
 
 	private:
 
-		// Will be replaced with proper Vulkan instantiation
-		SDL_Renderer* m_Renderer = nullptr;
+		Window* m_Window = nullptr;
 
 		VkInstance m_VkInstance = VK_NULL_HANDLE;
 		VkSurfaceKHR m_VkSurface = VK_NULL_HANDLE;
 		VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
 		VkDevice m_Device = VK_NULL_HANDLE;
+
 		VkSwapchainKHR m_SwapChain = VK_NULL_HANDLE;
+		std::vector<VkImage> m_SwapChainImages;
+		VkFormat m_SwapChainImageFormat;
+		VkExtent2D m_SwapChainExtent;
+
 		VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
 		VkQueue m_PresentQueue = VK_NULL_HANDLE;
-		Window* m_Window;
 
 		// Standard validation layer
 		const std::vector<const char*> m_ValidationLayers = 

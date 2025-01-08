@@ -8,8 +8,6 @@
 #include <iostream>
 #include <set>
 #include <sstream>
-#include <cstdint> 
-#include <limits> 
 #include <algorithm> 
 
 Tempus::Renderer::Renderer()
@@ -23,8 +21,7 @@ Tempus::Renderer::~Renderer()
 
 void Tempus::Renderer::Update()
 {
-	SDL_RenderClear(m_Renderer);
-	SDL_RenderPresent(m_Renderer);
+
 }
 
 bool Tempus::Renderer::Init(Tempus::Window* window)
@@ -73,17 +70,19 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 
 int Tempus::Renderer::RenderClear()
 {
-	return SDL_RenderClear(m_Renderer);
+	return 0;
+	//return SDL_RenderClear(m_Renderer);
 }
 
 void Tempus::Renderer::RenderPresent()
 {
-	SDL_RenderPresent(m_Renderer);
+	//SDL_RenderPresent(m_Renderer);
 }
 
 int Tempus::Renderer::SetRenderDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 {
-	return SDL_SetRenderDrawColor(m_Renderer, r, g, b, a);
+	return 0;
+	//return SDL_SetRenderDrawColor(m_Renderer, r, g, b, a);
 }
 
 bool Tempus::Renderer::CreateVulkanInstance()
@@ -192,19 +191,7 @@ bool Tempus::Renderer::PickPhysicalDevice()
 		return false;
 	}
 
-	// Logging of device information
-	VkPhysicalDeviceProperties deviceProperties;
-	VkPhysicalDeviceFeatures deviceFeatures;
-	vkGetPhysicalDeviceProperties(m_PhysicalDevice, &deviceProperties);
-	vkGetPhysicalDeviceFeatures(m_PhysicalDevice, &deviceFeatures);
-
-	std::cout << "Device Info:" << '\n';
-	std::cout << '\t' << "Name: " << deviceProperties.deviceName << '\n';
-	std::cout << '\t' << "ID: " << deviceProperties.deviceID << '\n';
-	std::cout << '\t' << "Type: " << deviceProperties.deviceType << '\n';
-	std::cout << '\t' << "Driver Version: " << deviceProperties.driverVersion << '\n';
-	std::cout << '\t' << "API Version: " << deviceProperties.apiVersion << '\n';
-	std::cout << '\t' << "Vendor ID: " << deviceProperties.vendorID << '\n';
+	LogDeviceInfo(m_PhysicalDevice);
 
 	return true;
 }
@@ -300,11 +287,12 @@ bool Tempus::Renderer::CreateSwapChain()
 	// Ignoring alpha channel
 	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 	createInfo.presentMode = presentMode;
-	// Ignore the pixels that are occluded. Best performance
+	// Ignore the pixels that are occluded. Best performance.
 	// Would probably need to disable this if doing some sort of screen space rendering
 	createInfo.clipped = VK_TRUE;
-	// When a swap chain is invalidated and a new one is created, the old one must be provided
+	// When a swap chain is invalidated or destroyed and a new one is created, the old one must be provided
 	createInfo.oldSwapchain = VK_NULL_HANDLE;
+
 
 	QueueFamilyIndices indices = FindQueueFamilies(m_PhysicalDevice);
 	uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
@@ -331,6 +319,15 @@ bool Tempus::Renderer::CreateSwapChain()
 		TPS_CORE_CRITICAL("Failed to create swap chain!");
 		return false;
 	}
+
+
+	// Querying for swap chain image count. Only minimum was specified in creation info, actual number may be higher
+	vkGetSwapchainImagesKHR(m_Device, m_SwapChain, &imageCount, nullptr);
+	m_SwapChainImages.resize(imageCount);
+	vkGetSwapchainImagesKHR(m_Device, m_SwapChain, &imageCount, m_SwapChainImages.data());
+	
+	m_SwapChainImageFormat = surfaceFormat.format;
+	m_SwapChainExtent = extent;
 
 	return true;
 }
@@ -453,7 +450,7 @@ VkSurfaceFormatKHR Tempus::Renderer::ChooseSwapSurfaceFormat(const std::vector<V
 VkExtent2D Tempus::Renderer::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities)
 {
 	// Special value check
-	if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) 
+	if (capabilities.currentExtent.width != (std::numeric_limits<uint32_t>::max)()) 
 	{
 		return capabilities.currentExtent;
 	} 
@@ -642,6 +639,27 @@ void Tempus::Renderer::LogExtensionsAndLayers()
 
 	TPS_CORE_INFO(ss.str());
 
+}
+
+void Tempus::Renderer::LogDeviceInfo(VkPhysicalDevice device)
+{
+	// Logging of device information
+	VkPhysicalDeviceProperties deviceProperties;
+	VkPhysicalDeviceFeatures deviceFeatures;
+	vkGetPhysicalDeviceProperties(device, &deviceProperties);
+	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+	std::stringstream ss;
+
+	ss << "\nDevice Info:" << '\n';
+	ss << '\t' << "Name: " << deviceProperties.deviceName << '\n';
+	ss << '\t' << "ID: " << deviceProperties.deviceID << '\n';
+	ss << '\t' << "Type: " << deviceProperties.deviceType << '\n';
+	ss << '\t' << "Driver Version: " << deviceProperties.driverVersion << '\n';
+	ss << '\t' << "API Version: " << deviceProperties.apiVersion << '\n';
+	ss << '\t' << "Vendor ID: " << deviceProperties.vendorID << '\n';
+
+	TPS_CORE_INFO(ss.str());
 }
 
 void Tempus::Renderer::Cleanup()
