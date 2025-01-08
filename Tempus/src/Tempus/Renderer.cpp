@@ -64,6 +64,11 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 		return false;
 	}
 
+	if (!CreateImageViews()) 
+	{
+		return false;
+	}
+
 	return true;
 
 }
@@ -323,11 +328,47 @@ bool Tempus::Renderer::CreateSwapChain()
 
 	// Querying for swap chain image count. Only minimum was specified in creation info, actual number may be higher
 	vkGetSwapchainImagesKHR(m_Device, m_SwapChain, &imageCount, nullptr);
+	// These images are created by the swapchain and do not need to be cleaned up
 	m_SwapChainImages.resize(imageCount);
 	vkGetSwapchainImagesKHR(m_Device, m_SwapChain, &imageCount, m_SwapChainImages.data());
 	
 	m_SwapChainImageFormat = surfaceFormat.format;
 	m_SwapChainExtent = extent;
+
+	return true;
+}
+
+bool Tempus::Renderer::CreateImageViews()
+{
+
+	m_SwapChainImageViews.resize(m_SwapChainImages.size());
+
+	for (size_t i = 0; i < m_SwapChainImages.size(); i++) 
+	{
+		VkImageViewCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		createInfo.image = m_SwapChainImages[i];
+		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		createInfo.format = m_SwapChainImageFormat;
+		
+		createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		createInfo.subresourceRange.baseMipLevel = 0;
+		createInfo.subresourceRange.levelCount = 1;
+		createInfo.subresourceRange.baseArrayLayer = 0;
+		createInfo.subresourceRange.layerCount = 1;
+
+		if (vkCreateImageView(m_Device, &createInfo, nullptr, &m_SwapChainImageViews[i]) != VK_SUCCESS) 
+		{
+			TPS_CORE_CRITICAL("Failed to create image view!");
+			return false;
+		}
+
+	}
 
 	return true;
 }
@@ -668,6 +709,11 @@ void Tempus::Renderer::Cleanup()
 	if (m_bEnableValidationLayers) 
 	{
 		DestroyDebugUtilsMessengerEXT(m_VkInstance, m_DebugMessenger, nullptr);
+	}
+
+	for (auto imageView : m_SwapChainImageViews) 
+	{
+		vkDestroyImageView(m_Device, imageView, nullptr);
 	}
 
 	vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);

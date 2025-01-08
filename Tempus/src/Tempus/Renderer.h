@@ -20,7 +20,6 @@ namespace Tempus {
 
 	class TEMPUS_API Renderer {
 
-
 	public:
 
 		Renderer();
@@ -64,6 +63,7 @@ namespace Tempus {
 		bool PickPhysicalDevice();
 		bool CreateLogicalDevice();
 		bool CreateSwapChain();
+		bool CreateImageViews();
 
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 		bool IsDeviceSuitable(VkPhysicalDevice device);
@@ -94,6 +94,7 @@ namespace Tempus {
 
 		VkSwapchainKHR m_SwapChain = VK_NULL_HANDLE;
 		std::vector<VkImage> m_SwapChainImages;
+		std::vector<VkImageView> m_SwapChainImageViews;
 		VkFormat m_SwapChainImageFormat;
 		VkExtent2D m_SwapChainExtent;
 
