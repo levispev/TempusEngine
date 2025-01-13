@@ -69,6 +69,11 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 		return false;
 	}
 
+	if (!CreateGraphicsPipeline())
+	{
+		return false;
+	}
+
 	return true;
 
 }
@@ -369,6 +374,12 @@ bool Tempus::Renderer::CreateImageViews()
 		}
 
 	}
+
+	return true;
+}
+
+bool Tempus::Renderer::CreateGraphicsPipeline()
+{
 
 	return true;
 }

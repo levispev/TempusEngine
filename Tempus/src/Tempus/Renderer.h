@@ -64,6 +64,7 @@ namespace Tempus {
 		bool CreateLogicalDevice();
 		bool CreateSwapChain();
 		bool CreateImageViews();
+		bool CreateGraphicsPipeline();
 
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 		bool IsDeviceSuitable(VkPhysicalDevice device);
