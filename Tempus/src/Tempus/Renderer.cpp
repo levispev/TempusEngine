@@ -1,14 +1,16 @@
-// Copyright Levi Spevakow (C) 2024
+// Copyright Levi Spevakow (C) 2025
 
 #include "Renderer.h"
 
 #include "Window.h"
 #include "Log.h"
+#include "Utils/FileUtils.h"
 #include "sdl/SDL_vulkan.h"
 #include <iostream>
 #include <set>
 #include <sstream>
 #include <algorithm> 
+
 
 Tempus::Renderer::Renderer()
 {
@@ -380,7 +382,9 @@ bool Tempus::Renderer::CreateImageViews()
 
 bool Tempus::Renderer::CreateGraphicsPipeline()
 {
-
+	// @TODO Make shader paths relative to the outputted executable, move them with post build command
+	auto vertShaderCode = FileUtils::ReadFile("bin/shaders/vert.spv");
+    auto fragShaderCode = FileUtils::ReadFile("bin/shaders/frag.spv");
 	return true;
 }
 

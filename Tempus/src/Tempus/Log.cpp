@@ -1,4 +1,4 @@
-// Copyright Levi Spevakow (C) 2024
+// Copyright Levi Spevakow (C) 2025
 
 #include "Log.h"
 #include "spdlog/sinks/stdout_color_sinks.h"

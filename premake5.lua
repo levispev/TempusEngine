@@ -29,7 +29,8 @@ project "Tempus"
     {
         path.join(os.getenv("VULKAN_SDK"), "Include"),
         "%{prj.name}/vendor/include",
-        "%{prj.name}/src/"
+        "%{prj.name}/src/",
+        "%{prj.name}/src/Tempus"
     }
 
     libdirs
@@ -39,7 +40,7 @@ project "Tempus"
     }
 
     filter "system:windows"
-        cppdialect "C++17"
+        cppdialect "C++20"
         staticruntime "On"
         systemversion "latest"
 
@@ -69,7 +70,7 @@ project "Tempus"
         }
 
     filter "system:macosx"
-        cppdialect "C++17"
+        cppdialect "C++20"
         staticruntime "On"
         systemversion "14"
         toolset "clang"
@@ -154,7 +155,7 @@ project "Sandbox"
     }
 
     filter "system:windows"
-        cppdialect "C++17"
+        cppdialect "C++20"
         staticruntime "On"
         systemversion "latest"
 
@@ -175,7 +176,7 @@ project "Sandbox"
 
     
     filter "system:macosx"
-        cppdialect "C++17"
+        cppdialect "C++20"
         staticruntime "On"
         systemversion "14"
         toolset "clang"

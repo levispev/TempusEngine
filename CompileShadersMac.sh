@@ -3,7 +3,9 @@ if [ -z "$VULKAN_SDK" ]; then
     exit 1
 fi
 
-"$VULKAN_SDK/bin/glslc" ./Tempus/res/shaders/shader.vert -o ./Tempus/res/shaders/vert.spv
-"$VULKAN_SDK/bin/glslc" ./Tempus/res/shaders/shader.frag -o ./Tempus/res/shaders/frag.spv
+mkdir -p ./bin/shaders
+
+"$VULKAN_SDK/bin/glslc" ./Tempus/res/shaders/shader.vert -o ./bin/shaders/vert.spv
+"$VULKAN_SDK/bin/glslc" ./Tempus/res/shaders/shader.frag -o ./bin/shaders/frag.spv
 
 echo "Successfully compiled shaders."
