@@ -65,6 +65,7 @@ namespace Tempus {
 		bool CreateSwapChain();
 		bool CreateImageViews();
 		bool CreateGraphicsPipeline();
+		VkShaderModule CreateShaderModule(const std::vector<char>& code);
 
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 		bool IsDeviceSuitable(VkPhysicalDevice device);

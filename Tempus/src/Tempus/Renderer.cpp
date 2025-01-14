@@ -383,9 +383,90 @@ bool Tempus::Renderer::CreateImageViews()
 bool Tempus::Renderer::CreateGraphicsPipeline()
 {
 	// @TODO Make shader paths relative to the outputted executable, move them with post build command
-	auto vertShaderCode = FileUtils::ReadFile("bin/shaders/vert.spv");
-    auto fragShaderCode = FileUtils::ReadFile("bin/shaders/frag.spv");
+	auto vertShaderCode = FileUtils::ReadFile("../bin/shaders/vert.spv");
+    auto fragShaderCode = FileUtils::ReadFile("../bin/shaders/frag.spv");
+
+	VkShaderModule vertShaderModule = CreateShaderModule(vertShaderCode);
+	VkShaderModule fragShaderModule = CreateShaderModule(fragShaderCode);
+
+	VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+	vertShaderStageInfo.module = vertShaderModule;
+	vertShaderStageInfo.pName = "main";
+
+	VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	fragShaderStageInfo.module = fragShaderModule;
+	fragShaderStageInfo.pName = "main";
+
+	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
+
+
+	// Currently hard coding vertex data in shader
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	vertexInputInfo.vertexBindingDescriptionCount = 0;
+	vertexInputInfo.pVertexBindingDescriptions = nullptr; // Optional
+	vertexInputInfo.vertexAttributeDescriptionCount = 0;
+	vertexInputInfo.pVertexAttributeDescriptions = nullptr; // Optional
+
+
+	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	inputAssembly.primitiveRestartEnable = VK_FALSE;
+
+
+	VkViewport viewPort{};
+	viewPort.x = 0.0f;
+	viewPort.y = 0.0f;
+	viewPort.width = (float)m_SwapChainExtent.width;
+	viewPort.height = (float)m_SwapChainExtent.height;
+	viewPort.minDepth = 0.0f;
+	viewPort.maxDepth = 1.0f;
+
+	VkRect2D scissor{};
+	scissor.offset = { 0,0 };
+	scissor.extent = m_SwapChainExtent;
+
+	// Dynamic states can be modified at drawtime without having to recreate the entire pipeline.
+	// They must be provided at drawtime
+	std::vector<VkDynamicState> dynamicStates =
+	{
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR
+	};
+
+	VkPipelineDynamicStateCreateInfo dynamicState{};
+	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+	dynamicState.pDynamicStates = dynamicStates.data();
+
+
+	vkDestroyShaderModule(m_Device, vertShaderModule, nullptr);
+	vkDestroyShaderModule(m_Device, fragShaderModule, nullptr);
+
 	return true;
+}
+
+VkShaderModule Tempus::Renderer::CreateShaderModule(const std::vector<char>& code)
+{
+	VkShaderModuleCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	createInfo.codeSize = code.size();
+	createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+
+	VkShaderModule shaderModule;
+	
+	if (vkCreateShaderModule(m_Device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) 
+	{
+		TPS_CORE_CRITICAL("Failed to create shader module!");
+		throw std::runtime_error("failed to create shader module!");
+	}
+
+	return shaderModule;
 }
 
 bool Tempus::Renderer::CreateSurface(Tempus::Window* window)
@@ -735,4 +816,5 @@ void Tempus::Renderer::Cleanup()
 	vkDestroyDevice(m_Device, nullptr);
 	vkDestroySurfaceKHR(m_VkInstance, m_VkSurface, nullptr);
 	vkDestroyInstance(m_VkInstance, nullptr);
+
 }
