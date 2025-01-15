@@ -100,7 +100,9 @@ namespace Tempus {
 		std::vector<VkImageView> m_SwapChainImageViews;
 		VkFormat m_SwapChainImageFormat;
 		VkExtent2D m_SwapChainExtent;
+		VkRenderPass m_RenderPass;
 		VkPipelineLayout m_PipelineLayout;
+		VkPipeline m_graphicsPipeline;
 
 		VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
 		VkQueue m_PresentQueue = VK_NULL_HANDLE;
