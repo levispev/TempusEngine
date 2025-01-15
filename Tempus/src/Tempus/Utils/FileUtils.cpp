@@ -2,15 +2,15 @@
 
 #include "FileUtils.h"
 #include <fstream>
-#include "Log.h"
 #include <iostream>
+#include "Log.h"
 
 #ifdef TPS_PLATFORM_WINDOWS
 #include <direct.h>
 #define ChangeDir _chdir
-#endif
-#ifdef TPS_PLATFORM_MACOS
+#elif TPS_PLATFORM_MAC
 #include <unistd.h>
+#include <mach-o/dyld.h>
 #define ChangeDir chdir
 #endif
 
@@ -54,10 +54,14 @@ void Tempus::FileUtils::PrintAbsolutePath(const std::string &relativePath)
 
 std::string Tempus::FileUtils::GetExecutablePath()
 {
-    char buffer[MAX_PATH];
 
 #ifdef TPS_PLATFORM_WINDOWS
+    char buffer[MAX_PATH];
     GetModuleFileNameA(NULL, buffer, MAX_PATH);
+#elif TPS_PLATFORM_MAC
+    char buffer[PATH_MAX];
+    uint32_t size = sizeof(buffer);
+    _NSGetExecutablePath(buffer, &size);
 #endif
 
     std::string path = buffer;

@@ -29,7 +29,7 @@ namespace Tempus {
 		Log::Init();
 
 		// Changing working directory to project root.
-		// @TODO in the future this will change if in a packaged build
+		// @TODO in the future this will change if in a packaged build or if projects exist in a different location
 		FileUtils::SetWorkingDirectory(FileUtils::GetExecutablePath());
 		FileUtils::SetWorkingDirectory("../../../");
 
@@ -63,7 +63,7 @@ namespace Tempus {
 	bool Application::InitWindow()
 	{
 		// Window creation
-		if (!m_Window || !m_Window->Init("Sandbox", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN))
+		if (!m_Window || !m_Window->Init("Sandbox", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI))
 		{
 			TPS_CORE_CRITICAL("Failed to initialize window!");
 			return false;

@@ -4,7 +4,6 @@
 
 #include "Core.h"
 #include <vector>
-#include <iostream>
 #include <filesystem>
 
 namespace Tempus
