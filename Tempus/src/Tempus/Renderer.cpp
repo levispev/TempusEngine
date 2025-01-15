@@ -81,6 +81,11 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 		return false;
 	}
 
+	if(!CreateFrameBuffers())
+	{
+		return false;
+	}
+
 	return true;
 
 }
@@ -387,15 +392,18 @@ bool Tempus::Renderer::CreateImageViews()
 
 bool Tempus::Renderer::CreateRenderPass()
 {
-
+	// Single colour attachment
 	VkAttachmentDescription colorAttachment{};
 	colorAttachment.format = m_SwapChainImageFormat;
+	// 1 sample because no multi sampling right now
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	// Currently not using stencil
 	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	// Final layout for presentation to swapchain
 	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
 	VkAttachmentReference colorAttachmentRef{};
@@ -572,7 +580,7 @@ bool Tempus::Renderer::CreateGraphicsPipeline()
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
 	pipelineInfo.basePipelineIndex = -1; // Optional
 
-	if (vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_graphicsPipeline) != VK_SUCCESS) 
+	if (vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_GraphicsPipeline) != VK_SUCCESS) 
 	{
 		TPS_CORE_CRITICAL("Failed to create graphics pipeline!");
 		return false;
@@ -582,6 +590,37 @@ bool Tempus::Renderer::CreateGraphicsPipeline()
 	vkDestroyShaderModule(m_Device, fragShaderModule, nullptr);
 
 	return true;
+}
+
+bool Tempus::Renderer::CreateFrameBuffers()
+{
+	m_SwapChainFramebuffers.resize(m_SwapChainImageViews.size());
+
+	for (size_t i = 0; i < m_SwapChainImageViews.size(); i++) 
+	{
+
+		VkImageView attachments[] = 
+		{
+			m_SwapChainImageViews[i]
+		};
+
+		VkFramebufferCreateInfo framebufferInfo{};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = m_RenderPass;
+		framebufferInfo.attachmentCount = 1;
+		framebufferInfo.pAttachments = attachments;
+		framebufferInfo.width = m_SwapChainExtent.width;
+		framebufferInfo.height = m_SwapChainExtent.height;
+		framebufferInfo.layers = 1;
+
+		if (vkCreateFramebuffer(m_Device, &framebufferInfo, nullptr, &m_SwapChainFramebuffers[i]) != VK_SUCCESS) 
+		{
+			TPS_CORE_CRITICAL("Failed to create framebuffer!");
+			return false;
+		}
+	}
+
+    return true;
 }
 
 VkShaderModule Tempus::Renderer::CreateShaderModule(const std::vector<char>& code)
@@ -940,12 +979,17 @@ void Tempus::Renderer::Cleanup()
 		DestroyDebugUtilsMessengerEXT(m_VkInstance, m_DebugMessenger, nullptr);
 	}
 
+	for (auto framebuffer : m_SwapChainFramebuffers) 
+	{
+        vkDestroyFramebuffer(m_Device, framebuffer, nullptr);
+    }
+
 	for (auto imageView : m_SwapChainImageViews) 
 	{
 		vkDestroyImageView(m_Device, imageView, nullptr);
 	}
 
-	vkDestroyPipeline(m_Device, m_graphicsPipeline, nullptr);
+	vkDestroyPipeline(m_Device, m_GraphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
 	vkDestroyRenderPass(m_Device, m_RenderPass, nullptr);
 	vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);

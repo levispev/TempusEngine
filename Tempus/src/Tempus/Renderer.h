@@ -66,6 +66,7 @@ namespace Tempus {
 		bool CreateImageViews();
 		bool CreateRenderPass();
 		bool CreateGraphicsPipeline();
+		bool CreateFrameBuffers();
 		VkShaderModule CreateShaderModule(const std::vector<char>& code);
 
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
@@ -102,7 +103,8 @@ namespace Tempus {
 		VkExtent2D m_SwapChainExtent;
 		VkRenderPass m_RenderPass;
 		VkPipelineLayout m_PipelineLayout;
-		VkPipeline m_graphicsPipeline;
+		VkPipeline m_GraphicsPipeline;
+		std::vector<VkFramebuffer> m_SwapChainFramebuffers;
 
 		VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
 		VkQueue m_PresentQueue = VK_NULL_HANDLE;
