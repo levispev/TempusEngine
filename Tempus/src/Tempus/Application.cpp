@@ -9,6 +9,7 @@
 #include "Renderer.h"
 
 #include "sdl/SDL_vulkan.h"
+#include "Utils/FileUtils.h"
 
 namespace Tempus {
 
@@ -26,6 +27,11 @@ namespace Tempus {
 	{
 
 		Log::Init();
+
+		// Changing working directory to project root.
+		// @TODO in the future this will change if in a packaged build
+		FileUtils::SetWorkingDirectory(FileUtils::GetExecutablePath());
+		FileUtils::SetWorkingDirectory("../../../");
 
 		// SDL Initialization
 		if (!InitSDL()) 

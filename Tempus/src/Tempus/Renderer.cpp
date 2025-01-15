@@ -71,6 +71,11 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 		return false;
 	}
 
+	if (!CreateRenderPass()) 
+	{
+		return false;
+	}
+
 	if (!CreateGraphicsPipeline())
 	{
 		return false;
@@ -380,17 +385,28 @@ bool Tempus::Renderer::CreateImageViews()
 	return true;
 }
 
+bool Tempus::Renderer::CreateRenderPass()
+{
+
+	VkAttachmentDescription colorAttachment{};
+	colorAttachment.format = m_SwapChainImageFormat;
+	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+
+	return true;
+}
+
 bool Tempus::Renderer::CreateGraphicsPipeline()
 {
-	// @TODO Make shader paths relative to the outputted executable, move them with post build command
-#ifdef TPS_PLATFORM_WINDOWS
-	auto vertShaderCode = FileUtils::ReadFile("../bin/shaders/vert.spv");
-    auto fragShaderCode = FileUtils::ReadFile("../bin/shaders/frag.spv");
-#endif
-#ifdef TPS_PLATFORM_MAC
+
 	auto vertShaderCode = FileUtils::ReadFile("bin/shaders/vert.spv");
-    auto fragShaderCode = FileUtils::ReadFile("bin/shaders/frag.spv");
-#endif
+	auto fragShaderCode = FileUtils::ReadFile("bin/shaders/frag.spv");
 
 	VkShaderModule vertShaderModule = CreateShaderModule(vertShaderCode);
 	VkShaderModule fragShaderModule = CreateShaderModule(fragShaderCode);

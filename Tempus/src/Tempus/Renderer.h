@@ -64,6 +64,7 @@ namespace Tempus {
 		bool CreateLogicalDevice();
 		bool CreateSwapChain();
 		bool CreateImageViews();
+		bool CreateRenderPass();
 		bool CreateGraphicsPipeline();
 		VkShaderModule CreateShaderModule(const std::vector<char>& code);
 

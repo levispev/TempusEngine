@@ -5,6 +5,7 @@
 #include "Core.h"
 #include <vector>
 #include <iostream>
+#include <filesystem>
 
 namespace Tempus
 {
@@ -14,9 +15,9 @@ namespace Tempus
     public:
 
         static std::vector<char> ReadFile(const std::string& filename);
-        static void PrintResolvedPath(const std::string& relativePath);
-
+        static void PrintAbsolutePath(const std::string& relativePath);
+        static std::string GetExecutablePath();
+        static void SetWorkingDirectory(const std::string& directory);
     };
-
 
 }
