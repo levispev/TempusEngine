@@ -49,13 +49,15 @@ namespace Tempus {
 			}
 		};
 
-		struct SwapChainSupportDetails 
+		struct SwapChainSupportDetails
 		{
-			VkSurfaceCapabilitiesKHR capabilities;
+			VkSurfaceCapabilitiesKHR capabilities = { 0 };
 			// Colour format and bits per pixel
 			std::vector<VkSurfaceFormatKHR> formats;
 			std::vector<VkPresentModeKHR> presentModes;
 		};
+
+		void DrawFrame();
 
 		bool CreateVulkanInstance();
 		bool SetupDebugMessenger();
@@ -67,8 +69,13 @@ namespace Tempus {
 		bool CreateRenderPass();
 		bool CreateGraphicsPipeline();
 		bool CreateFrameBuffers();
-		VkShaderModule CreateShaderModule(const std::vector<char>& code);
+		bool CreateCommandPool();
+		bool CreateCommandBuffer();
+		bool CreateSyncObjects();
 
+		bool RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+
+		VkShaderModule CreateShaderModule(const std::vector<char>& code);
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 		bool IsDeviceSuitable(VkPhysicalDevice device);
 		bool CheckValidationLayerSupport();
@@ -101,13 +108,21 @@ namespace Tempus {
 		std::vector<VkImageView> m_SwapChainImageViews;
 		VkFormat m_SwapChainImageFormat;
 		VkExtent2D m_SwapChainExtent;
+
 		VkRenderPass m_RenderPass;
 		VkPipelineLayout m_PipelineLayout;
 		VkPipeline m_GraphicsPipeline;
 		std::vector<VkFramebuffer> m_SwapChainFramebuffers;
 
+		VkCommandPool m_CommandPool;
+		VkCommandBuffer m_CommandBuffer;
+
 		VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
 		VkQueue m_PresentQueue = VK_NULL_HANDLE;
+
+		VkSemaphore m_ImageAvailableSemaphore;
+		VkSemaphore m_RenderFinishedSemaphore;
+		VkFence m_InFlightFence;
 
 		// Standard validation layer
 		const std::vector<const char*> m_ValidationLayers = 

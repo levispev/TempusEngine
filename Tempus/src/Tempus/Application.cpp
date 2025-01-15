@@ -136,8 +136,7 @@ namespace Tempus {
 		}
 
 		Update();
-
-		//m_Renderer->Update();
+		m_Renderer->Update();
 
 	}
 

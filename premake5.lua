@@ -59,7 +59,8 @@ project "Tempus"
 
         buildoptions
         {
-            "/utf-8"
+            "/utf-8",
+            "/wd4251"
         }
 
         postbuildcommands
