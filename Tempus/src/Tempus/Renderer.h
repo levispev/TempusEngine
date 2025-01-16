@@ -108,23 +108,23 @@ namespace Tempus {
 		VkSwapchainKHR m_SwapChain = VK_NULL_HANDLE;
 		std::vector<VkImage> m_SwapChainImages;
 		std::vector<VkImageView> m_SwapChainImageViews;
-		VkFormat m_SwapChainImageFormat;
-		VkExtent2D m_SwapChainExtent;
+		VkFormat m_SwapChainImageFormat = VK_FORMAT_UNDEFINED;
+		VkExtent2D m_SwapChainExtent = { 0 };
 
-		VkRenderPass m_RenderPass;
-		VkPipelineLayout m_PipelineLayout;
-		VkPipeline m_GraphicsPipeline;
+		VkRenderPass m_RenderPass = VK_NULL_HANDLE;
+		VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
+		VkPipeline m_GraphicsPipeline = VK_NULL_HANDLE;
 		std::vector<VkFramebuffer> m_SwapChainFramebuffers;
 
-		VkCommandPool m_CommandPool;
-		VkCommandBuffer m_CommandBuffer;
+		VkCommandPool m_CommandPool = VK_NULL_HANDLE;
+		VkCommandBuffer m_CommandBuffer = VK_NULL_HANDLE;
 
 		VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
 		VkQueue m_PresentQueue = VK_NULL_HANDLE;
 
-		VkSemaphore m_ImageAvailableSemaphore;
-		VkSemaphore m_RenderFinishedSemaphore;
-		VkFence m_InFlightFence;
+		VkSemaphore m_ImageAvailableSemaphore = VK_NULL_HANDLE;
+		VkSemaphore m_RenderFinishedSemaphore = VK_NULL_HANDLE;
+		VkFence m_InFlightFence = VK_NULL_HANDLE;
 
 		// Standard validation layer
 		const std::vector<const char*> m_ValidationLayers = 
