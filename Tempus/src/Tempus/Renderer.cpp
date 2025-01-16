@@ -36,70 +36,24 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 		return false;
 	}
 
-	if (!CreateVulkanInstance())
+	CreateVulkanInstance();
+
+	if (m_bEnableValidationLayers)
 	{
-		return false;
+		SetupDebugMessenger();
 	}
 
-	if (m_bEnableValidationLayers && !SetupDebugMessenger())
-	{
-		return false;
-	}
-
-	if (!CreateSurface(m_Window))
-	{
-		return false;
-	}
-
-	if (!PickPhysicalDevice())
-	{
-		return false;
-	}
-
-	if (!CreateLogicalDevice()) 
-	{
-		return false;
-	}
-
-	if (!CreateSwapChain()) 
-	{
-		return false;
-	}
-
-	if (!CreateImageViews()) 
-	{
-		return false;
-	}
-
-	if (!CreateRenderPass()) 
-	{
-		return false;
-	}
-
-	if (!CreateGraphicsPipeline())
-	{
-		return false;
-	}
-
-	if(!CreateFrameBuffers())
-	{
-		return false;
-	}
-
-	if (!CreateCommandPool()) 
-	{
-		return false;
-	}
-
-	if (!CreateCommandBuffer())
-	{
-		return false;
-	}
-
-	if (!CreateSyncObjects())
-	{
-		return false;
-	}
+	CreateSurface(m_Window);
+	PickPhysicalDevice();
+	CreateLogicalDevice();
+	CreateSwapChain();
+	CreateImageViews();
+	CreateRenderPass();
+	CreateGraphicsPipeline();
+	CreateFrameBuffers();
+	CreateCommandPool();
+	CreateCommandBuffer();
+	CreateSyncObjects();
 
 	return true;
 
@@ -157,7 +111,7 @@ void Tempus::Renderer::DrawFrame()
 
 	if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, m_InFlightFence) != VK_SUCCESS) 
 	{
-		throw std::runtime_error("Failed to submit draw command buffer!");
+		TPS_CORE_CRITICAL("Failed to submit draw command buffer!");
 	}
 
 	VkPresentInfoKHR presentInfo{};
@@ -176,12 +130,11 @@ void Tempus::Renderer::DrawFrame()
 
 }
 
-bool Tempus::Renderer::CreateVulkanInstance()
+void Tempus::Renderer::CreateVulkanInstance()
 {
 	if (m_bEnableValidationLayers && !CheckValidationLayerSupport())
 	{
 		TPS_CORE_CRITICAL("Validation layers requested, but not available!");
-		return false;
 	}
 
 	// Application info
@@ -226,16 +179,13 @@ bool Tempus::Renderer::CreateVulkanInstance()
 	if (vkCreateInstance(&createInfo, nullptr, &m_VkInstance) != VK_SUCCESS) 
 	{
 		TPS_CORE_CRITICAL("Failed to create Vulkan instance!");
-		return false;
 	}
 
 	LogExtensionsAndLayers();
 
-	return true;
-
 }
 
-bool Tempus::Renderer::SetupDebugMessenger()
+void Tempus::Renderer::SetupDebugMessenger()
 {
 
 	VkDebugUtilsMessengerCreateInfoEXT createInfo{};
@@ -244,13 +194,11 @@ bool Tempus::Renderer::SetupDebugMessenger()
 	if (CreateDebugUtilsMessengerEXT(m_VkInstance, &createInfo, nullptr, &m_DebugMessenger) != VK_SUCCESS) 
 	{
     	TPS_CORE_CRITICAL("Failed to set up debug messenger!");
-		return false;
 	}		
 
-    return true;
 }
 
-bool Tempus::Renderer::PickPhysicalDevice()
+void Tempus::Renderer::PickPhysicalDevice()
 {
 	// Get device count
 	uint32_t deviceCount = 0;
@@ -259,7 +207,6 @@ bool Tempus::Renderer::PickPhysicalDevice()
 	if (deviceCount == 0) 
 	{
 		TPS_CORE_CRITICAL("Failed to find GPU with Vulkan support!");
-		return false;
 	}
 
 	// Get physical devices
@@ -279,15 +226,13 @@ bool Tempus::Renderer::PickPhysicalDevice()
 	if (m_PhysicalDevice == VK_NULL_HANDLE) 
 	{
 		TPS_CORE_CRITICAL("Failed to find suitable GPU!");
-		return false;
 	}
 
 	LogDeviceInfo(m_PhysicalDevice);
 
-	return true;
 }
 
-bool Tempus::Renderer::CreateLogicalDevice()
+void Tempus::Renderer::CreateLogicalDevice()
 {
 
 	QueueFamilyIndices indices = FindQueueFamilies(m_PhysicalDevice);
@@ -335,17 +280,15 @@ bool Tempus::Renderer::CreateLogicalDevice()
 	if (vkCreateDevice(m_PhysicalDevice, &createInfo, nullptr, &m_Device) != VK_SUCCESS) 
 	{
 		TPS_CORE_CRITICAL("Failed to create logical device!");
-    	return false;
 	}
 
 	// Retrieve reference to devices graphics queue, index 0 because we only have 1 queue
 	vkGetDeviceQueue(m_Device, indices.graphicsFamily.value(), 0, &m_GraphicsQueue);
 	vkGetDeviceQueue(m_Device, indices.presentFamily.value(), 0, &m_PresentQueue);
 	
-	return true;
 }
 
-bool Tempus::Renderer::CreateSwapChain()
+void Tempus::Renderer::CreateSwapChain()
 {
 	SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(m_PhysicalDevice);
 
@@ -408,7 +351,6 @@ bool Tempus::Renderer::CreateSwapChain()
 	if (vkCreateSwapchainKHR(m_Device, &createInfo, nullptr, &m_SwapChain) != VK_SUCCESS) 
 	{
 		TPS_CORE_CRITICAL("Failed to create swap chain!");
-		return false;
 	}
 
 
@@ -421,10 +363,9 @@ bool Tempus::Renderer::CreateSwapChain()
 	m_SwapChainImageFormat = surfaceFormat.format;
 	m_SwapChainExtent = extent;
 
-	return true;
 }
 
-bool Tempus::Renderer::CreateImageViews()
+void Tempus::Renderer::CreateImageViews()
 {
 
 	m_SwapChainImageViews.resize(m_SwapChainImages.size());
@@ -451,15 +392,13 @@ bool Tempus::Renderer::CreateImageViews()
 		if (vkCreateImageView(m_Device, &createInfo, nullptr, &m_SwapChainImageViews[i]) != VK_SUCCESS) 
 		{
 			TPS_CORE_CRITICAL("Failed to create image view!");
-			return false;
 		}
 
 	}
 
-	return true;
 }
 
-bool Tempus::Renderer::CreateRenderPass()
+void Tempus::Renderer::CreateRenderPass()
 {
 	// Single colour attachment
 	VkAttachmentDescription colorAttachment{};
@@ -504,13 +443,11 @@ bool Tempus::Renderer::CreateRenderPass()
 	if (vkCreateRenderPass(m_Device, &renderPassInfo, nullptr, &m_RenderPass) != VK_SUCCESS) 
 	{
 		TPS_CORE_CRITICAL("Failed to create render pass!");
-		return false;
 	}
 
-	return true;
 }
 
-bool Tempus::Renderer::CreateGraphicsPipeline()
+void Tempus::Renderer::CreateGraphicsPipeline()
 {
 
 	auto vertShaderCode = FileUtils::ReadFile("bin/shaders/vert.spv");
@@ -624,7 +561,6 @@ bool Tempus::Renderer::CreateGraphicsPipeline()
 	if (vkCreatePipelineLayout(m_Device, &pipelineLayoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS) 
 	{
 		TPS_CORE_CRITICAL("Failed to create pipeline layout!");
-		return false;
 	}
 
 	// Pipeline creation
@@ -649,16 +585,14 @@ bool Tempus::Renderer::CreateGraphicsPipeline()
 	if (vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_GraphicsPipeline) != VK_SUCCESS) 
 	{
 		TPS_CORE_CRITICAL("Failed to create graphics pipeline!");
-		return false;
 	}
 
 	vkDestroyShaderModule(m_Device, vertShaderModule, nullptr);
 	vkDestroyShaderModule(m_Device, fragShaderModule, nullptr);
 
-	return true;
 }
 
-bool Tempus::Renderer::CreateFrameBuffers()
+void Tempus::Renderer::CreateFrameBuffers()
 {
 	m_SwapChainFramebuffers.resize(m_SwapChainImageViews.size());
 
@@ -682,14 +616,12 @@ bool Tempus::Renderer::CreateFrameBuffers()
 		if (vkCreateFramebuffer(m_Device, &framebufferInfo, nullptr, &m_SwapChainFramebuffers[i]) != VK_SUCCESS) 
 		{
 			TPS_CORE_CRITICAL("Failed to create framebuffer!");
-			return false;
 		}
 	}
 
-    return true;
 }
 
-bool Tempus::Renderer::CreateCommandPool()
+void Tempus::Renderer::CreateCommandPool()
 {
 	QueueFamilyIndices queueFamilyIndices = FindQueueFamilies(m_PhysicalDevice);
 
@@ -701,13 +633,11 @@ bool Tempus::Renderer::CreateCommandPool()
 	if (vkCreateCommandPool(m_Device, &poolInfo, nullptr, &m_CommandPool) != VK_SUCCESS) 
 	{
 		TPS_CORE_CRITICAL("Failed to create command pool!");
-		return false;
 	}
 
-	return true;
 }
 
-bool Tempus::Renderer::CreateCommandBuffer()
+void Tempus::Renderer::CreateCommandBuffer()
 {
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -718,13 +648,11 @@ bool Tempus::Renderer::CreateCommandBuffer()
 	if (vkAllocateCommandBuffers(m_Device, &allocInfo, &m_CommandBuffer) != VK_SUCCESS) 
 	{
 		TPS_CORE_CRITICAL("Failed to allocate command buffers!");
-		return false;
 	}
 
-	return true;
 }
 
-bool Tempus::Renderer::CreateSyncObjects()
+void Tempus::Renderer::CreateSyncObjects()
 {
 	VkSemaphoreCreateInfo semaphoreInfo{};
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -738,13 +666,11 @@ bool Tempus::Renderer::CreateSyncObjects()
 		vkCreateFence(m_Device, &fenceInfo, nullptr, &m_InFlightFence) != VK_SUCCESS) 
 	{
 		TPS_CORE_CRITICAL("Failed to create semaphores!");
-		return false;
 	}
 
-	return true;
 }
 
-bool Tempus::Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+void Tempus::Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
 {
 
 	VkCommandBufferBeginInfo beginInfo{};
@@ -755,7 +681,6 @@ bool Tempus::Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32
 	if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) 
 	{
 		TPS_CORE_CRITICAL("Failed to begin recording command buffer!");
-		return false;
 	}
 
 	VkRenderPassBeginInfo renderPassInfo{};
@@ -795,10 +720,8 @@ bool Tempus::Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) 
 	{
 		TPS_CORE_CRITICAL("Failed to record command buffer!");
-		return false;
 	}
 
-	return true;
 }
 
 VkShaderModule Tempus::Renderer::CreateShaderModule(const std::vector<char>& code)
@@ -819,15 +742,13 @@ VkShaderModule Tempus::Renderer::CreateShaderModule(const std::vector<char>& cod
 	return shaderModule;
 }
 
-bool Tempus::Renderer::CreateSurface(Tempus::Window* window)
+void Tempus::Renderer::CreateSurface(Tempus::Window* window)
 {
 
-	if (!window || !window->GetNativeWindow()) 
+	if(!window || !SDL_Vulkan_CreateSurface(window->GetNativeWindow(), m_VkInstance, &m_VkSurface))
 	{
-		return false;
+		TPS_CORE_CRITICAL("Failed to create surface!");
 	}
-
-	return SDL_Vulkan_CreateSurface(window->GetNativeWindow(), m_VkInstance, &m_VkSurface);
 
 }
 

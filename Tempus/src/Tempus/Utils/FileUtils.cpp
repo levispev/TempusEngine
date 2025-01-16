@@ -22,7 +22,6 @@ std::vector<char> Tempus::FileUtils::ReadFile(const std::string& filename)
     if (!file.is_open()) 
     {
         TPS_CORE_CRITICAL("Failed to open file {0}", filename);
-        throw std::runtime_error("Failed to open file!" + filename);
     }
 
     // Create Buffer
@@ -48,7 +47,7 @@ void Tempus::FileUtils::PrintAbsolutePath(const std::string &relativePath)
     } 
     catch (const std::filesystem::filesystem_error& e) 
     {
-        std::cerr << "Error resolving path: " << e.what() << std::endl;
+        TPS_CORE_CRITICAL("Error resolving path: {}", e.what());
     }
 }
 
@@ -73,7 +72,7 @@ void Tempus::FileUtils::SetWorkingDirectory(const std::string& directory)
 {
     if (ChangeDir(directory.c_str())) 
     {
-        throw std::runtime_error("Failed to change working directory to: " + directory);
+        TPS_CORE_CRITICAL("Failed to change working directory to: {}", directory);
     }
     else 
     {

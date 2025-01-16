@@ -1,4 +1,9 @@
+// Copyright Levi Spevakow (C) 2025
+
 #pragma once
+
+#include <exception>
+#include <iostream>
 
 #ifdef TPS_PLATFORM_WINDOWS
 
@@ -9,7 +14,17 @@ extern Tempus::Application* Tempus::CreateApplication();
 int main(int argc, char** argv)
 {
 	auto app = Tempus::CreateApplication();
-	app->Run();
+
+	try
+	{
+		app->Run();
+	}
+	catch(const std::exception& e)
+	{
+		std::cout << "Critical error! " << e.what() << std::endl;
+		return -1;
+	}
+
 	delete app;
 
 	return 0;
@@ -23,7 +38,17 @@ extern Tempus::Application* Tempus::CreateApplication();
 int main(int argc, char** argv)
 {
 	auto app = Tempus::CreateApplication();
-	app->Run();
+
+	try
+	{
+		app->Run();
+	}
+	catch(const std::exception& e)
+	{
+		std::cout << "Critical error! " << e.what() << std::endl;
+		return -1;
+	}
+
 	delete app;
 
 	return 0;

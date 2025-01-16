@@ -61,21 +61,21 @@ namespace Tempus {
 
 		void DrawFrame();
 
-		bool CreateVulkanInstance();
-		bool SetupDebugMessenger();
-		bool CreateSurface(class Window* window);
-		bool PickPhysicalDevice();
-		bool CreateLogicalDevice();
-		bool CreateSwapChain();
-		bool CreateImageViews();
-		bool CreateRenderPass();
-		bool CreateGraphicsPipeline();
-		bool CreateFrameBuffers();
-		bool CreateCommandPool();
-		bool CreateCommandBuffer();
-		bool CreateSyncObjects();
+		void CreateVulkanInstance();
+		void SetupDebugMessenger();
+		void CreateSurface(class Window* window);
+		void PickPhysicalDevice();
+		void CreateLogicalDevice();
+		void CreateSwapChain();
+		void CreateImageViews();
+		void CreateRenderPass();
+		void CreateGraphicsPipeline();
+		void CreateFrameBuffers();
+		void CreateCommandPool();
+		void CreateCommandBuffer();
+		void CreateSyncObjects();
 
-		bool RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+		void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
 		VkShaderModule CreateShaderModule(const std::vector<char>& code);
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
