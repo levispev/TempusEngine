@@ -31,9 +31,11 @@ namespace Tempus {
 
 		int RenderClear();
 		void RenderPresent();
-		int SetRenderDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
+		void SetRenderDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
 	private:
+
+		float m_ClearColour[4] = {0.25f, 0.5f, 0.1f, 0.0f};
 
 		// Struct for potential queue families
 		// Currently only searching for graphics queue family but will add more later

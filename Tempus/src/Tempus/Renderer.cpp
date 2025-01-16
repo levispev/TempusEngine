@@ -116,10 +116,12 @@ void Tempus::Renderer::RenderPresent()
 	//SDL_RenderPresent(m_Renderer);
 }
 
-int Tempus::Renderer::SetRenderDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
+void Tempus::Renderer::SetRenderDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 {
-	return 0;
-	//return SDL_SetRenderDrawColor(m_Renderer, r, g, b, a);
+	m_ClearColour[0] = r / 255.0f;
+	m_ClearColour[1] = g / 255.0f;
+	m_ClearColour[2] = b / 255.0f;
+	m_ClearColour[3] = a / 255.0f;
 }
 
 void Tempus::Renderer::DrawFrame()
@@ -762,7 +764,7 @@ bool Tempus::Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32
 	renderPassInfo.framebuffer = m_SwapChainFramebuffers[imageIndex];
 	renderPassInfo.renderArea.offset = { 0, 0 };
 	renderPassInfo.renderArea.extent = m_SwapChainExtent;
-	VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
+	VkClearValue clearColor = { {{m_ClearColour[0],m_ClearColour[1], m_ClearColour[2], m_ClearColour[3]}}};
 	renderPassInfo.clearValueCount = 1;
 	renderPassInfo.pClearValues = &clearColor;
 
@@ -1149,6 +1151,9 @@ void Tempus::Renderer::LogDeviceInfo(VkPhysicalDevice device)
 
 void Tempus::Renderer::Cleanup()
 {
+
+	// Wait for all semaphores to finish
+	vkDeviceWaitIdle(m_Device);
 
 	if (m_bEnableValidationLayers) 
 	{
