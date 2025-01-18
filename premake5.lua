@@ -67,7 +67,7 @@ project "Tempus"
         {
             "{RMDIR} ../bin/" .. outputdir .. "/Sandbox",
             "{MKDIR} ../bin/" .. outputdir .. "/Sandbox",
-            "{COPYFILE} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox",
+            "{COPYFILE} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox"
         }
 
     filter "system:macosx"

@@ -1,5 +1,12 @@
 @echo off
 
+if not defined VULKAN_SDK (
+    echo Error: VULKAN_SDK environment variable is not set.
+    echo Please ensure Vulkan SDK is installed and the environment variable is configured.
+    PAUSE
+    exit /b 1
+)
+
 rmdir /s /q bin
 rmdir /s /q bin-int
 rmdir /s /q .vs
