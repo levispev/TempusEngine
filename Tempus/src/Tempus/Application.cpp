@@ -11,6 +11,9 @@
 #include "sdl/SDL_vulkan.h"
 #include "Utils/FileUtils.h"
 
+#include "imgui.h"
+#include "imgui/imgui_impl_sdl2.h"
+
 namespace Tempus {
 
 	Application::Application() : CurrentEvent(SDL_Event())
@@ -127,12 +130,15 @@ namespace Tempus {
 	void Application::CoreUpdate()
 	{
 
-		SDL_PollEvent(&CurrentEvent);
-
-		if (CurrentEvent.type == SDL_QUIT)
+		while (SDL_PollEvent(&CurrentEvent)) 
 		{
-			bShouldQuit = true;
-			return;
+			ImGui_ImplSDL2_ProcessEvent(&CurrentEvent);
+
+			if (CurrentEvent.type == SDL_QUIT)
+			{
+				bShouldQuit = true;
+				return;
+			}
 		}
 
 		Update();

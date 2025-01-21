@@ -3,10 +3,15 @@
 #include "Tempus.h"
 
 #include <random>
+#include <chrono>
 
 class SandBox : public Tempus::Application
 {
 public:
+
+	std::chrono::time_point<std::chrono::high_resolution_clock> lastTime = std::chrono::high_resolution_clock::now();
+	double deltaTime = 0.0;
+	double fps = 0.0;
 
 	SandBox() 
 	{
@@ -36,6 +41,16 @@ public:
 			}
 		}
 
+
+		std::chrono::time_point<std::chrono::high_resolution_clock> currentTime = std::chrono::high_resolution_clock::now();
+		deltaTime = std::chrono::duration<double>(currentTime - lastTime).count();
+		lastTime = currentTime;
+
+		fps = 1.0 / deltaTime;
+
+		//TPS_INFO(fps);
+
+		//std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 
 };

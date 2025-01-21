@@ -60,6 +60,7 @@ namespace Tempus {
 		};
 
 		void DrawFrame();
+		void DrawImGui();
 
 		void CreateVulkanInstance();
 		void SetupDebugMessenger();
@@ -74,6 +75,8 @@ namespace Tempus {
 		void CreateCommandPool();
 		void CreateCommandBuffer();
 		void CreateSyncObjects();
+
+		void InitImGui();
 
 		void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
@@ -125,6 +128,8 @@ namespace Tempus {
 		VkSemaphore m_ImageAvailableSemaphore = VK_NULL_HANDLE;
 		VkSemaphore m_RenderFinishedSemaphore = VK_NULL_HANDLE;
 		VkFence m_InFlightFence = VK_NULL_HANDLE;
+
+		VkDescriptorPool m_ImguiPool;
 
 		// Standard validation layer
 		const std::vector<const char*> m_ValidationLayers = 

@@ -22,7 +22,8 @@ project "Tempus"
     files
     {
         "%{prj.name}/src/**.h",
-        "%{prj.name}/src/**.cpp"
+        "%{prj.name}/src/**.cpp",
+        "%{prj.name}/vendor/src/**.cpp"
     }
 
     includedirs
@@ -30,7 +31,8 @@ project "Tempus"
         path.join(os.getenv("VULKAN_SDK"), "Include"),
         "%{prj.name}/vendor/include",
         "%{prj.name}/src/",
-        "%{prj.name}/src/Tempus"
+        "%{prj.name}/src/Tempus",
+        "%{prj.name}/vendor/include/imgui"
     }
 
     libdirs

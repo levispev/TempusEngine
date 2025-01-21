@@ -10,7 +10,9 @@
 #include <set>
 #include <sstream>
 #include <algorithm> 
-
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_sdl2.h"
+#include "imgui/imgui_impl_vulkan.h"
 
 Tempus::Renderer::Renderer()
 {
@@ -23,6 +25,7 @@ Tempus::Renderer::~Renderer()
 
 void Tempus::Renderer::Update()
 {
+	DrawImGui();
 	DrawFrame();
 }
 
@@ -54,6 +57,8 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 	CreateCommandPool();
 	CreateCommandBuffer();
 	CreateSyncObjects();
+
+	InitImGui();
 
 	return true;
 
@@ -87,7 +92,7 @@ void Tempus::Renderer::DrawFrame()
 
 	uint32_t imageIndex;
 	// Retrieve image from swap chain
-	vkAcquireNextImageKHR(m_Device, m_SwapChain, UINT64_MAX, m_ImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+	VkResult result = vkAcquireNextImageKHR(m_Device, m_SwapChain, UINT64_MAX, m_ImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
 	vkResetCommandBuffer(m_CommandBuffer, 0);
 
@@ -128,6 +133,19 @@ void Tempus::Renderer::DrawFrame()
 
 	vkQueuePresentKHR(m_PresentQueue, &presentInfo);
 
+}
+
+void Tempus::Renderer::DrawImGui()
+{
+	ImGui_ImplVulkan_NewFrame();
+	ImGui_ImplSDL2_NewFrame();
+	ImGui::NewFrame();
+
+	ImGui::Begin("Stats");
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+	ImGui::End();
+
+	ImGui::Render();
 }
 
 void Tempus::Renderer::CreateVulkanInstance()
@@ -670,6 +688,62 @@ void Tempus::Renderer::CreateSyncObjects()
 
 }
 
+void Tempus::Renderer::InitImGui()
+{
+	// Huge buffer. Same as in example code. Can reduce
+	VkDescriptorPoolSize pool_sizes[] =
+	{
+		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+		{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+	};
+
+	VkDescriptorPoolCreateInfo poolInfo = {};
+	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+	poolInfo.maxSets = 1000;
+	poolInfo.poolSizeCount = std::size(pool_sizes);
+	poolInfo.pPoolSizes = pool_sizes;
+	
+	if (vkCreateDescriptorPool(m_Device, &poolInfo, nullptr, &m_ImguiPool) != VK_SUCCESS) 
+	{
+		TPS_CORE_CRITICAL("Failed to create imgui descriptor pool!");
+	}
+
+	ImGui::CreateContext();
+	ImGui::StyleColorsDark();
+
+	if (!m_Window || !m_Window->GetNativeWindow()) 
+	{
+		TPS_CORE_CRITICAL("Invalid window!");
+	}
+
+	ImGui_ImplSDL2_InitForVulkan(m_Window->GetNativeWindow());
+
+	ImGui_ImplVulkan_InitInfo initInfo = {};
+	initInfo.Instance = m_VkInstance;
+	initInfo.PhysicalDevice = m_PhysicalDevice;
+	initInfo.Device = m_Device;
+	initInfo.Queue = m_GraphicsQueue;
+	initInfo.DescriptorPool = m_ImguiPool;
+	initInfo.MinImageCount = 3;
+	initInfo.ImageCount = 3;
+	initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+	initInfo.RenderPass = m_RenderPass;
+
+	ImGui_ImplVulkan_Init(&initInfo);
+	//ImGui_ImplVulkan_CreateFontsTexture();
+
+}
+
 void Tempus::Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
 {
 
@@ -714,6 +788,8 @@ void Tempus::Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 	vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 
 	vkCmdEndRenderPass(commandBuffer);
 
@@ -1080,6 +1156,11 @@ void Tempus::Renderer::Cleanup()
 	{
 		DestroyDebugUtilsMessengerEXT(m_VkInstance, m_DebugMessenger, nullptr);
 	}
+
+	ImGui_ImplVulkan_Shutdown();
+	ImGui_ImplSDL2_Shutdown();
+	ImGui::DestroyContext();
+	vkDestroyDescriptorPool(m_Device, m_ImguiPool, nullptr);
 
 	vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
 
