@@ -47,8 +47,8 @@ namespace Tempus {
 #define TPS_CORE_ERROR(...)      ::Tempus::Log::GetCoreLogger()->error(__VA_ARGS__)
 // Throws a runtime exception on use
 #define TPS_CORE_CRITICAL(...)   do { \
-                                     ::Tempus::Log::GetCoreLogger()->critical(__VA_ARGS__); \
-                                     throw std::runtime_error(fmt::format(__VA_ARGS__)); \
+                                     ::Tempus::Log::GetCoreLogger()->critical("[{}:{}] {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
+                                     throw std::runtime_error(fmt::format("[{}:{}] {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__))); \
                                  } while(0)
 #else
 #define TPS_CORE_TRACE(...)      static_assert(false, "TPS_CORE_TACE is not accessible from the client application.")
@@ -65,6 +65,6 @@ namespace Tempus {
 #define TPS_ERROR(...)           ::Tempus::Log::GetClientLogger()->error(__VA_ARGS__)
 // Throws a runtime exception on use
 #define TPS_CRITICAL(...)        do { \
-                                     ::Tempus::Log::GetClientLogger()->critical(__VA_ARGS__); \
-                                     throw std::runtime_error(fmt::format(__VA_ARGS__)); \
+                                     ::Tempus::Log::GetClientLogger()->critical("[{}:{}] {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
+                                     throw std::runtime_error(fmt::format("[{}:{}] {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__))); \
                                  } while(0)

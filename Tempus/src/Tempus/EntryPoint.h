@@ -21,7 +21,6 @@ int main(int argc, char** argv)
 	}
 	catch(const std::exception& e)
 	{
-		std::cout << "Critical error! " << e.what() << std::endl;
 		return -1;
 	}
 
@@ -45,7 +44,6 @@ int main(int argc, char** argv)
 	}
 	catch(const std::exception& e)
 	{
-		std::cout << "Critical error! " << e.what() << std::endl;
 		return -1;
 	}
 

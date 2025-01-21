@@ -11,7 +11,7 @@
 #include "sdl/SDL_vulkan.h"
 #include "Utils/FileUtils.h"
 
-#include "imgui.h"
+#include "imgui/imgui.h"
 #include "imgui/imgui_impl_sdl2.h"
 
 namespace Tempus {
