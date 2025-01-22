@@ -28,5 +28,6 @@
 #error Tempus only supports Windows and Mac!
 #endif
 
+// Helper macros
 #define BIT(x) (1 << x)
-
+#define ENUM_TO_STRING(name) #name

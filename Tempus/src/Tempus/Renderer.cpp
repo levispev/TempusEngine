@@ -13,6 +13,8 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_sdl2.h"
 #include "imgui/imgui_impl_vulkan.h"
+#include <vulkan/vk_enum_string_helper.h>
+
 
 Tempus::Renderer::Renderer()
 {
@@ -141,8 +143,17 @@ void Tempus::Renderer::DrawImGui()
 	ImGui_ImplSDL2_NewFrame();
 	ImGui::NewFrame();
 
-	ImGui::Begin("Stats");
+	ImGui::Begin("Application Stats");
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+	ImGui::End();
+
+	ImGui::Begin("Device Info");
+		ImGui::Text("Name: %s", m_DeviceDetails.name.c_str());
+		ImGui::Text("Type: %s", m_DeviceDetails.type.c_str());
+		ImGui::Text("ID: %i", m_DeviceDetails.id);
+		ImGui::Text("Driver Version: %i", m_DeviceDetails.driverVersion);
+		ImGui::Text("API Version: %i", m_DeviceDetails.apiVersion);
+		ImGui::Text("Vendor ID: %i", m_DeviceDetails.vendorId);
 	ImGui::End();
 
 	ImGui::Render();
@@ -371,6 +382,16 @@ void Tempus::Renderer::CreateSwapChain()
 		TPS_CORE_CRITICAL("Failed to create swap chain!");
 	}
 
+	std::stringstream ss;
+
+	ss << "\nSwapchain details: \n";
+	ss << "\tFormat: " << string_VkFormat(surfaceFormat.format) << '\n';
+	ss << "\tColor Space: " << string_VkColorSpaceKHR(surfaceFormat.colorSpace) << '\n';
+	ss << "\tPresent mode: " << string_VkPresentModeKHR(presentMode) << '\n';
+	ss << "\tExtent: " << extent.width << "x" << extent.height << '\n';
+	ss << "\tImage count: " << imageCount << '\t';
+
+	TPS_CORE_INFO(ss.str());
 
 	// Querying for swap chain image count. Only minimum was specified in creation info, actual number may be higher
 	vkGetSwapchainImagesKHR(m_Device, m_SwapChain, &imageCount, nullptr);
@@ -1133,23 +1154,32 @@ void Tempus::Renderer::LogDeviceInfo(VkPhysicalDevice device)
 	vkGetPhysicalDeviceProperties(device, &deviceProperties);
 	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
+	m_DeviceDetails.name = deviceProperties.deviceName;
+	m_DeviceDetails.id = deviceProperties.deviceID;
+	m_DeviceDetails.type = std::string(string_VkPhysicalDeviceType(deviceProperties.deviceType)).substr(24);
+	m_DeviceDetails.driverVersion = deviceProperties.driverVersion;
+	m_DeviceDetails.apiVersion = deviceProperties.apiVersion;
+	m_DeviceDetails.vendorId = deviceProperties.vendorID;
+
 	std::stringstream ss;
 
 	ss << "\nDevice Info:" << '\n';
-	ss << '\t' << "Name: " << deviceProperties.deviceName << '\n';
-	ss << '\t' << "ID: " << deviceProperties.deviceID << '\n';
-	ss << '\t' << "Type: " << deviceProperties.deviceType << '\n';
-	ss << '\t' << "Driver Version: " << deviceProperties.driverVersion << '\n';
-	ss << '\t' << "API Version: " << deviceProperties.apiVersion << '\n';
-	ss << '\t' << "Vendor ID: " << deviceProperties.vendorID << '\n';
+	ss << '\t' << "Name: " << m_DeviceDetails.name << '\n';
+	ss << '\t' << "ID: " << m_DeviceDetails.id << '\n';
+	ss << '\t' << "Type: " << m_DeviceDetails.type << '\n';
+	ss << '\t' << "Driver Version: " << m_DeviceDetails.driverVersion << '\n';
+	ss << '\t' << "API Version: " << m_DeviceDetails.apiVersion << '\n';
+	ss << '\t' << "Vendor ID: " << m_DeviceDetails.vendorId << '\n';
 
 	TPS_CORE_INFO(ss.str());
+
 }
+
 
 void Tempus::Renderer::Cleanup()
 {
 
-	// Wait for all semaphores to finish
+	// Wait for all async objects to finish
 	vkDeviceWaitIdle(m_Device);
 
 	if (m_bEnableValidationLayers) 

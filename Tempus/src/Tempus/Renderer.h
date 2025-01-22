@@ -151,6 +151,18 @@ namespace Tempus {
 
 		VkDebugUtilsMessengerEXT m_DebugMessenger = VK_NULL_HANDLE;
 
+		struct DeviceDetails
+		{
+			std::string name;
+			uint32_t id;
+			std::string type;
+			uint32_t driverVersion;
+			uint32_t apiVersion;
+			uint32_t vendorId;
+		};
+
+		DeviceDetails m_DeviceDetails;
+
 	private:
 
 		// Callback function for validation layer debug messages
