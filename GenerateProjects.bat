@@ -18,4 +18,5 @@ del "Tempus\Tempus.vcxproj"
 del "Tempus\Tempus.vcxproj.filters"
 
 call vendor\bin\premake\premake5.exe vs2022
+call CompileShaders.bat
 PAUSE

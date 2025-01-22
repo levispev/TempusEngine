@@ -20,4 +20,6 @@ rm -rf "Tempus/Makefile"
 
 vendor/bin/premake/premake5 gmake2
 
+./CompileShadersMac.sh
+
 read -p "Press any key to continue..."
