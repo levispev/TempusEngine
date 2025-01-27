@@ -1,3 +1,5 @@
+#!/bin/bash
+
 if [ -z "$VULKAN_SDK" ]; then
     echo "Error: VULKAN_SDK environment variable is not set."
     exit 1

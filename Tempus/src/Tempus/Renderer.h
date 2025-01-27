@@ -35,7 +35,7 @@ namespace Tempus {
 
 	private:
 
-		float m_ClearColour[4] = {0.25f, 0.5f, 0.1f, 0.0f};
+		float m_ClearColor[4] = {0.25f, 0.5f, 0.1f, 0.0f};
 
 		// Struct for potential queue families
 		// Currently only searching for graphics queue family but will add more later
@@ -96,6 +96,7 @@ namespace Tempus {
 
 		void LogExtensionsAndLayers();
 		void LogDeviceInfo(VkPhysicalDevice device);
+		void LogSwapchainDetails(const SwapChainSupportDetails& details);
 
 		void Cleanup();
 

@@ -79,10 +79,10 @@ void Tempus::Renderer::RenderPresent()
 
 void Tempus::Renderer::SetRenderDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 {
-	m_ClearColour[0] = r / 255.0f;
-	m_ClearColour[1] = g / 255.0f;
-	m_ClearColour[2] = b / 255.0f;
-	m_ClearColour[3] = a / 255.0f;
+	m_ClearColor[0] = r / 255.0f;
+	m_ClearColor[1] = g / 255.0f;
+	m_ClearColor[2] = b / 255.0f;
+	m_ClearColor[3] = a / 255.0f;
 }
 
 void Tempus::Renderer::DrawFrame()
@@ -321,6 +321,8 @@ void Tempus::Renderer::CreateSwapChain()
 {
 	SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(m_PhysicalDevice);
 
+	LogSwapchainDetails(swapChainSupport);
+
     VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
     VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
     VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities);
@@ -384,7 +386,7 @@ void Tempus::Renderer::CreateSwapChain()
 
 	std::stringstream ss;
 
-	ss << "\nSwapchain details: \n";
+	ss << "\nCreated Swapchain details: \n";
 	ss << "\tFormat: " << string_VkFormat(surfaceFormat.format) << '\n';
 	ss << "\tColor Space: " << string_VkColorSpaceKHR(surfaceFormat.colorSpace) << '\n';
 	ss << "\tPresent mode: " << string_VkPresentModeKHR(presentMode) << '\n';
@@ -784,7 +786,8 @@ void Tempus::Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32
 	renderPassInfo.framebuffer = m_SwapChainFramebuffers[imageIndex];
 	renderPassInfo.renderArea.offset = { 0, 0 };
 	renderPassInfo.renderArea.extent = m_SwapChainExtent;
-	VkClearValue clearColor = { {{m_ClearColour[0],m_ClearColour[1], m_ClearColour[2], m_ClearColour[3]}}};
+	VkClearValue clearColor = { {{m_ClearColor[0],m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]}}};
+	//TPS_CORE_INFO("Clear Color: {}, {}, {}", m_ClearColor[0],m_ClearColor[1], m_ClearColor[2]);
 	renderPassInfo.clearValueCount = 1;
 	renderPassInfo.pClearValues = &clearColor;
 
@@ -924,6 +927,7 @@ Tempus::Renderer::SwapChainSupportDetails Tempus::Renderer::QuerySwapChainSuppor
 
 VkPresentModeKHR Tempus::Renderer::ChooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes)
 {
+	
     for (const auto& availablePresentMode : availablePresentModes) 
 	{
 		// Mailbox is desired if available
@@ -1175,6 +1179,42 @@ void Tempus::Renderer::LogDeviceInfo(VkPhysicalDevice device)
 
 }
 
+void Tempus::Renderer::LogSwapchainDetails(const SwapChainSupportDetails &details)
+{
+
+	std::stringstream ss;
+
+	ss << "\nSwapChain support details:\n";
+
+	ss << "\tMin Image Count: " << details.capabilities.minImageCount << '\n';
+	ss << "\tMax Image Count: " << details.capabilities.maxImageCount << '\n';
+	ss << "\tMin Image Extent: " << details.capabilities.minImageExtent.width << 'x' << details.capabilities.minImageExtent.height << '\n';
+	ss << "\tMax Image Extent: " << details.capabilities.maxImageExtent.width << 'x' << details.capabilities.maxImageExtent.height << '\n';
+	
+	ss << "Formats: \n";
+	
+	for(VkSurfaceFormatKHR surfaceFormat : details.formats)
+	{
+		ss << "\t" << string_VkFormat(surfaceFormat.format) << '\n';
+	}
+
+	ss << "Available Color spaces: \n";
+
+	for(VkSurfaceFormatKHR surfaceFormat : details.formats)
+	{
+		ss << "\t" << string_VkColorSpaceKHR(surfaceFormat.colorSpace) << '\n';
+	}
+
+	ss << "Available Present modes: \n";
+
+	for(VkPresentModeKHR presentMode : details.presentModes)
+	{
+		ss << '\t' << string_VkPresentModeKHR(presentMode) << '\n';
+	}
+
+	TPS_CORE_INFO(ss.str());
+
+}
 
 void Tempus::Renderer::Cleanup()
 {

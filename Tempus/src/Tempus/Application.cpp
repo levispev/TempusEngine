@@ -130,15 +130,14 @@ namespace Tempus {
 	void Application::CoreUpdate()
 	{
 
-		while (SDL_PollEvent(&CurrentEvent)) 
-		{
-			ImGui_ImplSDL2_ProcessEvent(&CurrentEvent);
+		SDL_PollEvent(&CurrentEvent);
 
-			if (CurrentEvent.type == SDL_QUIT)
-			{
-				bShouldQuit = true;
-				return;
-			}
+		ImGui_ImplSDL2_ProcessEvent(&CurrentEvent);
+
+		if (CurrentEvent.type == SDL_QUIT)
+		{
+			bShouldQuit = true;
+			return;
 		}
 
 		Update();

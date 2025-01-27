@@ -18,6 +18,7 @@ public:
 
 	virtual void Update() override
 	{
+		
 		SDL_Event event = GetCurrentEvent();
 
 		if (event.type == SDL_KEYDOWN)
@@ -25,7 +26,7 @@ public:
 			if (event.key.keysym.scancode == SDL_SCANCODE_A)
 			{
 
-				TPS_WARN("Colour Change!");
+				TPS_WARN("Color Change!");
 
 				std::random_device rd;
 				std::mt19937 gen(rd());
@@ -37,6 +38,7 @@ public:
 		}
 
 		//std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
 	}
 
 };
