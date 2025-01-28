@@ -1023,8 +1023,13 @@ uint32_t Tempus::Renderer::GetDeviceScore(VkPhysicalDevice device)
 	{
 	case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
 		score += 1;
+		break;
 	case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
 		score += 2;
+		break;
+	default:
+		score += 0;
+		break;
 	}
 
 	return score;
