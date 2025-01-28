@@ -83,6 +83,7 @@ namespace Tempus {
 		VkShaderModule CreateShaderModule(const std::vector<char>& code);
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 		bool IsDeviceSuitable(VkPhysicalDevice device);
+		uint32_t GetDeviceScore(VkPhysicalDevice device);
 		bool CheckValidationLayerSupport();
 		bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
 		std::vector<const char*> GetRequiredExtensions();

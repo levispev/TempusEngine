@@ -244,13 +244,17 @@ void Tempus::Renderer::PickPhysicalDevice()
 
 	LogDevices(devices);
 
+	uint32_t highestScore = 0;
+
 	// Check if device is suitable
 	for (const auto& device : devices) 
 	{
-		if (IsDeviceSuitable(device)) 
+		uint32_t score = GetDeviceScore(device);
+
+		if (IsDeviceSuitable(device) && score > highestScore) 
 		{
+			highestScore = score;
 			m_PhysicalDevice = device;
-			break;
 		}
 	}
 
@@ -1003,6 +1007,27 @@ bool Tempus::Renderer::IsDeviceSuitable(VkPhysicalDevice device)
 
 	return indices.IsComplete() && extensionsSupported && swapChainAdequate;
 
+}
+
+uint32_t Tempus::Renderer::GetDeviceScore(VkPhysicalDevice device)
+{
+
+	uint32_t score = 0;
+
+	VkPhysicalDeviceProperties deviceProperties;
+	VkPhysicalDeviceFeatures deviceFeatures;
+	vkGetPhysicalDeviceProperties(device, &deviceProperties);
+	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+	switch (deviceProperties.deviceType) 
+	{
+	case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+		score += 1;
+	case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+		score += 2;
+	}
+
+	return score;
 }
 
 bool Tempus::Renderer::CheckValidationLayerSupport()
