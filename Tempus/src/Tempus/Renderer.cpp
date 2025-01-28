@@ -237,10 +237,12 @@ void Tempus::Renderer::PickPhysicalDevice()
 	{
 		TPS_CORE_CRITICAL("Failed to find GPU with Vulkan support!");
 	}
-
+	
 	// Get physical devices
 	std::vector<VkPhysicalDevice> devices(deviceCount);
 	vkEnumeratePhysicalDevices(m_VkInstance, &deviceCount, devices.data());
+
+	LogDevices(devices);
 
 	// Check if device is suitable
 	for (const auto& device : devices) 
@@ -1214,6 +1216,14 @@ void Tempus::Renderer::LogSwapchainDetails(const SwapChainSupportDetails &detail
 
 	TPS_CORE_INFO(ss.str());
 
+}
+
+void Tempus::Renderer::LogDevices(const std::vector<VkPhysicalDevice>& devices)
+{
+	for (VkPhysicalDevice device : devices) 
+	{
+		LogDeviceInfo(device);
+	}
 }
 
 void Tempus::Renderer::Cleanup()

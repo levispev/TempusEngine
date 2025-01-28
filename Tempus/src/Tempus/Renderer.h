@@ -97,6 +97,7 @@ namespace Tempus {
 		void LogExtensionsAndLayers();
 		void LogDeviceInfo(VkPhysicalDevice device);
 		void LogSwapchainDetails(const SwapChainSupportDetails& details);
+		void LogDevices(const std::vector<VkPhysicalDevice>& devices);
 
 		void Cleanup();
 

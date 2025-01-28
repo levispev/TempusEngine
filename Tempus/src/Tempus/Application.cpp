@@ -14,6 +14,9 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_sdl2.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image/stb_image.h"
+
 namespace Tempus {
 
 	Application::Application() : CurrentEvent(SDL_Event())
