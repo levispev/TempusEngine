@@ -96,9 +96,8 @@ namespace Tempus {
 		VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
 		void LogExtensionsAndLayers();
-		void LogDeviceInfo(VkPhysicalDevice device);
+		void LogDeviceInfo();
 		void LogSwapchainDetails(const SwapChainSupportDetails& details);
-		void LogDevices(const std::vector<VkPhysicalDevice>& devices);
 
 		void Cleanup();
 

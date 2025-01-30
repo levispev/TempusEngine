@@ -150,10 +150,10 @@ void Tempus::Renderer::DrawImGui()
 	ImGui::Begin("Device Info");
 		ImGui::Text("Name: %s", m_DeviceDetails.name.c_str());
 		ImGui::Text("Type: %s", m_DeviceDetails.type.c_str());
-		ImGui::Text("ID: %i", m_DeviceDetails.id);
-		ImGui::Text("Driver Version: %i", m_DeviceDetails.driverVersion);
-		ImGui::Text("API Version: %i", m_DeviceDetails.apiVersion);
-		ImGui::Text("Vendor ID: %i", m_DeviceDetails.vendorId);
+		ImGui::Text("ID: %u", m_DeviceDetails.id);
+		ImGui::Text("Driver Version: %u", m_DeviceDetails.driverVersion);
+		ImGui::Text("API Version: %u", m_DeviceDetails.apiVersion);
+		ImGui::Text("Vendor ID: %u", m_DeviceDetails.vendorId);
 	ImGui::End();
 
 	ImGui::Render();
@@ -242,8 +242,6 @@ void Tempus::Renderer::PickPhysicalDevice()
 	std::vector<VkPhysicalDevice> devices(deviceCount);
 	vkEnumeratePhysicalDevices(m_VkInstance, &deviceCount, devices.data());
 
-	LogDevices(devices);
-
 	uint32_t highestScore = 0;
 
 	// Check if device is suitable
@@ -263,7 +261,7 @@ void Tempus::Renderer::PickPhysicalDevice()
 		TPS_CORE_CRITICAL("Failed to find suitable GPU!");
 	}
 
-	LogDeviceInfo(m_PhysicalDevice);
+	LogDeviceInfo();
 
 }
 
@@ -1182,30 +1180,46 @@ void Tempus::Renderer::LogExtensionsAndLayers()
 
 }
 
-void Tempus::Renderer::LogDeviceInfo(VkPhysicalDevice device)
+void Tempus::Renderer::LogDeviceInfo()
 {
-	// Logging of device information
-	VkPhysicalDeviceProperties deviceProperties;
-	VkPhysicalDeviceFeatures deviceFeatures;
-	vkGetPhysicalDeviceProperties(device, &deviceProperties);
-	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
-	m_DeviceDetails.name = deviceProperties.deviceName;
-	m_DeviceDetails.id = deviceProperties.deviceID;
-	m_DeviceDetails.type = std::string(string_VkPhysicalDeviceType(deviceProperties.deviceType)).substr(24);
-	m_DeviceDetails.driverVersion = deviceProperties.driverVersion;
-	m_DeviceDetails.apiVersion = deviceProperties.apiVersion;
-	m_DeviceDetails.vendorId = deviceProperties.vendorID;
+	uint32_t deviceCount = 0;
+	vkEnumeratePhysicalDevices(m_VkInstance, &deviceCount, nullptr);
+
+	std::vector<VkPhysicalDevice> devices(deviceCount);
+	vkEnumeratePhysicalDevices(m_VkInstance, &deviceCount, devices.data());
 
 	std::stringstream ss;
+	ss << "\nFound Devices:" << '\n';
+	uint32_t i = 0;
 
-	ss << "\nDevice Info:" << '\n';
-	ss << '\t' << "Name: " << m_DeviceDetails.name << '\n';
-	ss << '\t' << "ID: " << m_DeviceDetails.id << '\n';
-	ss << '\t' << "Type: " << m_DeviceDetails.type << '\n';
-	ss << '\t' << "Driver Version: " << m_DeviceDetails.driverVersion << '\n';
-	ss << '\t' << "API Version: " << m_DeviceDetails.apiVersion << '\n';
-	ss << '\t' << "Vendor ID: " << m_DeviceDetails.vendorId << '\n';
+	for (const VkPhysicalDevice& device : devices) 
+	{
+		// Logging of device information
+		VkPhysicalDeviceProperties deviceProperties;
+		VkPhysicalDeviceFeatures deviceFeatures;
+		vkGetPhysicalDeviceProperties(device, &deviceProperties);
+		vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+		m_DeviceDetails.name = deviceProperties.deviceName;
+		m_DeviceDetails.id = deviceProperties.deviceID;
+		m_DeviceDetails.type = std::string(string_VkPhysicalDeviceType(deviceProperties.deviceType)).substr(24);
+		m_DeviceDetails.driverVersion = deviceProperties.driverVersion;
+		m_DeviceDetails.apiVersion = deviceProperties.apiVersion;
+		m_DeviceDetails.vendorId = deviceProperties.vendorID;
+
+		if (device == m_PhysicalDevice) 
+		{
+			ss << COLOR_YELLOW << "[ACTIVE]" << COLOR_RESET;
+		}
+		ss << "Device #" << i++ << '\n';
+		ss << '\t' << "Name: " << m_DeviceDetails.name << '\n';
+		ss << '\t' << "ID: " << m_DeviceDetails.id << '\n';
+		ss << '\t' << "Type: " << m_DeviceDetails.type << '\n';
+		ss << '\t' << "Driver Version: " << m_DeviceDetails.driverVersion << '\n';
+		ss << '\t' << "API Version: " << m_DeviceDetails.apiVersion << '\n';
+		ss << '\t' << "Vendor ID: " << m_DeviceDetails.vendorId << '\n';
+	}
 
 	TPS_CORE_INFO(ss.str());
 
@@ -1246,14 +1260,6 @@ void Tempus::Renderer::LogSwapchainDetails(const SwapChainSupportDetails &detail
 
 	TPS_CORE_INFO(ss.str());
 
-}
-
-void Tempus::Renderer::LogDevices(const std::vector<VkPhysicalDevice>& devices)
-{
-	for (VkPhysicalDevice device : devices) 
-	{
-		LogDeviceInfo(device);
-	}
 }
 
 void Tempus::Renderer::Cleanup()
