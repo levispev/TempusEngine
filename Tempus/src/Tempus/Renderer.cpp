@@ -1201,24 +1201,26 @@ void Tempus::Renderer::LogDeviceInfo()
 		vkGetPhysicalDeviceProperties(device, &deviceProperties);
 		vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
-		m_DeviceDetails.name = deviceProperties.deviceName;
-		m_DeviceDetails.id = deviceProperties.deviceID;
-		m_DeviceDetails.type = std::string(string_VkPhysicalDeviceType(deviceProperties.deviceType)).substr(24);
-		m_DeviceDetails.driverVersion = deviceProperties.driverVersion;
-		m_DeviceDetails.apiVersion = deviceProperties.apiVersion;
-		m_DeviceDetails.vendorId = deviceProperties.vendorID;
+		DeviceDetails deviceDetails;
+		deviceDetails.name = deviceProperties.deviceName;
+		deviceDetails.id = deviceProperties.deviceID;
+		deviceDetails.type = std::string(string_VkPhysicalDeviceType(deviceProperties.deviceType)).substr(24);
+		deviceDetails.driverVersion = deviceProperties.driverVersion;
+		deviceDetails.apiVersion = deviceProperties.apiVersion;
+		deviceDetails.vendorId = deviceProperties.vendorID;
 
 		if (device == m_PhysicalDevice) 
 		{
 			ss << COLOR_YELLOW << "[ACTIVE]" << COLOR_RESET;
+			m_DeviceDetails = deviceDetails;
 		}
 		ss << "Device #" << i++ << '\n';
-		ss << '\t' << "Name: " << m_DeviceDetails.name << '\n';
-		ss << '\t' << "ID: " << m_DeviceDetails.id << '\n';
-		ss << '\t' << "Type: " << m_DeviceDetails.type << '\n';
-		ss << '\t' << "Driver Version: " << m_DeviceDetails.driverVersion << '\n';
-		ss << '\t' << "API Version: " << m_DeviceDetails.apiVersion << '\n';
-		ss << '\t' << "Vendor ID: " << m_DeviceDetails.vendorId << '\n';
+		ss << '\t' << "Name: " << deviceDetails.name << '\n';
+		ss << '\t' << "ID: " << deviceDetails.id << '\n';
+		ss << '\t' << "Type: " << deviceDetails.type << '\n';
+		ss << '\t' << "Driver Version: " << deviceDetails.driverVersion << '\n';
+		ss << '\t' << "API Version: " << deviceDetails.apiVersion << '\n';
+		ss << '\t' << "Vendor ID: " << deviceDetails.vendorId << '\n';
 	}
 
 	TPS_CORE_INFO(ss.str());
