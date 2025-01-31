@@ -20,9 +20,13 @@ namespace Tempus {
 
 		SDL_Window* GetNativeWindow() const;
 
+		void SetIcon(const char* path);
+
 	private:
 
 		SDL_Window* m_Window = nullptr;
+
+		void Cleanup();
 
 	};
 

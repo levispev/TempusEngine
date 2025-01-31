@@ -15,8 +15,6 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_sdl2.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image/stb_image.h"
 
 namespace Tempus {
 
@@ -53,23 +51,11 @@ R"(
 		FileUtils::SetWorkingDirectory(FileUtils::GetExecutablePath());
 		FileUtils::SetWorkingDirectory("../../../");
 
-		// SDL Initialization
-		if (!InitSDL()) 
-		{
-			return;
-		}
+		InitSDL();
 
-		// Window creation
-		if (!InitWindow()) 
-		{
-			return;
-		}
+		InitWindow();
 
-		// Renderer creation
-		if (!InitRenderer()) 
-		{
-			return;
-		}
+		InitRenderer();
 
 		while (!bShouldQuit) 
 		{
@@ -80,46 +66,42 @@ R"(
 
 	}
 
-	bool Application::InitWindow()
+	void Application::InitWindow()
 	{
 		// Window creation
 		if (!m_Window || !m_Window->Init("Sandbox", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI))
 		{
 			TPS_CORE_CRITICAL("Failed to initialize window!");
-			return false;
 		}
+
+		m_Window->SetIcon("Logo.png");
 
 		TPS_CORE_INFO("Window successfully created!");
 
-		return true;
-
 	}
 
-	bool Application::InitRenderer()
+	void Application::InitRenderer()
 	{
 
 		// Renderer creation
 		if (!m_Renderer || !m_Renderer->Init(m_Window))
 		{
 			TPS_CORE_CRITICAL("Failed to initialize renderer!");
-			return false;
 		}
 
 		m_Renderer->SetRenderDrawColor(19, 16, 102, 255);
 
 		TPS_CORE_INFO("Renderer successfully created!");
 
-		return true;
 	}
 
-	bool Application::InitSDL()
+	void Application::InitSDL()
 	{
 		SDL_SetMainReady();
 
 		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0)
 		{
 			TPS_CORE_CRITICAL("Failed to initialize SDL: {0}", SDL_GetError());
-			return false;
 		}
 
 		SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
@@ -131,7 +113,6 @@ R"(
 		if (SDL_Vulkan_LoadLibrary(nullptr)) 
 		{
 			TPS_CORE_CRITICAL("Failed to load Vulkan library: {0}", SDL_GetError());
-			return false;
 		}
 		
 		uint32_t instanceVersion = 0;
@@ -141,7 +122,6 @@ R"(
 			TPS_CORE_INFO("Loaded Vulkan version: {0}.{1}.{2}", VK_VERSION_MAJOR(instanceVersion), VK_VERSION_MINOR(instanceVersion), VK_VERSION_PATCH(instanceVersion));
 		}
 
-		return true;
 	}
 
 	void Application::CoreUpdate()

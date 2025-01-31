@@ -29,9 +29,9 @@ namespace Tempus {
 
 	private:
 
-		bool InitWindow();
-		bool InitRenderer();
-		bool InitSDL();
+		void InitWindow();
+		void InitRenderer();
+		void InitSDL();
 
 		void CoreUpdate();
 
