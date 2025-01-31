@@ -29,8 +29,6 @@ namespace Tempus {
 
 		bool Init(class Window* window);
 
-		int RenderClear();
-		void RenderPresent();
 		void SetRenderDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
 	private:
@@ -95,6 +93,7 @@ namespace Tempus {
 		VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 		VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
+		// Debug logging functions
 		void LogExtensionsAndLayers();
 		void LogDeviceInfo();
 		void LogSwapchainDetails(const SwapChainSupportDetails& details);

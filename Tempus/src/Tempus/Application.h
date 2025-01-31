@@ -27,6 +27,8 @@ namespace Tempus {
 
 		void SetRenderColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
+		class Window* GetWindow() const { return m_Window; }
+
 	private:
 
 		void InitWindow();

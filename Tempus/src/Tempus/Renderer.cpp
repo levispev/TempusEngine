@@ -66,17 +66,6 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 
 }
 
-int Tempus::Renderer::RenderClear()
-{
-	return 0;
-	//return SDL_RenderClear(m_Renderer);
-}
-
-void Tempus::Renderer::RenderPresent()
-{
-	//SDL_RenderPresent(m_Renderer);
-}
-
 void Tempus::Renderer::SetRenderDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 {
 	m_ClearColor[0] = r / 255.0f;
@@ -176,12 +165,13 @@ void Tempus::Renderer::CreateVulkanInstance()
 	appInfo.engineVersion = VK_MAKE_API_VERSION(0, 0, 1, 0);
 	appInfo.apiVersion = VK_API_VERSION_1_3;
 
+
 	VkInstanceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &appInfo;
 
 	// Retrieving minimum platform specific required extensions for SDL surface
-	auto extensions = GetRequiredExtensions();
+	std::vector<const char*> extensions = GetRequiredExtensions();
 
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	createInfo.ppEnabledExtensionNames = extensions.data();
@@ -840,7 +830,6 @@ VkShaderModule Tempus::Renderer::CreateShaderModule(const std::vector<char>& cod
 	if (vkCreateShaderModule(m_Device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) 
 	{
 		TPS_CORE_CRITICAL("Failed to create shader module!");
-		throw std::runtime_error("Failed to create shader module!");
 	}
 
 	return shaderModule;
@@ -1026,7 +1015,6 @@ uint32_t Tempus::Renderer::GetDeviceScore(VkPhysicalDevice device)
 		score += 2;
 		break;
 	default:
-		score += 0;
 		break;
 	}
 
@@ -1221,6 +1209,38 @@ void Tempus::Renderer::LogDeviceInfo()
 		ss << '\t' << "Driver Version: " << deviceDetails.driverVersion << '\n';
 		ss << '\t' << "API Version: " << deviceDetails.apiVersion << '\n';
 		ss << '\t' << "Vendor ID: " << deviceDetails.vendorId << '\n';
+		ss << '\n';
+
+		// Logging of queue support
+		uint32_t queueFamilyCount = 0;
+		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+		std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+		for (uint32_t i = 0; i < queueFamilies.size(); i++) 
+		{
+			const auto& queueFamily = queueFamilies[i];
+
+			ss << "Queue Family #" << i << '\n';
+			ss << "\tMax queue count: " << queueFamily.queueCount << '\n';
+			ss << "\tFlags: ";
+
+			if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) ss << "Graphics ";
+			if (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT) ss << "Compute ";
+			if (queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT) ss << "Transfer ";
+			if (queueFamily.queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) ss << "Sparse Binding ";
+			if (queueFamily.queueFlags & VK_QUEUE_PROTECTED_BIT) ss << "Protected ";
+			if (queueFamily.queueFlags & VK_QUEUE_VIDEO_DECODE_BIT_KHR) ss << "Video Decode ";
+			//if (queueFamily.queueFlags & VK_QUEUE_VIDEO_ENCODE_BIT_KHR) std::cout << "Video Encode ";
+
+			ss << '\n';
+
+			ss << "\tMinimum Image Transfer Granularity: "
+				<< queueFamily.minImageTransferGranularity.width << "x"
+				<< queueFamily.minImageTransferGranularity.height << "x"
+				<< queueFamily.minImageTransferGranularity.depth << "\n";
+		}
 	}
 
 	TPS_CORE_INFO(ss.str());
@@ -1285,7 +1305,7 @@ void Tempus::Renderer::Cleanup()
 	vkDestroySemaphore(m_Device, m_ImageAvailableSemaphore, nullptr);
 	vkDestroySemaphore(m_Device, m_RenderFinishedSemaphore, nullptr);
 	vkDestroyFence(m_Device, m_InFlightFence, nullptr);
-
+	
 	for (auto framebuffer : m_SwapChainFramebuffers) 
 	{
         vkDestroyFramebuffer(m_Device, framebuffer, nullptr);

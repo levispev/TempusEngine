@@ -19,7 +19,7 @@ int main(int argc, char** argv)
 	{
 		app->Run();
 	}
-	catch(const std::exception& e)
+	catch(const std::exception&)
 	{
 		return -1;
 	}
@@ -42,7 +42,7 @@ int main(int argc, char** argv)
 	{
 		app->Run();
 	}
-	catch(const std::exception& e)
+	catch(const std::exception&)
 	{
 		return -1;
 	}
