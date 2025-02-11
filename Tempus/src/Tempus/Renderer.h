@@ -31,6 +31,8 @@ namespace Tempus {
 
 		void SetRenderDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
+		const int MAX_FRAMES_IN_FLIGHT = 2;
+
 	private:
 
 		float m_ClearColor[4] = {0.25f, 0.5f, 0.1f, 0.0f};
@@ -121,14 +123,15 @@ namespace Tempus {
 		std::vector<VkFramebuffer> m_SwapChainFramebuffers;
 
 		VkCommandPool m_CommandPool = VK_NULL_HANDLE;
-		VkCommandBuffer m_CommandBuffer = VK_NULL_HANDLE;
+		std::vector<VkCommandBuffer> m_CommandBuffers;
 
 		VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
 		VkQueue m_PresentQueue = VK_NULL_HANDLE;
 
-		VkSemaphore m_ImageAvailableSemaphore = VK_NULL_HANDLE;
-		VkSemaphore m_RenderFinishedSemaphore = VK_NULL_HANDLE;
-		VkFence m_InFlightFence = VK_NULL_HANDLE;
+		std::vector<VkSemaphore> m_ImageAvailableSemaphores;
+		std::vector<VkSemaphore> m_RenderFinishedSemaphores;
+		std::vector<VkFence> m_InFlightFences;
+		uint32_t m_CurrentFrame = 0;
 
 		VkDescriptorPool m_ImguiPool;
 

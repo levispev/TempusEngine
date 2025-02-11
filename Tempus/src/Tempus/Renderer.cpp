@@ -77,35 +77,35 @@ void Tempus::Renderer::SetRenderDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 void Tempus::Renderer::DrawFrame()
 {
 	// Wait for previous frame to finish drawing
-	vkWaitForFences(m_Device, 1, &m_InFlightFence, VK_TRUE, UINT64_MAX);
+	vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
 	// Reset fence signal
-	vkResetFences(m_Device, 1, &m_InFlightFence);
+	vkResetFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame]);
 
 	uint32_t imageIndex;
 	// Retrieve image from swap chain
-	VkResult result = vkAcquireNextImageKHR(m_Device, m_SwapChain, UINT64_MAX, m_ImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+	VkResult result = vkAcquireNextImageKHR(m_Device, m_SwapChain, UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &imageIndex);
 
-	vkResetCommandBuffer(m_CommandBuffer, 0);
+	vkResetCommandBuffer(m_CommandBuffers[m_CurrentFrame], 0);
 
-	RecordCommandBuffer(m_CommandBuffer, imageIndex);
+	RecordCommandBuffer(m_CommandBuffers[m_CurrentFrame], imageIndex);
 
 
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-	VkSemaphore waitSemaphores[] = { m_ImageAvailableSemaphore };
+	VkSemaphore waitSemaphores[] = { m_ImageAvailableSemaphores[m_CurrentFrame]};
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;
 	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &m_CommandBuffer;
+	submitInfo.pCommandBuffers = &m_CommandBuffers[m_CurrentFrame];
 
-	VkSemaphore signalSemaphores[] = { m_RenderFinishedSemaphore };
+	VkSemaphore signalSemaphores[] = { m_RenderFinishedSemaphores[m_CurrentFrame]};
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
-	if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, m_InFlightFence) != VK_SUCCESS) 
+	if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, m_InFlightFences[m_CurrentFrame]) != VK_SUCCESS)
 	{
 		TPS_CORE_CRITICAL("Failed to submit draw command buffer!");
 	}
@@ -123,6 +123,8 @@ void Tempus::Renderer::DrawFrame()
 	presentInfo.pResults = nullptr; // Optional
 
 	vkQueuePresentKHR(m_PresentQueue, &presentInfo);
+
+	m_CurrentFrame = (m_CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
 }
 
@@ -567,12 +569,12 @@ void Tempus::Renderer::CreateGraphicsPipeline()
 	VkPipelineColorBlendAttachmentState colorBlendAttachment{};
 	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 	colorBlendAttachment.blendEnable = VK_FALSE;
-	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
-	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
-	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD; // Optional
-	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
-	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
-	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; // Optional
+	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; 
+	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; 
+	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD; 
+	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; 
+	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; 
+	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
 	VkPipelineColorBlendStateCreateInfo colorBlending{};
 	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -674,13 +676,16 @@ void Tempus::Renderer::CreateCommandPool()
 
 void Tempus::Renderer::CreateCommandBuffer()
 {
+
+	m_CommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.commandPool = m_CommandPool;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandBufferCount = 1;
+	allocInfo.commandBufferCount = (uint32_t)m_CommandBuffers.size();
 
-	if (vkAllocateCommandBuffers(m_Device, &allocInfo, &m_CommandBuffer) != VK_SUCCESS) 
+	if (vkAllocateCommandBuffers(m_Device, &allocInfo, m_CommandBuffers.data()) != VK_SUCCESS)
 	{
 		TPS_CORE_CRITICAL("Failed to allocate command buffers!");
 	}
@@ -689,6 +694,10 @@ void Tempus::Renderer::CreateCommandBuffer()
 
 void Tempus::Renderer::CreateSyncObjects()
 {
+	m_ImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+	m_RenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+	m_InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+
 	VkSemaphoreCreateInfo semaphoreInfo{};
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 	VkFenceCreateInfo fenceInfo{};
@@ -696,11 +705,14 @@ void Tempus::Renderer::CreateSyncObjects()
 	// Setting fence to be signalled on creation for first call of DrawFrame()
 	fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-	if (vkCreateSemaphore(m_Device, &semaphoreInfo, nullptr, &m_ImageAvailableSemaphore) != VK_SUCCESS ||
-		vkCreateSemaphore(m_Device, &semaphoreInfo, nullptr, &m_RenderFinishedSemaphore) != VK_SUCCESS ||
-		vkCreateFence(m_Device, &fenceInfo, nullptr, &m_InFlightFence) != VK_SUCCESS) 
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) 
 	{
-		TPS_CORE_CRITICAL("Failed to create semaphores!");
+		if (vkCreateSemaphore(m_Device, &semaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i]) != VK_SUCCESS ||
+			vkCreateSemaphore(m_Device, &semaphoreInfo, nullptr, &m_RenderFinishedSemaphores[i]) != VK_SUCCESS ||
+			vkCreateFence(m_Device, &fenceInfo, nullptr, &m_InFlightFences[i]) != VK_SUCCESS)
+		{
+			TPS_CORE_CRITICAL("Failed to create semaphores!");
+		}
 	}
 
 }
@@ -837,12 +849,10 @@ VkShaderModule Tempus::Renderer::CreateShaderModule(const std::vector<char>& cod
 
 void Tempus::Renderer::CreateSurface(Tempus::Window* window)
 {
-
 	if(!window || !SDL_Vulkan_CreateSurface(window->GetNativeWindow(), m_VkInstance, &m_VkSurface))
 	{
 		TPS_CORE_CRITICAL("Failed to create surface!");
 	}
-
 }
 
 Tempus::Renderer::QueueFamilyIndices Tempus::Renderer::FindQueueFamilies(VkPhysicalDevice device)
@@ -920,7 +930,7 @@ Tempus::Renderer::SwapChainSupportDetails Tempus::Renderer::QuerySwapChainSuppor
 
 VkPresentModeKHR Tempus::Renderer::ChooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes)
 {
-	
+
     for (const auto& availablePresentMode : availablePresentModes) 
 	{
 		// Mailbox is desired if available
@@ -1241,6 +1251,9 @@ void Tempus::Renderer::LogDeviceInfo()
 				<< queueFamily.minImageTransferGranularity.height << "x"
 				<< queueFamily.minImageTransferGranularity.depth << "\n";
 		}
+
+		ss << '\n';
+
 	}
 
 	TPS_CORE_INFO(ss.str());
@@ -1302,9 +1315,12 @@ void Tempus::Renderer::Cleanup()
 
 	vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
 
-	vkDestroySemaphore(m_Device, m_ImageAvailableSemaphore, nullptr);
-	vkDestroySemaphore(m_Device, m_RenderFinishedSemaphore, nullptr);
-	vkDestroyFence(m_Device, m_InFlightFence, nullptr);
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) 
+	{
+		vkDestroySemaphore(m_Device, m_ImageAvailableSemaphores[i], nullptr);
+		vkDestroySemaphore(m_Device, m_RenderFinishedSemaphores[i], nullptr);
+		vkDestroyFence(m_Device, m_InFlightFences[i], nullptr);
+	}
 	
 	for (auto framebuffer : m_SwapChainFramebuffers) 
 	{
