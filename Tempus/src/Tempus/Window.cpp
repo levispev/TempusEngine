@@ -67,7 +67,6 @@ namespace Tempus {
 		{
 			SDL_DestroyWindow(m_Window);
 		}
-
 	}
 
 }

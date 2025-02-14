@@ -29,7 +29,7 @@ namespace Tempus {
 
 		bool Init(class Window* window);
 
-		void SetRenderDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
+		void SetClearColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
 		const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -76,6 +76,8 @@ namespace Tempus {
 		void CreateCommandBuffer();
 		void CreateSyncObjects();
 
+		void RecreateSwapChain();
+
 		void InitImGui();
 
 		void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
@@ -100,6 +102,7 @@ namespace Tempus {
 		void LogDeviceInfo();
 		void LogSwapchainDetails(const SwapChainSupportDetails& details);
 
+		void CleanupSwapChain();
 		void Cleanup();
 
 	private:
@@ -132,6 +135,8 @@ namespace Tempus {
 		std::vector<VkSemaphore> m_RenderFinishedSemaphores;
 		std::vector<VkFence> m_InFlightFences;
 		uint32_t m_CurrentFrame = 0;
+
+		bool m_FramebufferResized = false;
 
 		VkDescriptorPool m_ImguiPool;
 

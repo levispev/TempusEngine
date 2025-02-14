@@ -25,7 +25,7 @@ namespace Tempus {
 
 		SDL_Event GetCurrentEvent() const { return CurrentEvent; }
 
-		void SetRenderColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
+		void SetRenderClearColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
 		class Window* GetWindow() const { return m_Window; }
 

@@ -32,7 +32,7 @@ public:
 				std::mt19937 gen(rd());
 				std::uniform_int_distribution<> dis(0, 255);
 
-				SetRenderColor(dis(gen), dis(gen), dis(gen), 255);
+				SetRenderClearColor(dis(gen), dis(gen), dis(gen), 255);
 
 			}
 		}

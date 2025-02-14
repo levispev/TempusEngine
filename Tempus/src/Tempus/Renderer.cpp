@@ -66,7 +66,7 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 
 }
 
-void Tempus::Renderer::SetRenderDrawColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
+void Tempus::Renderer::SetClearColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 {
 	m_ClearColor[0] = r / 255.0f;
 	m_ClearColor[1] = g / 255.0f;
@@ -78,12 +78,24 @@ void Tempus::Renderer::DrawFrame()
 {
 	// Wait for previous frame to finish drawing
 	vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
-	// Reset fence signal
-	vkResetFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame]);
 
 	uint32_t imageIndex;
 	// Retrieve image from swap chain
 	VkResult result = vkAcquireNextImageKHR(m_Device, m_SwapChain, UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &imageIndex);
+
+	// Check if swapchain has been invalidated
+	if (result == VK_ERROR_OUT_OF_DATE_KHR)
+	{
+		RecreateSwapChain();
+		return;
+	}
+	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+	{
+		TPS_CORE_CRITICAL("Failed to acquire swap chain image!");
+	}
+
+	// Reset fence signal
+	vkResetFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame]);
 
 	vkResetCommandBuffer(m_CommandBuffers[m_CurrentFrame], 0);
 
@@ -122,7 +134,17 @@ void Tempus::Renderer::DrawFrame()
 	presentInfo.pImageIndices = &imageIndex;
 	presentInfo.pResults = nullptr; // Optional
 
-	vkQueuePresentKHR(m_PresentQueue, &presentInfo);
+	result = vkQueuePresentKHR(m_PresentQueue, &presentInfo);
+
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_FramebufferResized)
+	{
+		m_FramebufferResized = false;
+		RecreateSwapChain();
+	}
+	else if (result != VK_SUCCESS)
+	{
+		TPS_CORE_CRITICAL("Failed to present swap chain image!");
+	}
 
 	m_CurrentFrame = (m_CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
@@ -136,14 +158,15 @@ void Tempus::Renderer::DrawImGui()
 
 	ImGui::Begin("Application Stats");
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::Text("Swapchain extent: %ux%u", m_SwapChainExtent.width, m_SwapChainExtent.height);
 	ImGui::End();
 
 	ImGui::Begin("Device Info");
 		ImGui::Text("Name: %s", m_DeviceDetails.name.c_str());
 		ImGui::Text("Type: %s", m_DeviceDetails.type.c_str());
 		ImGui::Text("ID: %u", m_DeviceDetails.id);
-		ImGui::Text("Driver Version: %u", m_DeviceDetails.driverVersion);
-		ImGui::Text("API Version: %u", m_DeviceDetails.apiVersion);
+		ImGui::Text("Driver Version: %u.%u.%u", VK_VERSION_MAJOR(m_DeviceDetails.driverVersion), VK_VERSION_MINOR(m_DeviceDetails.driverVersion), VK_VERSION_PATCH(m_DeviceDetails.driverVersion));
+		ImGui::Text("API Version: %u.%u.%u", VK_VERSION_MAJOR(m_DeviceDetails.apiVersion), VK_VERSION_MINOR(m_DeviceDetails.apiVersion), VK_VERSION_PATCH(m_DeviceDetails.apiVersion));
 		ImGui::Text("Vendor ID: %u", m_DeviceDetails.vendorId);
 	ImGui::End();
 
@@ -717,22 +740,34 @@ void Tempus::Renderer::CreateSyncObjects()
 
 }
 
+void Tempus::Renderer::RecreateSwapChain()
+{
+	TPS_CORE_INFO("Recreating swapchain!");
+	vkDeviceWaitIdle(m_Device);
+
+	CleanupSwapChain();
+
+	CreateSwapChain();
+	CreateImageViews();
+	CreateFrameBuffers();
+}
+
 void Tempus::Renderer::InitImGui()
 {
 	// Huge buffer. Same as in example code. Can reduce
 	VkDescriptorPoolSize pool_sizes[] =
 	{
-		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-		{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+		{ VK_DESCRIPTOR_TYPE_SAMPLER, 500 },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 500 },
+		{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 500 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 500 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 500 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 500 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 500 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 500 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 500 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 500 },
+		{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 500 }
 	};
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
@@ -1216,8 +1251,8 @@ void Tempus::Renderer::LogDeviceInfo()
 		ss << '\t' << "Name: " << deviceDetails.name << '\n';
 		ss << '\t' << "ID: " << deviceDetails.id << '\n';
 		ss << '\t' << "Type: " << deviceDetails.type << '\n';
-		ss << '\t' << "Driver Version: " << deviceDetails.driverVersion << '\n';
-		ss << '\t' << "API Version: " << deviceDetails.apiVersion << '\n';
+		ss << '\t' << "Driver Version: " << VK_VERSION_MAJOR(deviceDetails.driverVersion) << '.' << VK_VERSION_MINOR(deviceDetails.driverVersion) << '.' << VK_VERSION_PATCH(deviceDetails.driverVersion) <<'\n';
+		ss << '\t' << "API Version: " << VK_VERSION_MAJOR(deviceDetails.apiVersion) << '.' << VK_VERSION_MINOR(deviceDetails.apiVersion) << '.' << VK_VERSION_PATCH(deviceDetails.apiVersion) << '\n';
 		ss << '\t' << "Vendor ID: " << deviceDetails.vendorId << '\n';
 		ss << '\n';
 
@@ -1297,16 +1332,26 @@ void Tempus::Renderer::LogSwapchainDetails(const SwapChainSupportDetails &detail
 
 }
 
+void Tempus::Renderer::CleanupSwapChain()
+{
+	for (auto framebuffer : m_SwapChainFramebuffers)
+	{
+		vkDestroyFramebuffer(m_Device, framebuffer, nullptr);
+	}
+
+	for (auto imageView : m_SwapChainImageViews)
+	{
+		vkDestroyImageView(m_Device, imageView, nullptr);
+	}
+
+	vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);
+}
+
 void Tempus::Renderer::Cleanup()
 {
 
 	// Wait for all async objects to finish
 	vkDeviceWaitIdle(m_Device);
-
-	if (m_bEnableValidationLayers) 
-	{
-		DestroyDebugUtilsMessengerEXT(m_VkInstance, m_DebugMessenger, nullptr);
-	}
 
 	ImGui_ImplVulkan_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
@@ -1322,21 +1367,18 @@ void Tempus::Renderer::Cleanup()
 		vkDestroyFence(m_Device, m_InFlightFences[i], nullptr);
 	}
 	
-	for (auto framebuffer : m_SwapChainFramebuffers) 
-	{
-        vkDestroyFramebuffer(m_Device, framebuffer, nullptr);
-    }
-
-	for (auto imageView : m_SwapChainImageViews) 
-	{
-		vkDestroyImageView(m_Device, imageView, nullptr);
-	}
+	CleanupSwapChain();
 
 	vkDestroyPipeline(m_Device, m_GraphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
 	vkDestroyRenderPass(m_Device, m_RenderPass, nullptr);
-	vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);
 	vkDestroyDevice(m_Device, nullptr);
+
+	if (m_bEnableValidationLayers)
+	{
+		DestroyDebugUtilsMessengerEXT(m_VkInstance, m_DebugMessenger, nullptr);
+	}
+
 	vkDestroySurfaceKHR(m_VkInstance, m_VkSurface, nullptr);
 	vkDestroyInstance(m_VkInstance, nullptr);
 

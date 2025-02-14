@@ -69,7 +69,7 @@ R"(
 	void Application::InitWindow()
 	{
 		// Window creation
-		if (!m_Window || !m_Window->Init("Sandbox", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI))
+		if (!m_Window || !m_Window->Init("Sandbox", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE))
 		{
 			TPS_CORE_CRITICAL("Failed to initialize window!");
 		}
@@ -89,7 +89,7 @@ R"(
 			TPS_CORE_CRITICAL("Failed to initialize renderer!");
 		}
 
-		m_Renderer->SetRenderDrawColor(19, 16, 102, 255);
+		m_Renderer->SetClearColor(19, 16, 102, 255);
 
 		TPS_CORE_INFO("Renderer successfully created!");
 
@@ -136,6 +136,13 @@ R"(
 			bShouldQuit = true;
 			return;
 		}
+		else if (CurrentEvent.type == SDL_WINDOWEVENT) 
+		{
+			if (CurrentEvent.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) 
+			{
+
+			}
+		}
 
 		Update();
 		m_Renderer->Update();
@@ -165,8 +172,8 @@ R"(
 		TPS_CORE_INFO("Application Cleaned");
 	}
 
-	void Application::SetRenderColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
+	void Application::SetRenderClearColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 	{
-		m_Renderer->SetRenderDrawColor(r, g, b, a);
+		m_Renderer->SetClearColor(r, g, b, a);
 	}
 }
