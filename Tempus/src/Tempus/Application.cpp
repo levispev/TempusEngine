@@ -8,6 +8,7 @@
 
 #include "Window.h"
 #include "Renderer.h"
+#include "Events/EventDispatcher.h"
 
 #include "sdl/SDL_vulkan.h"
 #include "Utils/FileUtils.h"
@@ -127,6 +128,16 @@ R"(
 	void Application::CoreUpdate()
 	{
 
+		EventUpdate();
+
+		Update();
+		m_Renderer->Update();
+
+	}
+
+	void Application::EventUpdate()
+	{
+
 		SDL_PollEvent(&CurrentEvent);
 
 		ImGui_ImplSDL2_ProcessEvent(&CurrentEvent);
@@ -136,16 +147,10 @@ R"(
 			bShouldQuit = true;
 			return;
 		}
-		else if (CurrentEvent.type == SDL_WINDOWEVENT) 
+		else 
 		{
-			if (CurrentEvent.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) 
-			{
-
-			}
+			EventDispatcher::GetInstance()->Propagate(CurrentEvent);
 		}
-
-		Update();
-		m_Renderer->Update();
 
 	}
 

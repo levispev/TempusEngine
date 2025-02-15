@@ -14,6 +14,7 @@
 #include "imgui/imgui_impl_sdl2.h"
 #include "imgui/imgui_impl_vulkan.h"
 #include <vulkan/vk_enum_string_helper.h>
+#include "sdl/SDL.h"
 
 
 Tempus::Renderer::Renderer()
@@ -51,6 +52,7 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 	CreateSurface(m_Window);
 	PickPhysicalDevice();
 	CreateLogicalDevice();
+	LogSwapchainDetails(QuerySwapChainSupport(m_PhysicalDevice));
 	CreateSwapChain();
 	CreateImageViews();
 	CreateRenderPass();
@@ -72,6 +74,17 @@ void Tempus::Renderer::SetClearColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 	m_ClearColor[1] = g / 255.0f;
 	m_ClearColor[2] = b / 255.0f;
 	m_ClearColor[3] = a / 255.0f;
+}
+
+void Tempus::Renderer::OnEvent(const SDL_Event& event)
+{
+	if (event.type == SDL_WINDOWEVENT) 
+	{
+		if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) 
+		{
+			TPS_CORE_WARN("Window resized! {}x{}", event.window.data1, event.window.data2);
+		}
+	}
 }
 
 void Tempus::Renderer::DrawFrame()
@@ -339,8 +352,6 @@ void Tempus::Renderer::CreateLogicalDevice()
 void Tempus::Renderer::CreateSwapChain()
 {
 	SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(m_PhysicalDevice);
-
-	LogSwapchainDetails(swapChainSupport);
 
     VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
     VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
@@ -743,6 +754,7 @@ void Tempus::Renderer::CreateSyncObjects()
 void Tempus::Renderer::RecreateSwapChain()
 {
 	TPS_CORE_INFO("Recreating swapchain!");
+
 	vkDeviceWaitIdle(m_Device);
 
 	CleanupSwapChain();

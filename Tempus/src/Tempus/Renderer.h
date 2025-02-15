@@ -9,6 +9,7 @@
 #include "vulkan/vulkan.h"
 #include <optional>
 #include "Log.h"
+#include "Events/IEventListener.h"
 
 #ifdef TPS_PLATFORM_MAC
 #include "vulkan/vulkan_macos.h"
@@ -18,7 +19,7 @@
 
 namespace Tempus {
 
-	class TEMPUS_API Renderer {
+	class TEMPUS_API Renderer : public IEventListener {
 
 	public:
 
@@ -34,6 +35,8 @@ namespace Tempus {
 		const int MAX_FRAMES_IN_FLIGHT = 2;
 
 	private:
+
+		virtual void OnEvent(const SDL_Event& event) override;
 
 		float m_ClearColor[4] = {0.25f, 0.5f, 0.1f, 0.0f};
 

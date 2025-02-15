@@ -36,6 +36,7 @@ namespace Tempus {
 		void InitSDL();
 
 		void CoreUpdate();
+		void EventUpdate();
 
 	private:
 

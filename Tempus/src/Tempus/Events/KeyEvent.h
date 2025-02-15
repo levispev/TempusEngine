@@ -20,9 +20,4 @@ namespace Tempus {
 	};
 
 
-
-
-
-
-
 }

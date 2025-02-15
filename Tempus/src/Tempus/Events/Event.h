@@ -49,9 +49,4 @@ namespace Tempus {
 
 	};
 
-	class EventDispatcher
-	{
-
-	};
-
 }
