@@ -129,7 +129,6 @@ R"(
 	{
 
 		EventUpdate();
-
 		Update();
 		m_Renderer->Update();
 
@@ -149,7 +148,7 @@ R"(
 		}
 		else 
 		{
-			EventDispatcher::GetInstance()->Propagate(CurrentEvent);
+			EVENT_DISPATCHER->Propagate(CurrentEvent);
 		}
 
 	}

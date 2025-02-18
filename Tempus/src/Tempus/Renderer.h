@@ -141,7 +141,7 @@ namespace Tempus {
 
 		bool m_FramebufferResized = false;
 
-		VkDescriptorPool m_ImguiPool;
+		VkDescriptorPool m_ImguiPool = VK_NULL_HANDLE;
 
 		// Standard validation layer
 		const std::vector<const char*> m_ValidationLayers = 

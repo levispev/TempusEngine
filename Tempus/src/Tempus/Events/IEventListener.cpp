@@ -3,5 +3,5 @@
 
 Tempus::IEventListener::IEventListener()
 {
-    EventDispatcher::GetInstance()->Subscribe(std::bind(&IEventListener::OnEvent, this, std::placeholders::_1));
+    EventDispatcher::GetInstance()->Subscribe(BIND_EVENT(IEventListener::OnEvent));
 }
