@@ -59,6 +59,7 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 	CreateGraphicsPipeline();
 	CreateFrameBuffers();
 	CreateCommandPool();
+	CreateVertexBuffer();
 	CreateCommandBuffer();
 	CreateSyncObjects();
 
@@ -541,14 +542,15 @@ void Tempus::Renderer::CreateGraphicsPipeline()
 
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
+	auto bindingDescription = Vertex::GetBindingDescription();
+	auto attributeDescriptions = Vertex::GetAttributeDescriptions();
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	// Currently hard coding vertex data in shader so setting these to empty
-	vertexInputInfo.vertexBindingDescriptionCount = 0;
-	vertexInputInfo.pVertexBindingDescriptions = nullptr; // Optional
-	vertexInputInfo.vertexAttributeDescriptionCount = 0;
-	vertexInputInfo.pVertexAttributeDescriptions = nullptr; // Optional
+	vertexInputInfo.vertexBindingDescriptionCount = 1;
+	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
@@ -708,6 +710,42 @@ void Tempus::Renderer::CreateCommandPool()
 
 }
 
+void Tempus::Renderer::CreateVertexBuffer()
+{
+	VkBufferCreateInfo bufferInfo{};
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = sizeof(vertices[0]) * vertices.size();
+	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	if (vkCreateBuffer(m_Device, &bufferInfo, nullptr, &m_VertexBuffer) != VK_SUCCESS) 
+	{
+		TPS_CORE_CRITICAL("Failed to create vertex buffer!");
+	}
+
+	VkMemoryRequirements memRequirements{};
+	vkGetBufferMemoryRequirements(m_Device, m_VertexBuffer, &memRequirements);
+
+	VkMemoryAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+	if (vkAllocateMemory(m_Device, &allocInfo, nullptr, &m_VertexBufferMemory) != VK_SUCCESS) 
+	{
+		TPS_CORE_CRITICAL("failed to allocate vertex buffer memory!");
+	}
+
+	vkBindBufferMemory(m_Device, m_VertexBuffer, m_VertexBufferMemory, 0);
+
+
+	void* data;
+	vkMapMemory(m_Device, m_VertexBufferMemory, 0, bufferInfo.size, 0, &data);
+	memcpy(data, vertices.data(), (size_t)bufferInfo.size);
+	vkUnmapMemory(m_Device, m_VertexBufferMemory);
+
+}
+
 void Tempus::Renderer::CreateCommandBuffer()
 {
 
@@ -864,7 +902,11 @@ void Tempus::Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32
 	scissor.extent = m_SwapChainExtent;
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+	VkBuffer vertexBuffers[] = { m_VertexBuffer };
+	VkDeviceSize offsets[] = { 0 };
+	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
+	vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
 
 	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 
@@ -1161,6 +1203,22 @@ void Tempus::Renderer::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCre
 	createInfo.pUserData = nullptr;
 }
 
+uint32_t Tempus::Renderer::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+{
+	VkPhysicalDeviceMemoryProperties memProperties;
+	vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevice, &memProperties);
+
+	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) 
+	{
+		if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) 
+		{
+			return i;
+		}
+	}
+
+	TPS_CORE_CRITICAL("Failed to find suitable memory type!");
+}
+
 void Tempus::Renderer::LogExtensionsAndLayers()
 {
 
@@ -1380,6 +1438,9 @@ void Tempus::Renderer::Cleanup()
 	}
 	
 	CleanupSwapChain();
+
+	vkDestroyBuffer(m_Device, m_VertexBuffer, nullptr);
+	vkFreeMemory(m_Device, m_VertexBufferMemory, nullptr);
 
 	vkDestroyPipeline(m_Device, m_GraphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);

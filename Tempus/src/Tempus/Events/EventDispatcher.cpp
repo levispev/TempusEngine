@@ -1,3 +1,5 @@
+// Copyright Levi Spevakow (C) 2025
+
 #include "EventDispatcher.h"
 
 Tempus::EventDispatcher* Tempus::EventDispatcher::s_Instance = new Tempus::EventDispatcher();

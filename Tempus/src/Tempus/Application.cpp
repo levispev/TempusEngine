@@ -127,11 +127,9 @@ R"(
 
 	void Application::CoreUpdate()
 	{
-
 		EventUpdate();
 		Update();
 		m_Renderer->Update();
-
 	}
 
 	void Application::EventUpdate()
@@ -150,7 +148,7 @@ R"(
 		{
 			EVENT_DISPATCHER->Propagate(CurrentEvent);
 		}
-
+		
 	}
 
 	void Application::Update()

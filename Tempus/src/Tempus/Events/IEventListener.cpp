@@ -1,3 +1,5 @@
+// Copyright Levi Spevakow (C) 2025
+
 #include "IEventListener.h"
 #include "EventDispatcher.h"
 

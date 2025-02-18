@@ -10,6 +10,8 @@
 #include <optional>
 #include "Log.h"
 #include "Events/IEventListener.h"
+#include "glm/glm.hpp"
+#include <array>
 
 #ifdef TPS_PLATFORM_MAC
 #include "vulkan/vulkan_macos.h"
@@ -18,6 +20,42 @@
 
 
 namespace Tempus {
+
+	struct TEMPUS_API Vertex {
+
+		glm::vec2 pos;
+		glm::vec3 color;
+
+		static VkVertexInputBindingDescription GetBindingDescription() 
+		{
+			VkVertexInputBindingDescription bindingDescription{};
+
+			bindingDescription.binding = 0;
+			bindingDescription.stride = sizeof(Vertex);
+			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+			return bindingDescription;
+		}
+
+		static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions() 
+		{
+			std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+
+			// Vertex position attribute
+			attributeDescriptions[0].binding = 0;
+			attributeDescriptions[0].location = 0;
+			attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+			attributeDescriptions[0].offset = offsetof(Vertex, pos);
+
+			// Vertex color attribute
+			attributeDescriptions[1].binding = 0;
+			attributeDescriptions[1].location = 1;
+			attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+			attributeDescriptions[1].offset = offsetof(Vertex, color);
+
+			return attributeDescriptions;
+		}
+	};
 
 	class TEMPUS_API Renderer : public IEventListener {
 
@@ -35,6 +73,13 @@ namespace Tempus {
 		const int MAX_FRAMES_IN_FLIGHT = 2;
 
 	private:
+
+		const std::vector<Vertex> vertices = 
+		{
+			{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+			{{0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}},
+			{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+		};
 
 		virtual void OnEvent(const SDL_Event& event) override;
 
@@ -76,6 +121,7 @@ namespace Tempus {
 		void CreateGraphicsPipeline();
 		void CreateFrameBuffers();
 		void CreateCommandPool();
+		void CreateVertexBuffer();
 		void CreateCommandBuffer();
 		void CreateSyncObjects();
 
@@ -93,6 +139,8 @@ namespace Tempus {
 		bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
 		std::vector<const char*> GetRequiredExtensions();
 		void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+
+		uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 		// Swap chain support checks
 		SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
@@ -138,6 +186,9 @@ namespace Tempus {
 		std::vector<VkSemaphore> m_RenderFinishedSemaphores;
 		std::vector<VkFence> m_InFlightFences;
 		uint32_t m_CurrentFrame = 0;
+
+		VkBuffer m_VertexBuffer = VK_NULL_HANDLE;
+		VkDeviceMemory m_VertexBufferMemory = VK_NULL_HANDLE;
 
 		bool m_FramebufferResized = false;
 
