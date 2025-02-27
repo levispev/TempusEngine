@@ -180,7 +180,15 @@ void Tempus::Renderer::DrawImGui()
 		ImGui::Text("Name: %s", m_DeviceDetails.name.c_str());
 		ImGui::Text("Type: %s", m_DeviceDetails.type.c_str());
 		ImGui::Text("ID: %u", m_DeviceDetails.id);
-		ImGui::Text("Driver Version: %u.%u.%u", VK_VERSION_MAJOR(m_DeviceDetails.driverVersion), VK_VERSION_MINOR(m_DeviceDetails.driverVersion), VK_VERSION_PATCH(m_DeviceDetails.driverVersion));
+		// Nvidia vendor ID
+		if (m_DeviceDetails.vendorId == 0X10DE)
+		{
+			ImGui::Text("Driver Version: %u.%u.%u", ((m_DeviceDetails.driverVersion >> 22) & 0x3FF), ((m_DeviceDetails.driverVersion >> 14) & 0xFF), ((m_DeviceDetails.driverVersion >> 6) & 0xFF));
+		}
+		else
+		{
+			ImGui::Text("Driver Version: %u.%u.%u", VK_VERSION_MAJOR(m_DeviceDetails.driverVersion), VK_VERSION_MINOR(m_DeviceDetails.driverVersion), VK_VERSION_PATCH(m_DeviceDetails.driverVersion));
+		}
 		ImGui::Text("API Version: %u.%u.%u", VK_VERSION_MAJOR(m_DeviceDetails.apiVersion), VK_VERSION_MINOR(m_DeviceDetails.apiVersion), VK_VERSION_PATCH(m_DeviceDetails.apiVersion));
 		ImGui::Text("Vendor ID: %u", m_DeviceDetails.vendorId);
 	ImGui::End();
@@ -1405,7 +1413,15 @@ void Tempus::Renderer::LogDeviceInfo()
 		ss << '\t' << "Name: " << deviceDetails.name << '\n';
 		ss << '\t' << "ID: " << deviceDetails.id << '\n';
 		ss << '\t' << "Type: " << deviceDetails.type << '\n';
-		ss << '\t' << "Driver Version: " << VK_VERSION_MAJOR(deviceDetails.driverVersion) << '.' << VK_VERSION_MINOR(deviceDetails.driverVersion) << '.' << VK_VERSION_PATCH(deviceDetails.driverVersion) <<'\n';
+		// Nvidia vendor ID
+		if (deviceProperties.vendorID == 0X10DE) 
+		{
+			ss << '\t' << "Driver Version: " << ((deviceDetails.driverVersion >> 22) & 0x3FF) << '.' << ((deviceDetails.driverVersion >> 14) & 0xFF) << '.' << ((deviceDetails.driverVersion >> 6) & 0xFF) << '\n';
+		}
+		else 
+		{
+			ss << '\t' << "Driver Version: " << VK_VERSION_MAJOR(deviceDetails.driverVersion) << '.' << VK_VERSION_MINOR(deviceDetails.driverVersion) << '.' << VK_VERSION_PATCH(deviceDetails.driverVersion) <<'\n';
+		}
 		ss << '\t' << "API Version: " << VK_VERSION_MAJOR(deviceDetails.apiVersion) << '.' << VK_VERSION_MINOR(deviceDetails.apiVersion) << '.' << VK_VERSION_PATCH(deviceDetails.apiVersion) << '\n';
 		ss << '\t' << "Vendor ID: " << deviceDetails.vendorId << '\n';
 		ss << '\n';
