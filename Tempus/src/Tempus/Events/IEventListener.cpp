@@ -7,3 +7,8 @@ Tempus::IEventListener::IEventListener()
 {
     EventDispatcher::GetInstance()->Subscribe(BIND_EVENT(IEventListener::OnEvent));
 }
+
+Tempus::IEventListener::~IEventListener()
+{
+
+}

@@ -15,7 +15,7 @@ namespace Tempus {
 	protected:
 
 		IEventListener();
-		virtual ~IEventListener() = default;
+		~IEventListener();
 
 		virtual void OnEvent(const SDL_Event& event) = 0;
 

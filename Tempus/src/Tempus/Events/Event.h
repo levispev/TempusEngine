@@ -27,7 +27,6 @@ namespace Tempus {
 		EventCategoryMouseButton     = BIT(4)
 	};
 
-
 	class TEMPUS_API Event
 	{
 

@@ -76,9 +76,15 @@ namespace Tempus {
 
 		const std::vector<Vertex> vertices = 
 		{
-			{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-			{{0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}},
+			{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+			{{0.5f, -0.5f}, {0.0f, 1.0f, 1.0f}},
+			{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
 			{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+		};
+
+		const std::vector<uint16_t> indices = 
+		{
+			0, 1, 2, 2, 3, 0
 		};
 
 		virtual void OnEvent(const SDL_Event& event) override;
@@ -122,8 +128,12 @@ namespace Tempus {
 		void CreateFrameBuffers();
 		void CreateCommandPool();
 		void CreateVertexBuffer();
+		void CreateIndexBuffer();
 		void CreateCommandBuffer();
 		void CreateSyncObjects();
+
+		void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 		void RecreateSwapChain();
 
@@ -189,6 +199,8 @@ namespace Tempus {
 
 		VkBuffer m_VertexBuffer = VK_NULL_HANDLE;
 		VkDeviceMemory m_VertexBufferMemory = VK_NULL_HANDLE;
+		VkBuffer m_IndexBuffer = VK_NULL_HANDLE;
+		VkDeviceMemory m_IndexBufferMemory = VK_NULL_HANDLE;
 
 		bool m_FramebufferResized = false;
 

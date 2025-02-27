@@ -4,6 +4,8 @@
 #include <fstream>
 #include <iostream>
 #include "Log.h"
+#include <filesystem>
+
 
 #ifdef TPS_PLATFORM_WINDOWS
 #include <direct.h>
