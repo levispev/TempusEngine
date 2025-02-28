@@ -56,6 +56,7 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 	CreateSwapChain();
 	CreateImageViews();
 	CreateRenderPass();
+	CreateDescriptorSetLayout();
 	CreateGraphicsPipeline();
 	CreateFrameBuffers();
 	CreateCommandPool();
@@ -528,6 +529,29 @@ void Tempus::Renderer::CreateRenderPass()
 
 }
 
+void Tempus::Renderer::CreateDescriptorSetLayout()
+{
+	VkDescriptorSetLayoutBinding uboLayoutBinding{};
+	uboLayoutBinding.binding = 0;
+	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	// Can refer to an array of uniforms. We only have 1
+	uboLayoutBinding.descriptorCount = 1;
+	// Only accessing this uniform from the vertex shader
+	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+
+	VkDescriptorSetLayoutCreateInfo layoutInfo{};
+	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	layoutInfo.bindingCount = 1;
+	layoutInfo.pBindings = &uboLayoutBinding;
+
+	if (vkCreateDescriptorSetLayout(m_Device, &layoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
+	{
+		TPS_CORE_CRITICAL("Failed to create descriptor set layout!");
+	}
+
+}
+
 void Tempus::Renderer::CreateGraphicsPipeline()
 {
 
@@ -635,8 +659,9 @@ void Tempus::Renderer::CreateGraphicsPipeline()
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 0; // Optional
-	pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
+	// 1 Descriptor set
+	pipelineLayoutInfo.setLayoutCount = 1; 
+	pipelineLayoutInfo.pSetLayouts = &m_DescriptorSetLayout;
 	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
@@ -735,9 +760,10 @@ void Tempus::Renderer::CreateVertexBuffer()
 	memcpy(data, vertices.data(), (size_t)bufferSize);
 	vkUnmapMemory(m_Device, stagingBufferMemory);
 
-	// Vertex buffer that is inaccessible from host
+	// Vertex buffer for direct drawing that is inaccessible from host
 	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_VertexBuffer, m_VertexBufferMemory);
 
+	// Copying data from staging buffer to vertex buffer
 	CopyBuffer(stagingBuffer, m_VertexBuffer, bufferSize);
 
 	vkDestroyBuffer(m_Device, stagingBuffer, nullptr);
@@ -1538,6 +1564,8 @@ void Tempus::Renderer::Cleanup()
 	}
 	
 	CleanupSwapChain();
+
+	vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
 
 	vkDestroyBuffer(m_Device, m_VertexBuffer, nullptr);
 	vkFreeMemory(m_Device, m_VertexBufferMemory, nullptr);

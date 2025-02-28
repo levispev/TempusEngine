@@ -57,6 +57,12 @@ namespace Tempus {
 		}
 	};
 
+	struct UniformBufferObject {
+		glm::mat4 model;
+		glm::mat4 view;
+		glm::mat4 proj;
+	};
+
 	class TEMPUS_API Renderer : public IEventListener {
 
 	public:
@@ -124,6 +130,7 @@ namespace Tempus {
 		void CreateSwapChain();
 		void CreateImageViews();
 		void CreateRenderPass();
+		void CreateDescriptorSetLayout();
 		void CreateGraphicsPipeline();
 		void CreateFrameBuffers();
 		void CreateCommandPool();
@@ -182,6 +189,7 @@ namespace Tempus {
 		VkExtent2D m_SwapChainExtent = { 0 };
 
 		VkRenderPass m_RenderPass = VK_NULL_HANDLE;
+		VkDescriptorSetLayout m_DescriptorSetLayout = VK_NULL_HANDLE;
 		VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_GraphicsPipeline = VK_NULL_HANDLE;
 		std::vector<VkFramebuffer> m_SwapChainFramebuffers;
