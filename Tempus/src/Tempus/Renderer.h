@@ -23,7 +23,7 @@ namespace Tempus {
 
 	struct TEMPUS_API Vertex {
 
-		glm::vec2 pos;
+		glm::vec3 pos;
 		glm::vec3 color;
 
 		static VkVertexInputBindingDescription GetBindingDescription() 
@@ -44,7 +44,7 @@ namespace Tempus {
 			// Vertex position attribute
 			attributeDescriptions[0].binding = 0;
 			attributeDescriptions[0].location = 0;
-			attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+			attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 			attributeDescriptions[0].offset = offsetof(Vertex, pos);
 
 			// Vertex color attribute
@@ -82,15 +82,33 @@ namespace Tempus {
 
 		const std::vector<Vertex> vertices = 
 		{
-			{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-			{{0.5f, -0.5f}, {0.0f, 1.0f, 1.0f}},
-			{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-			{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+			// Front face
+			{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}}, // 0 bottom-left
+			{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},  // 1 bottom-right
+			{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}},   // 2 top-right
+			{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 0.0f}},  // 3 top-left
+
+			// Back face
+			{{-0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}},  // 4 bottom-left
+			{{0.5f, -0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},   // 5 bottom-right
+			{{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},    // 6 top-right
+			{{-0.5f, 0.5f, 0.5f}, {1.0f, 1.0f, 0.0f}}    // 7 top-left
 		};
 
 		const std::vector<uint16_t> indices = 
 		{
-			0, 1, 2, 2, 3, 0
+			// Front face
+			0, 1, 2,    2, 3, 0,
+			// Right face
+			1, 5, 6,    6, 2, 1,
+			// Back face
+			5, 4, 7,    7, 6, 5,
+			// Left face
+			4, 0, 3,    3, 7, 4,
+			// Top face
+			3, 2, 6,    6, 7, 3,
+			// Bottom face
+			4, 5, 1,    1, 0, 4
 		};
 
 		virtual void OnEvent(const SDL_Event& event) override;

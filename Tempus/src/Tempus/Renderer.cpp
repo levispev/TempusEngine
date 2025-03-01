@@ -182,8 +182,9 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 
 	UniformBufferObject ubo{};
 	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.model = glm::translate(ubo.model, glm::vec3(0.0f, 0.0f, glm::sin(time)));
 	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.proj = glm::perspective(glm::radians(45.0f), m_SwapChainExtent.width / (float)m_SwapChainExtent.height, 0.1f, 10.0f);
+	ubo.proj = glm::perspective(glm::radians(65.0f), m_SwapChainExtent.width / (float)m_SwapChainExtent.height, 0.1f, 10.0f);
 
 	// Accounting for inverted Y coordinate between OpenGL and Vulkan
 	ubo.proj[1][1] *= -1;
@@ -644,7 +645,7 @@ void Tempus::Renderer::CreateGraphicsPipeline()
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	rasterizer.depthBiasEnable = VK_FALSE;
 	rasterizer.depthBiasConstantFactor = 0.0f; // Optional
 	rasterizer.depthBiasClamp = 0.0f; // Optional
@@ -820,7 +821,6 @@ void Tempus::Renderer::CreateIndexBuffer()
 
 void Tempus::Renderer::CreateUniformBuffers()
 {
-
 	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
 	m_UniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
@@ -833,9 +833,7 @@ void Tempus::Renderer::CreateUniformBuffers()
 			m_UniformBuffers[i], m_UniformBuffersMemory[i]);
 
 		vkMapMemory(m_Device, m_UniformBuffersMemory[i], 0, bufferSize, 0, &m_UniformBuffersMapped[i]);
-
 	}
-
 }
 
 void Tempus::Renderer::CreateDescriptorPool()
@@ -892,8 +890,6 @@ void Tempus::Renderer::CreateDescriptorSets()
 
 		vkUpdateDescriptorSets(m_Device, 1, &descriptorWrite, 0, nullptr);
 	}
-
-
 }
 
 void Tempus::Renderer::CreateCommandBuffer()
