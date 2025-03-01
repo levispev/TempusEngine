@@ -120,6 +120,7 @@ namespace Tempus {
 		};
 
 		void DrawFrame();
+		void UpdateUniformBuffer(uint32_t currentImage);
 		void DrawImGui();
 
 		void CreateVulkanInstance();
@@ -136,6 +137,9 @@ namespace Tempus {
 		void CreateCommandPool();
 		void CreateVertexBuffer();
 		void CreateIndexBuffer();
+		void CreateUniformBuffers();
+		void CreateDescriptorPool();
+		void CreateDescriptorSets();
 		void CreateCommandBuffer();
 		void CreateSyncObjects();
 
@@ -209,6 +213,13 @@ namespace Tempus {
 		VkDeviceMemory m_VertexBufferMemory = VK_NULL_HANDLE;
 		VkBuffer m_IndexBuffer = VK_NULL_HANDLE;
 		VkDeviceMemory m_IndexBufferMemory = VK_NULL_HANDLE;
+
+		std::vector<VkBuffer> m_UniformBuffers;
+		std::vector<VkDeviceMemory> m_UniformBuffersMemory;
+		std::vector<void*> m_UniformBuffersMapped;
+
+		VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
+		std::vector<VkDescriptorSet> m_DescriptorSets;
 
 		bool m_FramebufferResized = false;
 
