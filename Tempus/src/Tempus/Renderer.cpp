@@ -196,9 +196,71 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 
 void Tempus::Renderer::DrawImGui()
 {
+	static bool showAboutPopup = false;
+
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplSDL2_NewFrame();
 	ImGui::NewFrame();
+
+	if (ImGui::BeginMainMenuBar()) 
+	{
+		if (ImGui::BeginMenu("File")) 
+		{
+			if (ImGui::MenuItem("New"))  {  }
+			if (ImGui::MenuItem("Open")) {  }
+			if (ImGui::MenuItem("Save")) {  }
+			if (ImGui::MenuItem("Exit")) {  }
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Edit")) 
+		{
+			if (ImGui::MenuItem("Undo")) {  }
+			if (ImGui::MenuItem("Redo")) { }
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("View")) 
+		{
+			if (ImGui::MenuItem("Fullscreen")) {  }
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Help")) 
+		{
+			if (ImGui::MenuItem("About")) { showAboutPopup = true;}
+			ImGui::EndMenu();
+		}
+
+		ImGui::EndMainMenuBar();
+	}
+
+	if (showAboutPopup) 
+	{
+		ImGui::OpenPopup("About"); 
+		if (ImGui::BeginPopupModal("About", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove)) 
+		{
+			ImGui::Text("Tempus Engine v0.0.0");
+			ImGui::Text("Built with SDL2 and ImGui");
+			ImGui::Text("Created by Levi Spevakow");
+			ImGui::Separator();
+
+			// Center the Close button
+			// Button width including padding
+			float buttonWidth = ImGui::CalcTextSize("Close").x + ImGui::GetStyle().FramePadding.x * 2; 
+			// Usable window width
+			float windowWidth = ImGui::GetWindowContentRegionMax().x - ImGui::GetWindowContentRegionMin().x;
+			float offset = (windowWidth - buttonWidth) * 0.5f; 
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset); 
+
+			if (ImGui::Button("Close")) 
+			{
+				showAboutPopup = false; 
+				ImGui::CloseCurrentPopup(); 
+			}
+			ImGui::EndPopup();
+		}
+	}
 
 	ImGui::Begin("Application Stats");
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
