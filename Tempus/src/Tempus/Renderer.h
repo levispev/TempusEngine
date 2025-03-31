@@ -153,6 +153,7 @@ namespace Tempus {
 		void CreateGraphicsPipeline();
 		void CreateFrameBuffers();
 		void CreateCommandPool();
+		void CreateTextureImage();
 		void CreateVertexBuffer();
 		void CreateIndexBuffer();
 		void CreateUniformBuffers();
@@ -164,11 +165,17 @@ namespace Tempus {
 		void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
+		void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
+			VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+
 		void RecreateSwapChain();
 
 		void InitImGui();
 
 		void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+		VkCommandBuffer BeginSingleTimeCommands();
+		void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
+		void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 
 		VkShaderModule CreateShaderModule(const std::vector<char>& code);
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
@@ -238,6 +245,9 @@ namespace Tempus {
 
 		VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
 		std::vector<VkDescriptorSet> m_DescriptorSets;
+
+		VkImage m_TextureImage = VK_NULL_HANDLE;
+		VkDeviceMemory m_TextureImageMemory = VK_NULL_HANDLE;
 
 		bool m_FramebufferResized = false;
 
