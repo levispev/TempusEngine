@@ -67,8 +67,7 @@ project "Tempus"
 
         postbuildcommands
         {
-            "{RMDIR} ../bin/" .. outputdir .. "/Sandbox",
-            "{MKDIR} ../bin/" .. outputdir .. "/Sandbox",
+            "if not exist \"../bin/" .. outputdir .. "/Sandbox\" mkdir \"../bin/" .. outputdir .. "/Sandbox\"",
             "{COPYFILE} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox"
         }
 

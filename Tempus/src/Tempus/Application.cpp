@@ -83,7 +83,6 @@ R"(
 
 	void Application::InitRenderer()
 	{
-
 		// Renderer creation
 		if (!m_Renderer || !m_Renderer->Init(m_Window))
 		{
@@ -93,7 +92,6 @@ R"(
 		m_Renderer->SetClearColor(19, 16, 102, 255);
 
 		TPS_CORE_INFO("Renderer successfully created!");
-
 	}
 
 	void Application::InitSDL()
@@ -122,7 +120,6 @@ R"(
 		{
 			TPS_CORE_INFO("Loaded Vulkan version: {0}.{1}.{2}", VK_VERSION_MAJOR(instanceVersion), VK_VERSION_MINOR(instanceVersion), VK_VERSION_PATCH(instanceVersion));
 		}
-
 	}
 
 	void Application::CoreUpdate()
@@ -130,14 +127,11 @@ R"(
 		EventUpdate();
 		Update();
 		m_Renderer->Update();
-
 		//std::this_thread::sleep_for(std::chrono::milliseconds(1));
-
 	}
 
 	void Application::EventUpdate()
 	{
-
 		SDL_PollEvent(&CurrentEvent);
 
 		ImGui_ImplSDL2_ProcessEvent(&CurrentEvent);
@@ -151,7 +145,6 @@ R"(
 		{
 			EVENT_DISPATCHER->Propagate(CurrentEvent);
 		}
-		
 	}
 
 	void Application::Update()
@@ -160,16 +153,8 @@ R"(
 
 	void Application::Cleanup()
 	{
-
-		if (m_Window) 
-		{
-			delete m_Window;
-		}
-
-		if (m_Renderer) 
-		{
-			delete m_Renderer;
-		}
+		delete m_Window;
+		delete m_Renderer;
 
 		SDL_Vulkan_UnloadLibrary();
 		SDL_Quit();

@@ -68,7 +68,7 @@ namespace Tempus {
 	public:
 
 		Renderer();
-		~Renderer();
+		virtual ~Renderer();
 
 		void Update();
 
