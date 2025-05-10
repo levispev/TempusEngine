@@ -18,6 +18,8 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include <chrono>
+
+#include "Application.h"
 #include "stb_image/stb_image.h"
 
 
@@ -209,7 +211,7 @@ void Tempus::Renderer::DrawImGui()
 			if (ImGui::MenuItem("New"))  {  }
 			if (ImGui::MenuItem("Open")) {  }
 			if (ImGui::MenuItem("Save")) {  }
-			if (ImGui::MenuItem("Exit")) {  }
+			if (ImGui::MenuItem("Exit")) { Application::RequestExit(); }
 			ImGui::EndMenu();
 		}
 

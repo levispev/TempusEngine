@@ -19,7 +19,7 @@
 
 namespace Tempus {
 
-	Application::Application() : CurrentEvent(SDL_Event())
+	Application::Application() : CurrentEvent(SDL_Event()), AppName("Application Name")
 	{
 		m_Window = new Window();
 		m_Renderer = new Renderer();
@@ -31,18 +31,20 @@ namespace Tempus {
 
 	void Application::Run()
 	{
-
+#pragma region TEMPUS_LOGO
 		std::cout << COLOR_BLUE <<
 R"(
-    888888888888  88888888888  88b           d88  88888888ba   88        88   ad88888ba   
-	 88       88           888b         d888  88      "8b  88        88  d8"     "8b  
-	 88       88           88`8b       d8'88  88      ,8P  88        88  Y8,          
-	 88       88aaaaa      88 `8b     d8' 88  88aaaaaa8P'  88        88  `Y8aaaaa,    
-	 88       88"""""      88  `8b   d8'  88  88""""""'    88        88    `"""""8b,  
-	 88       88           88   `8b d8'   88  88           88        88          `8b  
-	 88       88           88    `888'    88  88           Y8a.    .a8P  Y8a     a8P  
-	 88       88888888888  88     `8'     88  88            `"Y8888Y"'    "Y88888P" 
-)" 
+        888888888888  88888888888  88b           d88  88888888ba   88        88   ad88888ba   
+            88       88           888b         d888  88      "8b  88        88  d8"     "8b  
+           88       88           88`8b       d8'88  88      ,8P  88        88  Y8,          
+          88       88aaaaa      88 `8b     d8' 88  88aaaaaa8P'  88        88  `Y8aaaaa,    
+         88       88"""""      88  `8b   d8'  88  88""""""'    88        88    `"""""8b,  
+        88       88           88   `8b d8'   88  88           88        88          `8b  
+       88       88           88    `888'    88  88           Y8a.    .a8P  Y8a     a8P  
+      88       88888888888  88     `8'     88  88            `"Y8888Y"'    "Y88888P" 
+)"
+#pragma endregion
+		
 		<< '\n' << COLOR_RESET;
 
 		Log::Init();
@@ -70,7 +72,7 @@ R"(
 	void Application::InitWindow()
 	{
 		// Window creation
-		if (!m_Window || !m_Window->Init("Sandbox", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1000, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE))
+		if (!m_Window || !m_Window->Init(AppName.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1000, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE))
 		{
 			TPS_CORE_CRITICAL("Failed to initialize window!");
 		}
@@ -78,7 +80,6 @@ R"(
 		m_Window->SetIcon("Logo.png");
 
 		TPS_CORE_INFO("Window successfully created!");
-
 	}
 
 	void Application::InitRenderer()

@@ -6,6 +6,8 @@
 
 #include "vulkan/vulkan.h"
 #define SDL_MAIN_HANDLED
+
+#include <string>
 #include "sdl/SDL.h"
 
 namespace Tempus {
@@ -17,6 +19,13 @@ namespace Tempus {
 		Application();
 		virtual ~Application();
 		void Run();
+
+		static void RequestExit()
+		{
+			SDL_Event quitEvent;
+			quitEvent.type = SDL_QUIT;
+			SDL_PushEvent(&quitEvent);
+		}
 
 	protected:
 
@@ -45,8 +54,11 @@ namespace Tempus {
 		class Renderer* m_Renderer = nullptr;
 
 		bool bShouldQuit = false;
-
 		SDL_Event CurrentEvent;
+		
+	protected:
+		
+		std::string AppName;
 
 	};
 

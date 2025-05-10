@@ -8,13 +8,12 @@ class SandBox : public Tempus::Application
 {
 public:
 
-	SandBox() 
+	SandBox()
 	{
+		AppName = "Sandbox";
 	}
 
-	~SandBox() 
-	{
-	}
+	~SandBox() override = default;
 
 	virtual void Update() override
 	{

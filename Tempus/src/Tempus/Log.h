@@ -48,11 +48,12 @@ namespace Tempus {
 #define TPS_CORE_ERROR(...)      ::Tempus::Log::GetCoreLogger()->error(__VA_ARGS__)
 // Throws a runtime exception on use
 #define TPS_CORE_CRITICAL(...)   do { \
-                                     ::Tempus::Log::GetCoreLogger()->critical("[{}:{}] {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
-                                     throw std::runtime_error(fmt::format("[{}:{}] {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__))); \
+									 const auto message = fmt::format("[{}:{}] {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
+                                     ::Tempus::Log::GetCoreLogger()->critical(message); \
+                                     throw std::runtime_error(message); \
                                  } while(0)
 #else
-#define TPS_CORE_TRACE(...)      static_assert(false, "TPS_CORE_TACE is not accessible from the client application.")
+#define TPS_CORE_TRACE(...)      static_assert(false, "TPS_CORE_TRACE is not accessible from the client application.")
 #define TPS_CORE_INFO(...)       static_assert(false, "TPS_CORE_INFO is not accessible from the client application.")
 #define TPS_CORE_WARN(...)       static_assert(false, "TPS_CORE_WARN is not accessible from the client application.")
 #define TPS_CORE_ERROR(...)      static_assert(false, "TPS_CORE_ERROR is not accessible from the client application.")
@@ -66,6 +67,7 @@ namespace Tempus {
 #define TPS_ERROR(...)           ::Tempus::Log::GetClientLogger()->error(__VA_ARGS__)
 // Throws a runtime exception on use
 #define TPS_CRITICAL(...)        do { \
-                                     ::Tempus::Log::GetClientLogger()->critical("[{}:{}] {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
-                                     throw std::runtime_error(fmt::format("[{}:{}] {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__))); \
+									const auto message = fmt::format("[{}:{}] {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
+									::Tempus::Log::GetClientLogger()->critical(message); \
+									throw std::runtime_error(message); \
                                  } while(0)
