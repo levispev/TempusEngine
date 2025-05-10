@@ -199,3 +199,35 @@ project "Sandbox"
     filter "configurations:Dist"
         defines "TPS_DIST"
         optimize "On"
+        
+        
+newaction {
+    trigger = "clean",
+    description = "Remove all build files and intermediate files",
+    execute = function()
+        print("Cleaning build files...")
+        
+        -- Common directories to clean for all platforms
+        os.rmdir("./bin")
+        os.rmdir("./bin-int")
+        
+        if os.host() == "windows" then
+            print("Cleaning Windows-specific files...")
+            os.remove("**.sln")
+            os.remove("**.vcxproj")
+            os.remove("**.vcxproj.filters")
+            os.remove("**.vcxproj.user")
+        elseif os.host() == "macosx" then
+            print("Cleaning macOS-specific files...")
+            os.remove("Makefile")
+            os.remove("**.make")
+            os.remove("**.d")
+            os.remove("**.o")
+            -- Clean xcode project files
+            os.rmdir("**.xcodeproj")
+            os.rmdir("**.xcworkspace")
+        end
+        
+        print("Done.")
+    end
+}
