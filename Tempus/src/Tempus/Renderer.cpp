@@ -22,6 +22,8 @@
 #include "Application.h"
 #include "stb_image/stb_image.h"
 
+#define NVIDIA_VENDOR_ID 0X10DE
+
 
 Tempus::Renderer::Renderer()
 {
@@ -274,7 +276,7 @@ void Tempus::Renderer::DrawImGui()
 		ImGui::Text("Type: %s", m_DeviceDetails.type.c_str());
 		ImGui::Text("ID: %u", m_DeviceDetails.id);
 		// Nvidia vendor ID
-		if (m_DeviceDetails.vendorId == 0X10DE)
+		if (m_DeviceDetails.vendorId == NVIDIA_VENDOR_ID)
 		{
 			ImGui::Text("Driver Version: %u.%u.%u", ((m_DeviceDetails.driverVersion >> 22) & 0x3FF), ((m_DeviceDetails.driverVersion >> 14) & 0xFF), ((m_DeviceDetails.driverVersion >> 6) & 0xFF));
 		}
