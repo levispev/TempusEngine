@@ -39,35 +39,50 @@ namespace Tempus {
 	};
 
 }
+#ifndef TPS_DIST
+	#ifdef TPS_BUILD_DLL
+	// Core log macros
+	#define TPS_CORE_TRACE(...)      ::Tempus::Log::GetCoreLogger()->trace(__VA_ARGS__)
+	#define TPS_CORE_INFO(...)       ::Tempus::Log::GetCoreLogger()->info(__VA_ARGS__)
+	#define TPS_CORE_WARN(...)       ::Tempus::Log::GetCoreLogger()->warn(__VA_ARGS__)
+	#define TPS_CORE_ERROR(...)      ::Tempus::Log::GetCoreLogger()->error(__VA_ARGS__)
+	// Throws a runtime exception on use
+	#define TPS_CORE_CRITICAL(...)   do { \
+										const auto message = fmt::format("[{}:{}] {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
+										::Tempus::Log::GetCoreLogger()->critical(message); \
+										throw std::runtime_error(message); \
+									} while(0)
+	#else
+	#define TPS_CORE_TRACE(...)      static_assert(false, "TPS_CORE_TRACE is not accessible from the client application.")
+	#define TPS_CORE_INFO(...)       static_assert(false, "TPS_CORE_INFO is not accessible from the client application.")
+	#define TPS_CORE_WARN(...)       static_assert(false, "TPS_CORE_WARN is not accessible from the client application.")
+	#define TPS_CORE_ERROR(...)      static_assert(false, "TPS_CORE_ERROR is not accessible from the client application.")
+	#define TPS_CORE_CRITICAL(...)   static_assert(false, "TPS_CORE_CRITICAL is not accessible from the client application.")
+	#endif
 
-#ifdef TPS_BUILD_DLL
-// Core log macros
-#define TPS_CORE_TRACE(...)      ::Tempus::Log::GetCoreLogger()->trace(__VA_ARGS__)
-#define TPS_CORE_INFO(...)       ::Tempus::Log::GetCoreLogger()->info(__VA_ARGS__)
-#define TPS_CORE_WARN(...)       ::Tempus::Log::GetCoreLogger()->warn(__VA_ARGS__)
-#define TPS_CORE_ERROR(...)      ::Tempus::Log::GetCoreLogger()->error(__VA_ARGS__)
-// Throws a runtime exception on use
-#define TPS_CORE_CRITICAL(...)   do { \
-									 const auto message = fmt::format("[{}:{}] {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
-                                     ::Tempus::Log::GetCoreLogger()->critical(message); \
-                                     throw std::runtime_error(message); \
-                                 } while(0)
+	// Client log macros
+	#define TPS_TRACE(...)           ::Tempus::Log::GetClientLogger()->trace(__VA_ARGS__)
+	#define TPS_INFO(...)            ::Tempus::Log::GetClientLogger()->info(__VA_ARGS__)
+	#define TPS_WARN(...)            ::Tempus::Log::GetClientLogger()->warn(__VA_ARGS__)
+	#define TPS_ERROR(...)           ::Tempus::Log::GetClientLogger()->error(__VA_ARGS__)
+	// Throws a runtime exception on use
+	#define TPS_CRITICAL(...)        do { \
+										const auto message = fmt::format("[{}:{}] {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
+										::Tempus::Log::GetClientLogger()->critical(message); \
+										throw std::runtime_error(message); \
+									} while(0)
 #else
-#define TPS_CORE_TRACE(...)      static_assert(false, "TPS_CORE_TRACE is not accessible from the client application.")
-#define TPS_CORE_INFO(...)       static_assert(false, "TPS_CORE_INFO is not accessible from the client application.")
-#define TPS_CORE_WARN(...)       static_assert(false, "TPS_CORE_WARN is not accessible from the client application.")
-#define TPS_CORE_ERROR(...)      static_assert(false, "TPS_CORE_ERROR is not accessible from the client application.")
-#define TPS_CORE_CRITICAL(...)   static_assert(false, "TPS_CORE_CRITICAL is not accessible from the client application.")
-#endif
+	// Core log macros
+	#define TPS_CORE_TRACE(...)
+	#define TPS_CORE_INFO(...)
+	#define TPS_CORE_WARN(...)
+	#define TPS_CORE_ERROR(...)
+	#define TPS_CORE_CRITICAL(...)
 
-// Client log macros
-#define TPS_TRACE(...)           ::Tempus::Log::GetClientLogger()->trace(__VA_ARGS__)
-#define TPS_INFO(...)            ::Tempus::Log::GetClientLogger()->info(__VA_ARGS__)
-#define TPS_WARN(...)            ::Tempus::Log::GetClientLogger()->warn(__VA_ARGS__)
-#define TPS_ERROR(...)           ::Tempus::Log::GetClientLogger()->error(__VA_ARGS__)
-// Throws a runtime exception on use
-#define TPS_CRITICAL(...)        do { \
-									const auto message = fmt::format("[{}:{}] {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)); \
-									::Tempus::Log::GetClientLogger()->critical(message); \
-									throw std::runtime_error(message); \
-                                 } while(0)
+	// Client log macros
+	#define TPS_TRACE(...)
+	#define TPS_INFO(...)
+	#define TPS_WARN(...)
+	#define TPS_ERROR(...)
+	#define TPS_CRITICAL(...)
+#endif

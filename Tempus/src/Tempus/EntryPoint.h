@@ -36,6 +36,12 @@ extern Tempus::Application* Tempus::CreateApplication();
 
 int main(int argc, char** argv)
 {
+#ifdef TPS_DIST
+	// Nulling stdout and stderr on distribution
+	freopen("/dev/null", "w", stdout);
+	freopen("/dev/null", "w", stderr);
+#endif
+
 	auto app = Tempus::CreateApplication();
 
 	try

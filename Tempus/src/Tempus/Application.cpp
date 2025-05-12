@@ -21,8 +21,8 @@ namespace Tempus {
 
 	Application::Application() : CurrentEvent(SDL_Event()), AppName("Application Name")
 	{
-		m_Window = std::make_unique<Window>();
-		m_Renderer = std::make_unique<Renderer>();
+		m_Window = new Window();
+		m_Renderer = new Renderer();
 	}
 
 	Application::~Application()
@@ -34,14 +34,14 @@ namespace Tempus {
 #pragma region TEMPUS_LOGO
 		std::cout << COLOR_BLUE <<
 R"(
-        888888888888  88888888888  88b           d88  88888888ba   88        88   ad88888ba   
-            88       88           888b         d888  88      "8b  88        88  d8"     "8b  
-           88       88           88`8b       d8'88  88      ,8P  88        88  Y8,          
-          88       88aaaaa      88 `8b     d8' 88  88aaaaaa8P'  88        88  `Y8aaaaa,    
-         88       88"""""      88  `8b   d8'  88  88""""""'    88        88    `"""""8b,  
-        88       88           88   `8b d8'   88  88           88        88          `8b  
-       88       88           88    `888'    88  88           Y8a.    .a8P  Y8a     a8P  
-      88       88888888888  88     `8'     88  88            `"Y8888Y"'    "Y88888P" 
+   888888888888  88888888888  88b           d88  88888888ba   88        88   ad88888ba
+       88       88           888b         d888  88      "8b  88        88  d8"     "8b
+      88       88           88`8b       d8'88  88      ,8P  88        88  Y8,         
+     88       88aaaaa      88 `8b     d8' 88  88aaaaaa8P'  88        88  `Y8aaaaa,    
+    88       88"""""      88  `8b   d8'  88  88""""""'    88        88    `"""""8b,  
+   88       88           88   `8b d8'   88  88           88        88          `8b  
+  88       88           88    `888'    88  88           Y8a.    .a8P  Y8a     a8P  
+ 88       88888888888  88     `8'     88  88            `"Y8888Y"'    "Y88888P" 
 )"
 #pragma endregion
 		
@@ -85,7 +85,7 @@ R"(
 	void Application::InitRenderer()
 	{
 		// Renderer creation
-		if (!m_Renderer || !m_Renderer->Init(m_Window.get()))
+		if (!m_Renderer || !m_Renderer->Init(m_Window))
 		{
 			TPS_CORE_CRITICAL("Failed to initialize renderer!");
 		}
@@ -154,8 +154,8 @@ R"(
 
 	void Application::Cleanup()
 	{
-		m_Renderer.reset();
-		m_Window.reset();
+		delete m_Renderer;
+		delete m_Window;
 		
 		SDL_Vulkan_UnloadLibrary();
 		SDL_Quit();

@@ -1826,37 +1826,45 @@ void Tempus::Renderer::LogDeviceInfo()
 
 void Tempus::Renderer::LogSwapchainDetails(const SwapChainSupportDetails &details)
 {
-	std::stringstream ss;
+    std::stringstream ss;
 
-	ss << "\nSwapChain support details:\n";
+    ss << "\nSwapChain support details:\n";
 
-	ss << "\tMin Image Count: " << details.capabilities.minImageCount << '\n';
-	ss << "\tMax Image Count: " << details.capabilities.maxImageCount << '\n';
-	ss << "\tMin Image Extent: " << details.capabilities.minImageExtent.width << 'x' << details.capabilities.minImageExtent.height << '\n';
-	ss << "\tMax Image Extent: " << details.capabilities.maxImageExtent.width << 'x' << details.capabilities.maxImageExtent.height << '\n';
-	
-	ss << "Formats: \n";
-	
-	for(VkSurfaceFormatKHR surfaceFormat : details.formats)
-	{
-		ss << "\t" << string_VkFormat(surfaceFormat.format) << '\n';
-	}
+    ss << "\tMin Image Count: " << details.capabilities.minImageCount << '\n';
+    ss << "\tMax Image Count: " << details.capabilities.maxImageCount << '\n';
+    ss << "\tMin Image Extent: " << details.capabilities.minImageExtent.width << 'x' << details.capabilities.minImageExtent.height << '\n';
+    ss << "\tMax Image Extent: " << details.capabilities.maxImageExtent.width << 'x' << details.capabilities.maxImageExtent.height << '\n';
 
-	ss << "Available Color spaces: \n";
+    std::set<VkFormat> uniqueFormats;
+    for (const auto& surfaceFormat : details.formats)
+    {
+        uniqueFormats.insert(surfaceFormat.format);
+    }
+    ss << "Formats: \n";
+    for (const auto& format : uniqueFormats)
+    {
+        ss << "\tFormat: " << string_VkFormat(format) << '\n';
+    }
 
-	for(VkSurfaceFormatKHR surfaceFormat : details.formats)
-	{
-		ss << "\t" << string_VkColorSpaceKHR(surfaceFormat.colorSpace) << '\n';
-	}
+    std::set<VkColorSpaceKHR> uniqueColorSpaces;
+    for (const auto& surfaceFormat : details.formats)
+    {
+        uniqueColorSpaces.insert(surfaceFormat.colorSpace);
+    }
+    ss << "Available Color spaces: \n";
+    for (const auto& colorSpace : uniqueColorSpaces)
+    {
+        ss << "\t" << string_VkColorSpaceKHR(colorSpace) << '\n';
+    }
 
-	ss << "Available Present modes: \n";
+    std::set<VkPresentModeKHR> uniquePresentModes(details.presentModes.begin(), details.presentModes.end());
+    ss << "Available Present modes: \n";
+    for (const auto& presentMode : uniquePresentModes)
+    {
+        ss << "\t" << string_VkPresentModeKHR(presentMode) << '\n'; // Convert VkPresentModeKHR to string
+    }
 
-	for(VkPresentModeKHR presentMode : details.presentModes)
-	{
-		ss << '\t' << string_VkPresentModeKHR(presentMode) << '\n';
-	}
-
-	TPS_CORE_INFO(ss.str());
+    TPS_CORE_INFO(ss.str());
 }
 
 void Tempus::Renderer::CleanupSwapChain()
