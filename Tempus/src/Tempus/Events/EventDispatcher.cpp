@@ -2,19 +2,29 @@
 
 #include "EventDispatcher.h"
 
-Tempus::EventDispatcher* Tempus::EventDispatcher::s_Instance = new Tempus::EventDispatcher();
+#include "IEventListener.h"
 
-std::vector<std::function<void(const SDL_Event&)>> Tempus::EventDispatcher::subscribers;
+std::unique_ptr<Tempus::EventDispatcher> Tempus::EventDispatcher::s_Instance = nullptr;
 
-void Tempus::EventDispatcher::Subscribe(std::function<void(const SDL_Event&)> callback)
+Tempus::SubscriberSet Tempus::EventDispatcher::subscribers;
+
+void Tempus::EventDispatcher::Subscribe(IEventListener* subscriber)
 {
-	subscribers.push_back(callback);
+	subscribers.emplace(subscriber);
+}
+
+void Tempus::EventDispatcher::Unsubscribe(IEventListener* subscriber)
+{
+	subscribers.erase(subscriber);
 }
 
 void Tempus::EventDispatcher::Propagate(const SDL_Event& event)
 {
-	for (auto& callback : GetInstance()->subscribers) 
+	for (IEventListener* subscriber : subscribers) 
 	{
-		callback(event);
+		if (subscriber)
+		{
+			subscriber->OnEvent(event);
+		}
 	}
 }

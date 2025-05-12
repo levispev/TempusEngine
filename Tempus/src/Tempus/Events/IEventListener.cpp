@@ -5,10 +5,10 @@
 
 Tempus::IEventListener::IEventListener()
 {
-    EventDispatcher::GetInstance()->Subscribe(BIND_EVENT(IEventListener::OnEvent));
+    EVENT_DISPATCHER->Subscribe(this);
 }
 
 Tempus::IEventListener::~IEventListener()
 {
-
+    EVENT_DISPATCHER->Unsubscribe(this);
 }

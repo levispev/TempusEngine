@@ -2,7 +2,9 @@
 
 #pragma once
 
-#include <functional>
+#include <memory>
+#include <set>
+
 #include "Event.h"
 #include "sdl/SDL.h"
 
@@ -10,20 +12,35 @@
 
 namespace Tempus {
 
-	class EventDispatcher {
+	class IEventListener;
+
+	typedef std::set<IEventListener*> SubscriberSet;
+	
+	class TEMPUS_API EventDispatcher {
 
 	private:
 
 		EventDispatcher() = default;
-		~EventDispatcher() = default;
 
-		static EventDispatcher* s_Instance;
-		static std::vector<std::function<void(const SDL_Event&)>> subscribers;
+		static std::unique_ptr<EventDispatcher> s_Instance;
+		static SubscriberSet subscribers;
 
 	public:
 
-		static EventDispatcher* GetInstance() { return s_Instance; };
-		static void Subscribe(std::function<void(const SDL_Event&)> callback);
+		static EventDispatcher* GetInstance()
+		{
+			if (!s_Instance)
+			{
+				// Not using std::make_unique because of private constructor
+				s_Instance = std::unique_ptr<EventDispatcher>(new EventDispatcher());
+			}
+			return s_Instance.get();
+		}
+
+		static const SubscriberSet& GetSubscribers() { return subscribers; }
+		static uint32_t GetSubscriberCount() { return static_cast<uint32_t>(subscribers.size()); }
+		static void Subscribe(IEventListener* subscriber);
+		static void Unsubscribe(IEventListener* subscriber);
 		static void Propagate(const SDL_Event& event);
 
 	};

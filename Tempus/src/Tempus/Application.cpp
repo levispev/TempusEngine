@@ -21,8 +21,8 @@ namespace Tempus {
 
 	Application::Application() : CurrentEvent(SDL_Event()), AppName("Application Name")
 	{
-		m_Window = new Window();
-		m_Renderer = new Renderer();
+		m_Window = std::make_unique<Window>();
+		m_Renderer = std::make_unique<Renderer>();
 	}
 
 	Application::~Application()
@@ -72,7 +72,7 @@ R"(
 	void Application::InitWindow()
 	{
 		// Window creation
-		if (!m_Window || !m_Window->Init(AppName.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1000, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE))
+		if (!m_Window || !m_Window->Init(AppName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1000, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE))
 		{
 			TPS_CORE_CRITICAL("Failed to initialize window!");
 		}
@@ -85,7 +85,7 @@ R"(
 	void Application::InitRenderer()
 	{
 		// Renderer creation
-		if (!m_Renderer || !m_Renderer->Init(m_Window))
+		if (!m_Renderer || !m_Renderer->Init(m_Window.get()))
 		{
 			TPS_CORE_CRITICAL("Failed to initialize renderer!");
 		}
@@ -154,9 +154,9 @@ R"(
 
 	void Application::Cleanup()
 	{
-		delete m_Window;
-		delete m_Renderer;
-
+		m_Renderer.reset();
+		m_Window.reset();
+		
 		SDL_Vulkan_UnloadLibrary();
 		SDL_Quit();
 

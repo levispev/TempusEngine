@@ -7,7 +7,8 @@
 #include "vulkan/vulkan.h"
 #define SDL_MAIN_HANDLED
 
-#include <string>
+#include <memory>
+
 #include "sdl/SDL.h"
 
 namespace Tempus {
@@ -36,7 +37,7 @@ namespace Tempus {
 
 		void SetRenderClearColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
-		class Window* GetWindow() const { return m_Window; }
+		class Window* GetWindow() const { return m_Window.get(); }
 
 	private:
 
@@ -50,15 +51,15 @@ namespace Tempus {
 	private:
 
 		VkInstance m_Instance = nullptr;
-		class Window* m_Window = nullptr;
-		class Renderer* m_Renderer = nullptr;
+		std::unique_ptr<class Window> m_Window = nullptr;
+		std::unique_ptr<class Renderer> m_Renderer = nullptr;
 
 		bool bShouldQuit = false;
 		SDL_Event CurrentEvent;
 		
 	protected:
 		
-		std::string AppName;
+		const char* AppName;
 
 	};
 

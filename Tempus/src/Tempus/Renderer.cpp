@@ -20,6 +20,7 @@
 #include <chrono>
 
 #include "Application.h"
+#include "Events/EventDispatcher.h"
 #include "stb_image/stb_image.h"
 
 #define NVIDIA_VENDOR_ID 0X10DE
@@ -68,7 +69,7 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 	CreateGraphicsPipeline();
 	CreateFrameBuffers();
 	CreateCommandPool();
-	//CreateTextureImage();
+	CreateTextureImage();
 	CreateVertexBuffer();
 	CreateIndexBuffer();
 	CreateUniformBuffers();
@@ -114,6 +115,7 @@ void Tempus::Renderer::DrawFrame()
 	// Check if swapchain has been invalidated
 	if (result == VK_ERROR_OUT_OF_DATE_KHR)
 	{
+		TPS_CORE_WARN("Swapchain out of date!");
 		RecreateSwapChain();
 		return;
 	}
@@ -167,6 +169,7 @@ void Tempus::Renderer::DrawFrame()
 
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_FramebufferResized)
 	{
+		TPS_CORE_WARN("Swapchain out of date!");
 		m_FramebufferResized = false;
 		RecreateSwapChain();
 	}
@@ -287,6 +290,11 @@ void Tempus::Renderer::DrawImGui()
 		ImGui::Text("API Version: %u.%u.%u", VK_VERSION_MAJOR(m_DeviceDetails.apiVersion), VK_VERSION_MINOR(m_DeviceDetails.apiVersion), VK_VERSION_PATCH(m_DeviceDetails.apiVersion));
 		ImGui::Text("Vendor ID: %u", m_DeviceDetails.vendorId);
 	ImGui::End();
+
+	ImGui::Begin("Event Dispatcher");
+		ImGui::Text("Subscriber count: %u", EVENT_DISPATCHER->GetSubscriberCount());
+	ImGui::End();
+	
 
 	ImGui::Render();
 }
@@ -857,13 +865,23 @@ void Tempus::Renderer::CreateTextureImage()
 
 	void* data;
 	vkMapMemory(m_Device, stagingBufferMemory, 0, imageSize, 0, &data);
-	memcpy(data, pixels, static_cast<size_t>(imageSize));
+	memcpy(data, pixels, imageSize);
 	vkUnmapMemory(m_Device, stagingBufferMemory);
 
 	stbi_image_free(pixels);
 
 	CreateImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_TextureImage, m_TextureImageMemory);
+
+	// Image needs to be transitioned to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL before copying the buffer into it
+	TransitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	// Copying data from staging buffer to texture image
+	CopyBufferToImage(stagingBuffer, m_TextureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+	// Transitioning to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL for shader access
+	TransitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+	vkDestroyBuffer(m_Device, stagingBuffer, nullptr);
+	vkFreeMemory(m_Device, stagingBufferMemory, nullptr);
 }
 
 void Tempus::Renderer::CreateVertexBuffer()
@@ -1051,11 +1069,10 @@ void Tempus::Renderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
 
 	if (vkAllocateMemory(m_Device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
 	{
-		TPS_CORE_CRITICAL("failed to allocate vertex buffer memory!");
+		TPS_CORE_CRITICAL("Failed to allocate vertex buffer memory!");
 	}
 
 	vkBindBufferMemory(m_Device, buffer, bufferMemory, 0);
-
 }
 
 void Tempus::Renderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
@@ -1071,14 +1088,42 @@ void Tempus::Renderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDevi
 	EndSingleTimeCommands(commandBuffer);
 }
 
+void Tempus::Renderer::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
+{
+	VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+
+	VkBufferImageCopy region{};
+	region.bufferOffset = 0;
+	region.bufferRowLength = 0;
+	region.bufferImageHeight = 0;
+
+	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	region.imageSubresource.mipLevel = 0;
+	region.imageSubresource.baseArrayLayer = 0;
+	region.imageSubresource.layerCount = 1;
+
+	region.imageOffset = { 0, 0, 0 };
+	region.imageExtent = { width, height, 1 };
+
+	vkCmdCopyBufferToImage(commandBuffer,
+		buffer,
+		image,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		1,
+		&region
+	);
+
+	EndSingleTimeCommands(commandBuffer);
+}
+
 void Tempus::Renderer::CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
-	VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
+                                   VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
 {
 	VkImageCreateInfo imageInfo{};
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	imageInfo.imageType = VK_IMAGE_TYPE_2D;
-	imageInfo.extent.width = static_cast<uint32_t>(width);
-	imageInfo.extent.height = static_cast<uint32_t>(height);
+	imageInfo.extent.width = width;
+	imageInfo.extent.height = height;
 	imageInfo.extent.depth = 1;
 	imageInfo.mipLevels = 1;
 	imageInfo.arrayLayers = 1;
@@ -1145,7 +1190,7 @@ void Tempus::Renderer::InitImGui()
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 	poolInfo.maxSets = 1000;
-	poolInfo.poolSizeCount = std::size(pool_sizes);
+	poolInfo.poolSizeCount = static_cast<uint32_t>(std::size(pool_sizes));
 	poolInfo.pPoolSizes = pool_sizes;
 	
 	if (vkCreateDescriptorPool(m_Device, &poolInfo, nullptr, &m_ImguiPool) != VK_SUCCESS) 
@@ -1284,7 +1329,7 @@ void Tempus::Renderer::TransitionImageLayout(VkImage image, VkFormat format, VkI
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 	barrier.oldLayout = oldLayout;
 	barrier.newLayout = newLayout;
-	// Queue family ownership is not being transfered
+	// Queue family ownership is not being transferred
 	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
@@ -1294,12 +1339,39 @@ void Tempus::Renderer::TransitionImageLayout(VkImage image, VkFormat format, VkI
 	barrier.subresourceRange.levelCount = 1;
 	barrier.subresourceRange.baseArrayLayer = 0;
 	barrier.subresourceRange.layerCount = 1;
-	barrier.srcAccessMask = 0; // TODO
-	barrier.dstAccessMask = 0; // TODO
+	
+	VkPipelineStageFlags sourceStage;
+	VkPipelineStageFlags destinationStage;
+	
+	// If transitioning from undefined to transfer
+	if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+	{
+		// Transfer writes don't need to wait on anything
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+		// Earliest possible pipeline stage
+		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+	}
+	// If transitioning from transfer to shader read
+	else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+	{
+		// Shader should wait on transfer writes
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	}
+	else
+	{
+		TPS_CORE_CRITICAL("Unsupported layout transition!");
+	}
 
 	vkCmdPipelineBarrier(
 		commandBuffer,
-		0 /* TODO */, 0 /* TODO */,
+		sourceStage, destinationStage,
 		0,
 		0, nullptr,
 		0, nullptr,
@@ -1307,7 +1379,6 @@ void Tempus::Renderer::TransitionImageLayout(VkImage image, VkFormat format, VkI
 	);
 
 	EndSingleTimeCommands(commandBuffer);
-
 }
 
 VkShaderModule Tempus::Renderer::CreateShaderModule(const std::vector<char>& code)
@@ -1379,7 +1450,6 @@ Tempus::Renderer::QueueFamilyIndices Tempus::Renderer::FindQueueFamilies(VkPhysi
 
 Tempus::Renderer::SwapChainSupportDetails Tempus::Renderer::QuerySwapChainSupport(VkPhysicalDevice device)
 {
-
 	SwapChainSupportDetails details;
 
 	// Query surface capabilities
@@ -1410,7 +1480,6 @@ Tempus::Renderer::SwapChainSupportDetails Tempus::Renderer::QuerySwapChainSuppor
 
 VkPresentModeKHR Tempus::Renderer::ChooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes)
 {
-
     for (const auto& availablePresentMode : availablePresentModes) 
 	{
 		// Mailbox is desired if available
@@ -1446,24 +1515,22 @@ VkExtent2D Tempus::Renderer::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR &ca
 	{
 		return capabilities.currentExtent;
 	} 
-	else 
+
+	int width, height;
+	// The drawable size (pixels) may differ from the window size (screen coordinates) on high DPI displays (Mac Retina)
+	// Vulkan wants exact pixel size, not screen coordinates
+	SDL_Vulkan_GetDrawableSize(m_Window->GetNativeWindow(), &width, &height);
+
+	VkExtent2D actualExtent = 
 	{
-		int width, height;
-		// The drawable size (pixels) may differ from the window size (screen coordinates) on high DPI displays (Mac Retina)
-		// Vulkan wants exact pixel size, not screen coordinates
-		SDL_Vulkan_GetDrawableSize(m_Window->GetNativeWindow(), &width, &height);
+		static_cast<uint32_t>(width),
+		static_cast<uint32_t>(height)
+	};
 
-		VkExtent2D actualExtent = 
-		{
-			static_cast<uint32_t>(width),
-			static_cast<uint32_t>(height)
-		};
+	actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+	actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
 
-		actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
-		actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
-
-		return actualExtent;	
-	}
+	return actualExtent;	
 }
 
 bool Tempus::Renderer::IsDeviceSuitable(VkPhysicalDevice device)
@@ -1483,12 +1550,10 @@ bool Tempus::Renderer::IsDeviceSuitable(VkPhysicalDevice device)
 	}
 
 	return indices.IsComplete() && extensionsSupported && swapChainAdequate;
-
 }
 
 uint32_t Tempus::Renderer::GetDeviceScore(VkPhysicalDevice device)
 {
-
 	uint32_t score = 0;
 
 	VkPhysicalDeviceProperties deviceProperties;
@@ -1539,7 +1604,6 @@ bool Tempus::Renderer::CheckValidationLayerSupport()
 		{
 			return false;
 		}
-
 	}
 
 	return true;
@@ -1612,7 +1676,6 @@ uint32_t Tempus::Renderer::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyF
 
 void Tempus::Renderer::LogExtensionsAndLayers()
 {
-
 	uint32_t extensionCount = 0;
 	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
 
@@ -1671,12 +1734,10 @@ void Tempus::Renderer::LogExtensionsAndLayers()
 	}
 
 	TPS_CORE_INFO(ss.str());
-
 }
 
 void Tempus::Renderer::LogDeviceInfo()
 {
-
 	uint32_t deviceCount = 0;
 	vkEnumeratePhysicalDevices(m_VkInstance, &deviceCount, nullptr);
 
@@ -1761,12 +1822,10 @@ void Tempus::Renderer::LogDeviceInfo()
 	}
 
 	TPS_CORE_INFO(ss.str());
-
 }
 
 void Tempus::Renderer::LogSwapchainDetails(const SwapChainSupportDetails &details)
 {
-
 	std::stringstream ss;
 
 	ss << "\nSwapChain support details:\n";
@@ -1798,7 +1857,6 @@ void Tempus::Renderer::LogSwapchainDetails(const SwapChainSupportDetails &detail
 	}
 
 	TPS_CORE_INFO(ss.str());
-
 }
 
 void Tempus::Renderer::CleanupSwapChain()
@@ -1818,7 +1876,6 @@ void Tempus::Renderer::CleanupSwapChain()
 
 void Tempus::Renderer::Cleanup()
 {
-
 	// Wait for all async objects to finish
 	vkDeviceWaitIdle(m_Device);
 
@@ -1837,6 +1894,9 @@ void Tempus::Renderer::Cleanup()
 	}
 	
 	CleanupSwapChain();
+
+	vkDestroyImage(m_Device, m_TextureImage, nullptr);
+	vkFreeMemory(m_Device, m_TextureImageMemory, nullptr);
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) 
 	{
@@ -1865,4 +1925,5 @@ void Tempus::Renderer::Cleanup()
 	vkDestroySurfaceKHR(m_VkInstance, m_VkSurface, nullptr);
 	vkDestroyInstance(m_VkInstance, nullptr);
 
+	TPS_CORE_INFO("Renderer Cleaned");
 }

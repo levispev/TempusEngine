@@ -17,14 +17,12 @@ public:
 
 	virtual void Update() override
 	{
-		
 		SDL_Event event = GetCurrentEvent();
 
 		if (event.type == SDL_KEYDOWN)
 		{
 			if (event.key.keysym.scancode == SDL_SCANCODE_A)
 			{
-
 				TPS_WARN("Color Change!");
 
 				std::random_device rd;
@@ -32,10 +30,8 @@ public:
 				std::uniform_int_distribution<> dis(0, 255);
 
 				SetRenderClearColor(dis(gen), dis(gen), dis(gen), 255);
-
 			}
 		}
-
 	}
 
 };

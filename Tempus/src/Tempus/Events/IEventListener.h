@@ -2,20 +2,21 @@
 
 #pragma once
 
+#include <memory>
+
 #include "Events/Event.h"
 #include "sdl/SDL.h"
 
-#define BIND_EVENT(x) std::bind(&x, this, std::placeholders::_1)
-
 namespace Tempus {
 
-	class IEventListener
+	class TEMPUS_API IEventListener
 	{
-
 	protected:
 
+		friend class EventDispatcher;
+
 		IEventListener();
-		~IEventListener();
+		virtual ~IEventListener();
 
 		virtual void OnEvent(const SDL_Event& event) = 0;
 

@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "Tempus/Core.h"
 #include "sdl/SDL.h"
 
@@ -31,4 +33,9 @@ namespace Tempus {
 	};
 
 }
+
+#ifdef TPS_PLATFORM_WINDOWS
+	template class TEMPUS_API std::unique_ptr<Tempus::Window>;
+#endif
+
 

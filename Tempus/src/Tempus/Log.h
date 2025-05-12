@@ -12,11 +12,11 @@
 #define COLOR_WHITE "\033[1;37m"
 #define COLOR_RESET "\033[0m"
 
-namespace Tempus {
-
 #ifdef TPS_PLATFORM_WINDOWS
 	template class TEMPUS_API std::shared_ptr<spdlog::logger>;
 #endif
+
+namespace Tempus {
 
 	class TEMPUS_API Log
 	{
