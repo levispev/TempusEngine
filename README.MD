@@ -7,7 +7,9 @@
   <p align="center">
     A cross-platform 3D Vulkan game engine written entirely in C++
     <br />
-    Created by Levi Spevakow
+    Created by <a href="https://www.linkedin.com/in/levispev/">Levi Spevakow</a>
+    <br />
+    Logo created by <a href="https://www.linkedin.com/in/miadelino/">Mia Delino</a>
     <br />
     <br />
   </p>

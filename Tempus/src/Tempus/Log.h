@@ -23,8 +23,8 @@ namespace Tempus {
 
 	public:
 
-		Log();
-		~Log();
+		Log() = default;
+		~Log() = default;
 
 		static void Init();
 

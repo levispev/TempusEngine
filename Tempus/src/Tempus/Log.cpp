@@ -22,20 +22,6 @@ namespace Tempus {
 
 		TPS_CORE_INFO("Core log initialized!");
 		TPS_INFO("Client log initialized!");
-
 	}
-
-	Tempus::Log::Log()
-	{
-
-
-	}
-
-	Tempus::Log::~Log()
-	{
-
-
-	}
-
 }
 

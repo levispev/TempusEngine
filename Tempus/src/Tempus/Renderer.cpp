@@ -25,7 +25,6 @@
 
 #define NVIDIA_VENDOR_ID 0X10DE
 
-
 Tempus::Renderer::Renderer()
 {
 }
@@ -43,7 +42,6 @@ void Tempus::Renderer::Update()
 
 bool Tempus::Renderer::Init(Tempus::Window* window)
 {
-
 	m_Window = window;
 
 	if (!m_Window) 
@@ -70,6 +68,8 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 	CreateFrameBuffers();
 	CreateCommandPool();
 	CreateTextureImage();
+	CreateTextureImageView();
+	CreateTextureSampler();
 	CreateVertexBuffer();
 	CreateIndexBuffer();
 	CreateUniformBuffers();
@@ -81,7 +81,6 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 	InitImGui();
 
 	return true;
-
 }
 
 void Tempus::Renderer::SetClearColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
@@ -179,7 +178,6 @@ void Tempus::Renderer::DrawFrame()
 	}
 
 	m_CurrentFrame = (m_CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-
 }
 
 void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
@@ -294,7 +292,6 @@ void Tempus::Renderer::DrawImGui()
 	ImGui::Begin("Event Dispatcher");
 		ImGui::Text("Subscriber count: %u", EVENT_DISPATCHER->GetSubscriberCount());
 	ImGui::End();
-	
 
 	ImGui::Render();
 }
@@ -352,12 +349,10 @@ void Tempus::Renderer::CreateVulkanInstance()
 	}
 
 	LogExtensionsAndLayers();
-
 }
 
 void Tempus::Renderer::SetupDebugMessenger()
 {
-
 	VkDebugUtilsMessengerCreateInfoEXT createInfo{};
 	PopulateDebugMessengerCreateInfo(createInfo);
 
@@ -365,7 +360,6 @@ void Tempus::Renderer::SetupDebugMessenger()
 	{
     	TPS_CORE_CRITICAL("Failed to set up debug messenger!");
 	}		
-
 }
 
 void Tempus::Renderer::PickPhysicalDevice()
@@ -403,12 +397,10 @@ void Tempus::Renderer::PickPhysicalDevice()
 	}
 
 	LogDeviceInfo();
-
 }
 
 void Tempus::Renderer::CreateLogicalDevice()
 {
-
 	QueueFamilyIndices indices = FindQueueFamilies(m_PhysicalDevice);
 
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
@@ -430,6 +422,7 @@ void Tempus::Renderer::CreateLogicalDevice()
 	}
 
 	VkPhysicalDeviceFeatures deviceFeatures{};
+	deviceFeatures.samplerAnisotropy = VK_TRUE;
 	
 	VkDeviceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -459,7 +452,6 @@ void Tempus::Renderer::CreateLogicalDevice()
 	// Retrieve reference to devices graphics queue, index 0 because we only have 1 queue
 	vkGetDeviceQueue(m_Device, indices.graphicsFamily.value(), 0, &m_GraphicsQueue);
 	vkGetDeviceQueue(m_Device, indices.presentFamily.value(), 0, &m_PresentQueue);
-	
 }
 
 void Tempus::Renderer::CreateSwapChain()
@@ -546,40 +538,16 @@ void Tempus::Renderer::CreateSwapChain()
 	
 	m_SwapChainImageFormat = surfaceFormat.format;
 	m_SwapChainExtent = extent;
-
 }
 
 void Tempus::Renderer::CreateImageViews()
 {
-
 	m_SwapChainImageViews.resize(m_SwapChainImages.size());
 
 	for (size_t i = 0; i < m_SwapChainImages.size(); i++) 
 	{
-		VkImageViewCreateInfo createInfo{};
-		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		createInfo.image = m_SwapChainImages[i];
-		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		createInfo.format = m_SwapChainImageFormat;
-		
-		createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-		createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		createInfo.subresourceRange.baseMipLevel = 0;
-		createInfo.subresourceRange.levelCount = 1;
-		createInfo.subresourceRange.baseArrayLayer = 0;
-		createInfo.subresourceRange.layerCount = 1;
-
-		if (vkCreateImageView(m_Device, &createInfo, nullptr, &m_SwapChainImageViews[i]) != VK_SUCCESS) 
-		{
-			TPS_CORE_CRITICAL("Failed to create image view!");
-		}
-
+		m_SwapChainImageViews[i] = CreateImageView(m_SwapChainImages[i], m_SwapChainImageFormat);
 	}
-
 }
 
 void Tempus::Renderer::CreateRenderPass()
@@ -628,7 +596,6 @@ void Tempus::Renderer::CreateRenderPass()
 	{
 		TPS_CORE_CRITICAL("Failed to create render pass!");
 	}
-
 }
 
 void Tempus::Renderer::CreateDescriptorSetLayout()
@@ -642,21 +609,27 @@ void Tempus::Renderer::CreateDescriptorSetLayout()
 	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 	uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
 
+	VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+	samplerLayoutBinding.binding = 1;
+	samplerLayoutBinding.descriptorCount = 1;
+	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	samplerLayoutBinding.pImmutableSamplers = nullptr; // Optional
+
+	std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
 	VkDescriptorSetLayoutCreateInfo layoutInfo{};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = 1;
-	layoutInfo.pBindings = &uboLayoutBinding;
+	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+	layoutInfo.pBindings = bindings.data();
 
 	if (vkCreateDescriptorSetLayout(m_Device, &layoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
 	{
 		TPS_CORE_CRITICAL("Failed to create descriptor set layout!");
 	}
-
 }
 
 void Tempus::Renderer::CreateGraphicsPipeline()
 {
-
 	auto vertShaderCode = FileUtils::ReadFile("bin/shaders/vert.spv");
 	auto fragShaderCode = FileUtils::ReadFile("bin/shaders/frag.spv");
 
@@ -798,7 +771,6 @@ void Tempus::Renderer::CreateGraphicsPipeline()
 
 	vkDestroyShaderModule(m_Device, vertShaderModule, nullptr);
 	vkDestroyShaderModule(m_Device, fragShaderModule, nullptr);
-
 }
 
 void Tempus::Renderer::CreateFrameBuffers()
@@ -884,6 +856,45 @@ void Tempus::Renderer::CreateTextureImage()
 	vkFreeMemory(m_Device, stagingBufferMemory, nullptr);
 }
 
+void Tempus::Renderer::CreateTextureImageView()
+{
+	m_TextureImageView = CreateImageView(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB);
+}
+
+void Tempus::Renderer::CreateTextureSampler()
+{
+	VkSamplerCreateInfo samplerInfo{};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerInfo.magFilter = VK_FILTER_LINEAR;
+	samplerInfo.minFilter = VK_FILTER_LINEAR;
+
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.anisotropyEnable = VK_TRUE;
+	
+	VkPhysicalDeviceProperties properties{};
+	vkGetPhysicalDeviceProperties(m_PhysicalDevice, &properties);
+	// Setting to max anisotropy value based on hardware
+	samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+
+	// Fallback color when sampling beyond clamped image
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	// Basically every real world application uses normalized UV's
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;
+	samplerInfo.compareEnable = VK_FALSE;
+	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerInfo.mipLodBias = 0.0f;
+	samplerInfo.minLod = 0.0f;
+	samplerInfo.maxLod = 0.0f;
+
+	if (vkCreateSampler(m_Device, &samplerInfo, nullptr, &m_TextureSampler) != VK_SUCCESS)
+	{
+		TPS_CORE_CRITICAL("Failed to create texture sampler!");
+	}
+}
+
 void Tempus::Renderer::CreateVertexBuffer()
 {
 	VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
@@ -949,14 +960,18 @@ void Tempus::Renderer::CreateUniformBuffers()
 
 void Tempus::Renderer::CreateDescriptorPool()
 {
-	VkDescriptorPoolSize poolSize{};
-	poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSize.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-
+	std::array<VkDescriptorPoolSize, 2> poolSizes{};
+	// For vertex uniform buffer
+	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+	// For texture image sampler
+	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+	
 	VkDescriptorPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = 1;
-	poolInfo.pPoolSizes = &poolSize;
+	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+	poolInfo.pPoolSizes = poolSizes.data();
 	poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
 	if (vkCreateDescriptorPool(m_Device, &poolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS) 
@@ -988,24 +1003,36 @@ void Tempus::Renderer::CreateDescriptorSets()
 		bufferInfo.offset = 0;
 		bufferInfo.range = sizeof(UniformBufferObject);
 
-		VkWriteDescriptorSet descriptorWrite{};
-		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite.dstSet = m_DescriptorSets[i];
-		descriptorWrite.dstBinding = 0;
-		descriptorWrite.dstArrayElement = 0;
-		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrite.descriptorCount = 1;
-		descriptorWrite.pBufferInfo = &bufferInfo;
-		descriptorWrite.pImageInfo = nullptr; // Optional
-		descriptorWrite.pTexelBufferView = nullptr; // Optional
+		VkDescriptorImageInfo imageInfo{};
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = m_TextureImageView;
+		imageInfo.sampler = m_TextureSampler;
 
-		vkUpdateDescriptorSets(m_Device, 1, &descriptorWrite, 0, nullptr);
+		std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[0].dstSet = m_DescriptorSets[i];
+		descriptorWrites[0].dstBinding = 0;
+		descriptorWrites[0].dstArrayElement = 0;
+		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrites[0].descriptorCount = 1;
+		descriptorWrites[0].pBufferInfo = &bufferInfo;
+		descriptorWrites[0].pImageInfo = nullptr; // Optional
+		descriptorWrites[0].pTexelBufferView = nullptr; // Optional
+
+		descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[1].dstSet = m_DescriptorSets[i];
+		descriptorWrites[1].dstBinding = 1;
+		descriptorWrites[1].dstArrayElement = 0;
+		descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrites[1].descriptorCount = 1;
+		descriptorWrites[1].pImageInfo = &imageInfo;
+
+		vkUpdateDescriptorSets(m_Device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 	}
 }
 
 void Tempus::Renderer::CreateCommandBuffer()
 {
-
 	m_CommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
 	VkCommandBufferAllocateInfo allocInfo{};
@@ -1018,7 +1045,6 @@ void Tempus::Renderer::CreateCommandBuffer()
 	{
 		TPS_CORE_CRITICAL("Failed to allocate command buffers!");
 	}
-
 }
 
 void Tempus::Renderer::CreateSyncObjects()
@@ -1043,7 +1069,6 @@ void Tempus::Renderer::CreateSyncObjects()
 			TPS_CORE_CRITICAL("Failed to create semaphores!");
 		}
 	}
-
 }
 
 void Tempus::Renderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
@@ -1156,6 +1181,28 @@ void Tempus::Renderer::CreateImage(uint32_t width, uint32_t height, VkFormat for
 	vkBindImageMemory(m_Device, image, imageMemory, 0);
 }
 
+VkImageView Tempus::Renderer::CreateImageView(VkImage image, VkFormat format)
+{
+	VkImageViewCreateInfo viewInfo{};
+	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	viewInfo.image = image;
+	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	viewInfo.format = format;
+	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewInfo.subresourceRange.baseMipLevel = 0;
+	viewInfo.subresourceRange.levelCount = 1;
+	viewInfo.subresourceRange.baseArrayLayer = 0;
+	viewInfo.subresourceRange.layerCount = 1;
+
+	VkImageView imageView;
+	if (vkCreateImageView(m_Device, &viewInfo, nullptr, &imageView) != VK_SUCCESS)
+	{
+		TPS_CORE_CRITICAL("Failed to create image view!");
+	}
+
+	return imageView;
+}
+
 void Tempus::Renderer::RecreateSwapChain()
 {
 	TPS_CORE_INFO("Recreating swapchain!");
@@ -1221,7 +1268,6 @@ void Tempus::Renderer::InitImGui()
 
 	ImGui_ImplVulkan_Init(&initInfo);
 	//ImGui_ImplVulkan_CreateFontsTexture();
-
 }
 
 void Tempus::Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
@@ -1549,7 +1595,10 @@ bool Tempus::Renderer::IsDeviceSuitable(VkPhysicalDevice device)
 		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 	}
 
-	return indices.IsComplete() && extensionsSupported && swapChainAdequate;
+	VkPhysicalDeviceFeatures supportedFeatures;
+	vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
+
+	return indices.IsComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
 }
 
 uint32_t Tempus::Renderer::GetDeviceScore(VkPhysicalDevice device)
@@ -1902,6 +1951,9 @@ void Tempus::Renderer::Cleanup()
 	}
 	
 	CleanupSwapChain();
+
+	vkDestroySampler(m_Device, m_TextureSampler, nullptr);
+	vkDestroyImageView(m_Device, m_TextureImageView, nullptr);
 
 	vkDestroyImage(m_Device, m_TextureImage, nullptr);
 	vkFreeMemory(m_Device, m_TextureImageMemory, nullptr);

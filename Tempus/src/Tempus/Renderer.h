@@ -25,6 +25,7 @@ namespace Tempus {
 
 		glm::vec3 pos;
 		glm::vec3 color;
+		glm::vec2 texCoord;
 
 		static VkVertexInputBindingDescription GetBindingDescription() 
 		{
@@ -37,9 +38,9 @@ namespace Tempus {
 			return bindingDescription;
 		}
 
-		static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions() 
+		static std::array<VkVertexInputAttributeDescription, 3> GetAttributeDescriptions() 
 		{
-			std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+			std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
 
 			// Vertex position attribute
 			attributeDescriptions[0].binding = 0;
@@ -52,6 +53,11 @@ namespace Tempus {
 			attributeDescriptions[1].location = 1;
 			attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
 			attributeDescriptions[1].offset = offsetof(Vertex, color);
+
+			attributeDescriptions[2].binding = 0;
+			attributeDescriptions[2].location = 2;
+			attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+			attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
 
 			return attributeDescriptions;
 		}
@@ -80,35 +86,57 @@ namespace Tempus {
 
 	private:
 
-		const std::vector<Vertex> vertices = 
-		{
-			// Front face
-			{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}}, // 0 bottom-left
-			{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},  // 1 bottom-right
-			{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}},   // 2 top-right
-			{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 0.0f}},  // 3 top-left
+		const std::vector<Vertex> vertices = {
+		    // Front face (z = -0.5)
+		    {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}}, // 0 bottom-left
+		    {{ 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}}, // 1 bottom-right
+		    {{ 0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f}}, // 2 top-right
+		    {{-0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}}, // 3 top-left
 
-			// Back face
-			{{-0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}},  // 4 bottom-left
-			{{0.5f, -0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},   // 5 bottom-right
-			{{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},    // 6 top-right
-			{{-0.5f, 0.5f, 0.5f}, {1.0f, 1.0f, 0.0f}}    // 7 top-left
+		    // Back face (z = 0.5)
+		    {{ 0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}, // 4 bottom-left
+		    {{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}}, // 5 bottom-right
+		    {{-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}}, // 6 top-right
+		    {{ 0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}}, // 7 top-left
+
+		    // Left face (x = -0.5)
+		    {{-0.5f, -0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}}, // 8 bottom-left
+		    {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}}, // 9 bottom-right
+		    {{-0.5f,  0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}}, // 10 top-right
+		    {{-0.5f,  0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, // 11 top-left
+
+		    // Right face (x = 0.5)
+		    {{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}}, // 12 bottom-left
+		    {{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}}, // 13 bottom-right
+		    {{ 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}}, // 14 top-right
+		    {{ 0.5f,  0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, // 15 top-left
+
+		    // Top face (y = 0.5)
+		    {{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, // 16 bottom-left
+		    {{ 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}}, // 17 bottom-right
+		    {{ 0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}}, // 18 top-right
+		    {{-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}}, // 19 top-left
+
+		    // Bottom face (y = -0.5)
+		    {{-0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}}, // 20 bottom-left
+		    {{ 0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 1.0f}}, // 21 bottom-right
+		    {{ 0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}}, // 22 top-right
+		    {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}}, // 23 top-left
 		};
 
-		const std::vector<uint16_t> indices = 
-		{
-			// Front face
-			0, 1, 2,    2, 3, 0,
-			// Right face
-			1, 5, 6,    6, 2, 1,
-			// Back face
-			5, 4, 7,    7, 6, 5,
-			// Left face
-			4, 0, 3,    3, 7, 4,
-			// Top face
-			3, 2, 6,    6, 7, 3,
-			// Bottom face
-			4, 5, 1,    1, 0, 4
+		const std::vector<uint16_t> indices = {
+		    // Front face
+		    0, 1, 2,    2, 3, 0,
+		    // Back face
+		    4, 5, 6,    6, 7, 4,
+		    // Left face
+		    8, 9, 10,   10, 11, 8,
+		    // Right face
+		    12, 13, 14, 14, 15, 12,
+		    // Top face
+		    16, 17, 18, 18, 19, 16,
+		    // Bottom face
+		    20, 21, 22, 22, 23, 20
 		};
 
 		virtual void OnEvent(const SDL_Event& event) override;
@@ -154,6 +182,8 @@ namespace Tempus {
 		void CreateFrameBuffers();
 		void CreateCommandPool();
 		void CreateTextureImage();
+		void CreateTextureImageView();
+		void CreateTextureSampler();
 		void CreateVertexBuffer();
 		void CreateIndexBuffer();
 		void CreateUniformBuffers();
@@ -168,6 +198,7 @@ namespace Tempus {
 
 		void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
 			VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+		VkImageView CreateImageView(VkImage image, VkFormat format);
 
 		void RecreateSwapChain();
 
@@ -250,6 +281,8 @@ namespace Tempus {
 
 		VkImage m_TextureImage = VK_NULL_HANDLE;
 		VkDeviceMemory m_TextureImageMemory = VK_NULL_HANDLE;
+		VkImageView m_TextureImageView = VK_NULL_HANDLE;
+		VkSampler m_TextureSampler = VK_NULL_HANDLE;
 
 		bool m_FramebufferResized = false;
 
