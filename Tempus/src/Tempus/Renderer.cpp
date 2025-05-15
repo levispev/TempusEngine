@@ -15,6 +15,9 @@
 #include "imgui/imgui_impl_vulkan.h"
 #include <vulkan/vk_enum_string_helper.h>
 #include "sdl/SDL.h"
+#define GLM_FORCE_RADIANS
+// Vulkan uses 0 - 1 depth range. Default is 1 - 0 (OpenGl)
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include <chrono>
@@ -65,6 +68,7 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 	CreateRenderPass();
 	CreateDescriptorSetLayout();
 	CreateGraphicsPipeline();
+	CreateDepthResources();
 	CreateFrameBuffers();
 	CreateCommandPool();
 	CreateTextureImage();
@@ -546,7 +550,7 @@ void Tempus::Renderer::CreateImageViews()
 
 	for (size_t i = 0; i < m_SwapChainImages.size(); i++) 
 	{
-		m_SwapChainImageViews[i] = CreateImageView(m_SwapChainImages[i], m_SwapChainImageFormat);
+		m_SwapChainImageViews[i] = CreateImageView(m_SwapChainImages[i], m_SwapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
 	}
 }
 
@@ -570,23 +574,40 @@ void Tempus::Renderer::CreateRenderPass()
 	colorAttachmentRef.attachment = 0;
 	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+
+	VkAttachmentDescription depthAttachment{};
+	depthAttachment.format = FindDepthFormat();
+	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VkAttachmentReference depthAttachmentRef{};
+	depthAttachmentRef.attachment = 1;
+	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
 	VkSubpassDescription subpass{};
 	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpass.colorAttachmentCount = 1;
 	subpass.pColorAttachments = &colorAttachmentRef;
-
+	subpass.pDepthStencilAttachment = &depthAttachmentRef;
+	
 	VkSubpassDependency dependency{};
 	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
+	std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
 	VkRenderPassCreateInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = 1;
-	renderPassInfo.pAttachments = &colorAttachment;
+	renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+	renderPassInfo.pAttachments = attachments.data();
 	renderPassInfo.subpassCount = 1;
 	renderPassInfo.pSubpasses = &subpass;
 	renderPassInfo.dependencyCount = 1;
@@ -745,6 +766,18 @@ void Tempus::Renderer::CreateGraphicsPipeline()
 		TPS_CORE_CRITICAL("Failed to create pipeline layout!");
 	}
 
+	VkPipelineDepthStencilStateCreateInfo depthStencil{};
+	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depthStencil.depthTestEnable = VK_TRUE;
+	depthStencil.depthWriteEnable = VK_TRUE;
+	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+	depthStencil.depthBoundsTestEnable = VK_FALSE;
+	depthStencil.minDepthBounds = 0.0f; // Optional
+	depthStencil.maxDepthBounds = 1.0f; // Optional
+	depthStencil.stencilTestEnable = VK_FALSE;
+	depthStencil.front = {}; // Optional
+	depthStencil.back = {}; // Optional
+	
 	// Pipeline creation
 	VkGraphicsPipelineCreateInfo pipelineInfo{};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -755,7 +788,7 @@ void Tempus::Renderer::CreateGraphicsPipeline()
 	pipelineInfo.pViewportState = &viewportState;
 	pipelineInfo.pRasterizationState = &rasterizer;
 	pipelineInfo.pMultisampleState = &multisampling;
-	pipelineInfo.pDepthStencilState = nullptr; // Optional
+	pipelineInfo.pDepthStencilState = &depthStencil;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.layout = m_PipelineLayout;
@@ -779,17 +812,17 @@ void Tempus::Renderer::CreateFrameBuffers()
 
 	for (size_t i = 0; i < m_SwapChainImageViews.size(); i++) 
 	{
-
-		VkImageView attachments[] = 
+		std::array<VkImageView, 2> attachments =
 		{
-			m_SwapChainImageViews[i]
+			m_SwapChainImageViews[i],
+			m_DepthImageView
 		};
 
 		VkFramebufferCreateInfo framebufferInfo{};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebufferInfo.renderPass = m_RenderPass;
-		framebufferInfo.attachmentCount = 1;
-		framebufferInfo.pAttachments = attachments;
+		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		framebufferInfo.pAttachments = attachments.data();
 		framebufferInfo.width = m_SwapChainExtent.width;
 		framebufferInfo.height = m_SwapChainExtent.height;
 		framebufferInfo.layers = 1;
@@ -815,6 +848,15 @@ void Tempus::Renderer::CreateCommandPool()
 		TPS_CORE_CRITICAL("Failed to create command pool!");
 	}
 
+}
+
+void Tempus::Renderer::CreateDepthResources()
+{
+	VkFormat depthFormat = FindDepthFormat();
+	CreateImage(m_SwapChainExtent.width, m_SwapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_DepthImage, m_DepthImageMemory);
+
+	m_DepthImageView = CreateImageView(m_DepthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
 void Tempus::Renderer::CreateTextureImage()
@@ -858,7 +900,7 @@ void Tempus::Renderer::CreateTextureImage()
 
 void Tempus::Renderer::CreateTextureImageView()
 {
-	m_TextureImageView = CreateImageView(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB);
+	m_TextureImageView = CreateImageView(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 void Tempus::Renderer::CreateTextureSampler()
@@ -1057,7 +1099,7 @@ void Tempus::Renderer::CreateSyncObjects()
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 	VkFenceCreateInfo fenceInfo{};
 	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-	// Setting fence to be signalled on creation for first call of DrawFrame()
+	// Setting fence to be signaled on creation for first call of DrawFrame()
 	fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) 
@@ -1181,14 +1223,14 @@ void Tempus::Renderer::CreateImage(uint32_t width, uint32_t height, VkFormat for
 	vkBindImageMemory(m_Device, image, imageMemory, 0);
 }
 
-VkImageView Tempus::Renderer::CreateImageView(VkImage image, VkFormat format)
+VkImageView Tempus::Renderer::CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags)
 {
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	viewInfo.image = image;
 	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 	viewInfo.format = format;
-	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewInfo.subresourceRange.aspectMask = aspectFlags;
 	viewInfo.subresourceRange.baseMipLevel = 0;
 	viewInfo.subresourceRange.levelCount = 1;
 	viewInfo.subresourceRange.baseArrayLayer = 0;
@@ -1213,6 +1255,7 @@ void Tempus::Renderer::RecreateSwapChain()
 
 	CreateSwapChain();
 	CreateImageViews();
+	CreateDepthResources();
 	CreateFrameBuffers();
 }
 
@@ -1282,16 +1325,19 @@ void Tempus::Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32
 		TPS_CORE_CRITICAL("Failed to begin recording command buffer!");
 	}
 
+	// Order of clear values needs to match order of attachments
+	std::array<VkClearValue, 2> clearValues{};
+	clearValues[0].color = {{m_ClearColor[0],m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]}};
+	clearValues[1].depthStencil = { 1.0f, 0 };
+
 	VkRenderPassBeginInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = m_RenderPass;
 	renderPassInfo.framebuffer = m_SwapChainFramebuffers[imageIndex];
 	renderPassInfo.renderArea.offset = { 0, 0 };
 	renderPassInfo.renderArea.extent = m_SwapChainExtent;
-	VkClearValue clearColor = { {{m_ClearColor[0],m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]}}};
-	//TPS_CORE_INFO("Clear Color: {}, {}, {}", m_ClearColor[0],m_ClearColor[1], m_ClearColor[2]);
-	renderPassInfo.clearValueCount = 1;
-	renderPassInfo.pClearValues = &clearColor;
+	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	renderPassInfo.pClearValues = clearValues.data();
 
 	// Begin render pass
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -1707,6 +1753,41 @@ void Tempus::Renderer::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCre
 	createInfo.pUserData = nullptr;
 }
 
+VkFormat Tempus::Renderer::FindSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
+	VkFormatFeatureFlags features)
+{
+	for (VkFormat format : candidates)
+	{
+		VkFormatProperties props;
+		vkGetPhysicalDeviceFormatProperties(m_PhysicalDevice, format, &props);
+
+		if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
+		{
+			return format;
+		}
+		if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
+		{
+			return format;
+		}
+	}
+	
+	TPS_CORE_CRITICAL("Failed to find supported format!");
+}
+
+VkFormat Tempus::Renderer::FindDepthFormat()
+{
+	return FindSupportedFormat(
+		{VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+		VK_IMAGE_TILING_OPTIMAL,
+		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+		);
+}
+
+bool Tempus::Renderer::HasStencilComponent(VkFormat format)
+{
+	return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+}
+
 uint32_t Tempus::Renderer::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
 {
 	VkPhysicalDeviceMemoryProperties memProperties;
@@ -1918,6 +1999,10 @@ void Tempus::Renderer::LogSwapchainDetails(const SwapChainSupportDetails &detail
 
 void Tempus::Renderer::CleanupSwapChain()
 {
+	vkDestroyImageView(m_Device, m_DepthImageView, nullptr);
+	vkDestroyImage(m_Device, m_DepthImage, nullptr);
+	vkFreeMemory(m_Device, m_DepthImageMemory, nullptr);
+	
 	for (auto framebuffer : m_SwapChainFramebuffers)
 	{
 		vkDestroyFramebuffer(m_Device, framebuffer, nullptr);

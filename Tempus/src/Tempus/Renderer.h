@@ -87,44 +87,84 @@ namespace Tempus {
 	private:
 
 		const std::vector<Vertex> vertices = {
-		    // Front face (z = -0.5)
+		    // 1st cube
+		    // Front face 
 		    {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}}, // 0 bottom-left
 		    {{ 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}}, // 1 bottom-right
 		    {{ 0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f}}, // 2 top-right
 		    {{-0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}}, // 3 top-left
 
-		    // Back face (z = 0.5)
+		    // Back face 
 		    {{ 0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}, // 4 bottom-left
 		    {{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}}, // 5 bottom-right
 		    {{-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}}, // 6 top-right
 		    {{ 0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}}, // 7 top-left
 
-		    // Left face (x = -0.5)
+		    // Left face 
 		    {{-0.5f, -0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}}, // 8 bottom-left
 		    {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}}, // 9 bottom-right
 		    {{-0.5f,  0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}}, // 10 top-right
 		    {{-0.5f,  0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, // 11 top-left
 
-		    // Right face (x = 0.5)
+		    // Right face 
 		    {{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}}, // 12 bottom-left
 		    {{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}}, // 13 bottom-right
 		    {{ 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}}, // 14 top-right
 		    {{ 0.5f,  0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, // 15 top-left
 
-		    // Top face (y = 0.5)
+		    // Top face 
 		    {{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, // 16 bottom-left
 		    {{ 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}}, // 17 bottom-right
 		    {{ 0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}}, // 18 top-right
 		    {{-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}}, // 19 top-left
 
-		    // Bottom face (y = -0.5)
+		    // Bottom face 
 		    {{-0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}}, // 20 bottom-left
 		    {{ 0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 1.0f}}, // 21 bottom-right
 		    {{ 0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}}, // 22 top-right
 		    {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}}, // 23 top-left
+
+			// 2nd cube
+			// Front face 
+			{{ 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}}, // 24 bottom-left
+			{{ 1.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}}, // 25 bottom-right
+			{{ 1.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f}}, // 26 top-right
+			{{ 0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}}, // 27 top-left
+
+			// Back face 
+			{{ 1.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},  // 28 bottom-left
+			{{ 0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},  // 29 bottom-right
+			{{ 0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},  // 30 top-right
+			{{ 1.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},  // 31 top-left
+
+			// Left face 
+			{{ 0.5f, -0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}}, // 32 bottom-left
+			{{ 0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}}, // 33 bottom-right
+			{{ 0.5f,  0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}}, // 34 top-right
+			{{ 0.5f,  0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, // 35 top-left
+
+			// Right face 
+			{{ 1.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}},  // 36 bottom-left
+			{{ 1.5f, -0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}},  // 37 bottom-right
+			{{ 1.5f,  0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},  // 38 top-right
+			{{ 1.5f,  0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},  // 39 top-left
+
+			// Top face 
+			{{ 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},  // 40 bottom-left
+			{{ 1.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},  // 41 bottom-right
+			{{ 1.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},  // 42 top-right
+			{{ 0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},  // 43 top-left
+
+			// Bottom face 
+			{{ 0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}}, // 44 bottom-left
+			{{ 1.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 1.0f}}, // 45 bottom-right
+			{{ 1.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}}, // 46 top-right
+			{{ 0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}}, // 47 top-left
+
 		};
 
 		const std::vector<uint16_t> indices = {
+		    // 1st Cube
 		    // Front face
 		    0, 1, 2,    2, 3, 0,
 		    // Back face
@@ -136,7 +176,21 @@ namespace Tempus {
 		    // Top face
 		    16, 17, 18, 18, 19, 16,
 		    // Bottom face
-		    20, 21, 22, 22, 23, 20
+		    20, 21, 22, 22, 23, 20,
+
+		    // 2nd Cube
+		    // Front face
+		    24, 25, 26, 26, 27, 24,
+		    // Back face
+		    28, 29, 30, 30, 31, 28,
+		    // Left face
+		    32, 33, 34, 34, 35, 32,
+		    // Right face
+		    36, 37, 38, 38, 39, 36,
+		    // Top face
+		    40, 41, 42, 42, 43, 40,
+		    // Bottom face
+		    44, 45, 46, 46, 47, 44
 		};
 
 		virtual void OnEvent(const SDL_Event& event) override;
@@ -181,6 +235,7 @@ namespace Tempus {
 		void CreateGraphicsPipeline();
 		void CreateFrameBuffers();
 		void CreateCommandPool();
+		void CreateDepthResources();
 		void CreateTextureImage();
 		void CreateTextureImageView();
 		void CreateTextureSampler();
@@ -198,7 +253,7 @@ namespace Tempus {
 
 		void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
 			VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
-		VkImageView CreateImageView(VkImage image, VkFormat format);
+		VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
 
 		void RecreateSwapChain();
 
@@ -218,6 +273,9 @@ namespace Tempus {
 		bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
 		std::vector<const char*> GetRequiredExtensions();
 		void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+		VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+		VkFormat FindDepthFormat();
+		bool HasStencilComponent(VkFormat format);
 
 		uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
@@ -279,10 +337,15 @@ namespace Tempus {
 		VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
 		std::vector<VkDescriptorSet> m_DescriptorSets;
 
+		// Texture image
 		VkImage m_TextureImage = VK_NULL_HANDLE;
 		VkDeviceMemory m_TextureImageMemory = VK_NULL_HANDLE;
 		VkImageView m_TextureImageView = VK_NULL_HANDLE;
 		VkSampler m_TextureSampler = VK_NULL_HANDLE;
+		// Depth image
+		VkImage m_DepthImage = VK_NULL_HANDLE;
+		VkDeviceMemory m_DepthImageMemory = VK_NULL_HANDLE;
+		VkImageView m_DepthImageView = VK_NULL_HANDLE;
 
 		bool m_FramebufferResized = false;
 
