@@ -31,3 +31,9 @@
 // Helper macros
 #define BIT(x) (1 << x)
 #define ENUM_TO_STRING(name) #name
+
+#include <cstdint>
+
+constexpr uint32_t MAX_ENTITIES = 5000;
+constexpr uint8_t MAX_COMPONENTS = 32;
+

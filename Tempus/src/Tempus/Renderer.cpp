@@ -23,6 +23,8 @@
 #include <chrono>
 
 #include "Application.h"
+#include "Scene.h"
+#include "SceneManager.h"
 #include "Events/EventDispatcher.h"
 #include "stb_image/stb_image.h"
 
@@ -295,6 +297,18 @@ void Tempus::Renderer::DrawImGui()
 
 	ImGui::Begin("Event Dispatcher");
 		ImGui::Text("Subscriber count: %u", EVENT_DISPATCHER->GetSubscriberCount());
+	ImGui::End();
+
+	Scene* currentScene = SCENE_MANAGER->GetActiveScene();
+	ImGui::Begin("Scene");
+		ImGui::Text("Name: %s", currentScene->GetName().c_str());
+		ImGui::Text("Entity count: %u", currentScene->GetEntityCount());
+		ImGui::Text("-----------------");
+		std::vector<std::string> entNames = currentScene->GetEntityNames();
+		for (uint32_t i = 0; i < currentScene->GetEntityCount(); i++)
+		{
+			ImGui::Text("#%u: %s", i, entNames[i].c_str());
+		}
 	ImGui::End();
 
 	ImGui::Render();

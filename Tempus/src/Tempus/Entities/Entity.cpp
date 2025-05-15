@@ -2,14 +2,12 @@
 
 #include "Entity.h"
 
-namespace Tempus
+
+Tempus::Entity::Entity(uint32_t id) :  m_Id(id)
 {
-
-    Entity::Entity()
-    {
-    }
-
-    Entity::~Entity()
-    {
-    }
 }
+
+Tempus::Entity::~Entity()
+{
+}
+
