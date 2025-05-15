@@ -17,154 +17,151 @@
 #include "imgui/imgui_impl_sdl2.h"
 
 
-namespace Tempus {
+Tempus::Application::Application() : CurrentEvent(SDL_Event()), AppName("Application Name")
+{
+	m_Window = new Window();
+	m_Renderer = new Renderer();
+}
 
-	Application::Application() : CurrentEvent(SDL_Event()), AppName("Application Name")
-	{
-		m_Window = new Window();
-		m_Renderer = new Renderer();
-	}
+Tempus::Application::~Application()
+{
+}
 
-	Application::~Application()
-	{
-	}
-
-	void Application::Run()
-	{
+void Tempus::Application::Run()
+{
 #pragma region TEMPUS_LOGO
-		std::cout << COLOR_BLUE <<
+	std::cout << COLOR_BLUE <<
 R"(
-   888888888888  88888888888  88b           d88  88888888ba   88        88   ad88888ba
-       88       88           888b         d888  88      "8b  88        88  d8"     "8b
-      88       88           88`8b       d8'88  88      ,8P  88        88  Y8,         
-     88       88aaaaa      88 `8b     d8' 88  88aaaaaa8P'  88        88  `Y8aaaaa,    
-    88       88"""""      88  `8b   d8'  88  88""""""'    88        88    `"""""8b,  
-   88       88           88   `8b d8'   88  88           88        88          `8b  
-  88       88           88    `888'    88  88           Y8a.    .a8P  Y8a     a8P  
- 88       88888888888  88     `8'     88  88            `"Y8888Y"'    "Y88888P" 
+  888888888888  88888888888  88b           d88  88888888ba   88        88   ad88888ba
+      88       88           888b         d888  88      "8b  88        88  d8"     "8b
+     88       88           88`8b       d8'88  88      ,8P  88        88  Y8,         
+    88       88aaaaa      88 `8b     d8' 88  88aaaaaa8P'  88        88  `Y8aaaaa,    
+   88       88"""""      88  `8b   d8'  88  88""""""'    88        88    `"""""8b,   
+  88       88           88   `8b d8'   88  88           88        88          `8b    
+ 88       88           88    `888'    88  88           Y8a.    .a8P  Y8a     a8P     
+88       88888888888  88     `8'     88  88            `"Y8888Y"'    "Y88888P"       
 )"
 #pragma endregion
-		
-		<< '\n' << COLOR_RESET;
+	
+	<< '\n' << COLOR_RESET;
 
-		Log::Init();
+	Log::Init();
 
-		// Changing working directory to project root.
-		// @TODO in the future this will change if in a packaged build or if projects exist in a different location
-		FileUtils::SetWorkingDirectory(FileUtils::GetExecutablePath());
-		FileUtils::SetWorkingDirectory("../../../");
+	// Changing working directory to project root.
+	// @TODO in the future this will change if in a packaged build or if projects exist in a different location
+	FileUtils::SetWorkingDirectory(FileUtils::GetExecutablePath());
+	FileUtils::SetWorkingDirectory("../../../");
 
-		InitSDL();
+	InitSDL();
 
-		InitWindow();
+	InitWindow();
 
-		InitRenderer();
+	InitRenderer();
 
-		while (!bShouldQuit) 
-		{
-			CoreUpdate();
-		}
-
-		Cleanup();
-
-	}
-
-	void Application::InitWindow()
+	while (!bShouldQuit) 
 	{
-		// Window creation
-		if (!m_Window || !m_Window->Init(AppName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1000, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE))
-		{
-			TPS_CORE_CRITICAL("Failed to initialize window!");
-		}
-
-		m_Window->SetIcon("Logo.png");
-
-		TPS_CORE_INFO("Window successfully created!");
+		CoreUpdate();
 	}
 
-	void Application::InitRenderer()
+	Cleanup();
+
+}
+
+void Tempus::Application::InitWindow()
+{
+	// Window creation
+	if (!m_Window || !m_Window->Init(AppName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1000, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE))
 	{
-		// Renderer creation
-		if (!m_Renderer || !m_Renderer->Init(m_Window))
-		{
-			TPS_CORE_CRITICAL("Failed to initialize renderer!");
-		}
-
-		m_Renderer->SetClearColor(19, 16, 102, 255);
-
-		TPS_CORE_INFO("Renderer successfully created!");
+		TPS_CORE_CRITICAL("Failed to initialize window!");
 	}
 
-	void Application::InitSDL()
+	m_Window->SetIcon("Logo.png");
+
+	TPS_CORE_INFO("Window successfully created!");
+}
+
+void Tempus::Application::InitRenderer()
+{
+	// Renderer creation
+	if (!m_Renderer || !m_Renderer->Init(m_Window))
 	{
-		SDL_SetMainReady();
-
-		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0)
-		{
-			TPS_CORE_CRITICAL("Failed to initialize SDL: {0}", SDL_GetError());
-		}
-
-		SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
-
-		SDL_version version;
-		SDL_GetVersion(&version);
-		TPS_CORE_INFO("Initialized SDL version {0}.{1}.{2}", version.major, version.minor, version.patch);
-
-		if (SDL_Vulkan_LoadLibrary(nullptr)) 
-		{
-			TPS_CORE_CRITICAL("Failed to load Vulkan library: {0}", SDL_GetError());
-		}
-		
-		uint32_t instanceVersion = 0;
-
-		if (vkEnumerateInstanceVersion(&instanceVersion) == VK_SUCCESS) 
-		{
-			TPS_CORE_INFO("Loaded Vulkan version: {0}.{1}.{2}", VK_VERSION_MAJOR(instanceVersion), VK_VERSION_MINOR(instanceVersion), VK_VERSION_PATCH(instanceVersion));
-		}
+		TPS_CORE_CRITICAL("Failed to initialize renderer!");
 	}
 
-	void Application::CoreUpdate()
+	m_Renderer->SetClearColor(19, 16, 102, 255);
+
+	TPS_CORE_INFO("Renderer successfully created!");
+}
+
+void Tempus::Application::InitSDL()
+{
+	SDL_SetMainReady();
+
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0)
 	{
-		EventUpdate();
-		Update();
-		m_Renderer->Update();
-		//std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		TPS_CORE_CRITICAL("Failed to initialize SDL: {0}", SDL_GetError());
 	}
 
-	void Application::EventUpdate()
+	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
+
+	SDL_version version;
+	SDL_GetVersion(&version);
+	TPS_CORE_INFO("Initialized SDL version {0}.{1}.{2}", version.major, version.minor, version.patch);
+
+	if (SDL_Vulkan_LoadLibrary(nullptr)) 
 	{
-		SDL_PollEvent(&CurrentEvent);
-
-		ImGui_ImplSDL2_ProcessEvent(&CurrentEvent);
-
-		if (CurrentEvent.type == SDL_QUIT)
-		{
-			bShouldQuit = true;
-			return;
-		}
-		else 
-		{
-			EVENT_DISPATCHER->Propagate(CurrentEvent);
-		}
+		TPS_CORE_CRITICAL("Failed to load Vulkan library: {0}", SDL_GetError());
 	}
+	
+	uint32_t instanceVersion = 0;
 
-	void Application::Update()
+	if (vkEnumerateInstanceVersion(&instanceVersion) == VK_SUCCESS) 
 	{
+		TPS_CORE_INFO("Loaded Vulkan version: {0}.{1}.{2}", VK_VERSION_MAJOR(instanceVersion), VK_VERSION_MINOR(instanceVersion), VK_VERSION_PATCH(instanceVersion));
 	}
+}
 
-	void Application::Cleanup()
+void Tempus::Application::CoreUpdate()
+{
+	EventUpdate();
+	Update();
+	m_Renderer->Update();
+	//std::this_thread::sleep_for(std::chrono::milliseconds(1));
+}
+
+void Tempus::Application::EventUpdate()
+{
+	SDL_PollEvent(&CurrentEvent);
+
+	ImGui_ImplSDL2_ProcessEvent(&CurrentEvent);
+
+	if (CurrentEvent.type == SDL_QUIT)
 	{
-		delete m_Renderer;
-		delete m_Window;
-		
-		SDL_Vulkan_UnloadLibrary();
-		SDL_Quit();
-
-		TPS_CORE_INFO("Application Cleaned");
+		bShouldQuit = true;
+		return;
 	}
-
-	void Application::SetRenderClearColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
+	else 
 	{
-		m_Renderer->SetClearColor(r, g, b, a);
+		EVENT_DISPATCHER->Propagate(CurrentEvent);
 	}
+}
+
+void Tempus::Application::Update()
+{
+}
+
+void Tempus::Application::Cleanup()
+{
+	delete m_Renderer;
+	delete m_Window;
+	
+	SDL_Vulkan_UnloadLibrary();
+	SDL_Quit();
+
+	TPS_CORE_INFO("Application Cleaned");
+}
+
+void Tempus::Application::SetRenderClearColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
+{
+	m_Renderer->SetClearColor(r, g, b, a);
 }
