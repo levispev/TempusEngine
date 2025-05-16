@@ -32,7 +32,7 @@
 
 Tempus::Renderer::Renderer()
 {
-	stbi_set_flip_vertically_on_load(true);
+	//stbi_set_flip_vertically_on_load(true);
 }
 
 Tempus::Renderer::~Renderer()
