@@ -3,14 +3,17 @@
 #pragma once
 
 #include <glm/vec3.hpp>
-
+#include "Component.h"
 #include "Core.h"
 
 namespace Tempus
 {
 
-    class TEMPUS_API TransformComponent
+    class TEMPUS_API TransformComponent : public Component
     {
+
+        DECLARE_COMPONENT_ID(1);
+
     public:
 
         union

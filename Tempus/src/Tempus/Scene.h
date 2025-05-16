@@ -9,6 +9,14 @@
 #include <map>
 #include <set>
 #include <string>
+#include "Log.h"
+
+template<typename T>
+constexpr auto has_static_getid(int) -> decltype(T::GetId(), std::true_type{}) { return {}; }
+template<typename T>
+constexpr std::false_type has_static_getid(...) { return {}; }
+
+#define STATIC_ASSERT_HAS_COMPONENT_ID(T) static_assert(decltype(has_static_getid<T>(0))::value, #T " must have a declared component ID!")
 
 namespace Tempus
 {
@@ -25,7 +33,9 @@ namespace Tempus
         requires std::derived_from<T, Component>
         void AddComponent(uint32_t id, Args... arguments)
         {
-            
+            static_assert(T::GetId() > 0, "Cannot add invalid component!");
+            m_EntityComponents[id].set(T::GetId());
+            TPS_CORE_TRACE("Component added of ID [{0}] added to entity [{1}]", T::GetId(), m_EntityNames[id]);
         }
 
         inline uint32_t GetEntityCount() const { return m_EntityCount; }
@@ -38,6 +48,18 @@ namespace Tempus
                 names.push_back(pair.second);
             }
             return names;
+        }
+
+        template<typename T>
+        requires std::derived_from<T, Component>
+        bool HasComponent(uint32_t id)
+        {
+            if(m_EntityComponents[id].test(T::GetId()))
+            {
+                return true;
+            }
+
+            return false;
         }
 
     private:

@@ -14,10 +14,7 @@ Tempus::Scene::Scene(const std::string& sceneName) : m_SceneName(sceneName)
 
 Tempus::Entity Tempus::Scene::AddEntity(const std::string& name)
 {
-    if (m_EntityCount >= MAX_ENTITIES)
-    {
-        TPS_CORE_CRITICAL("Max entity count reached! Cannot create entity");
-    }
+    TPS_ASSERT(m_EntityCount < MAX_ENTITIES, "Max entity count reached! Cannot create entity");
 
     uint32_t id = m_AvailableEntityIds.front();
     m_AvailableEntityIds.pop();
@@ -29,6 +26,8 @@ Tempus::Entity Tempus::Scene::AddEntity(const std::string& name)
 
     m_Entities.insert(id);
     m_EntityNames[id] = name;
+
+    TPS_CORE_TRACE("Entity Created! Name: [{0}] ID: [{1}]", name, id);
 
     //@TODO std::move
     return newEntity;

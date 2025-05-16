@@ -29,11 +29,24 @@ namespace Tempus {
         ~Entity();
 
         template<typename T, typename ...Args>
+        requires std::derived_from<T, Component>
         void AddComponent(Args... arguments)
         {
+            STATIC_ASSERT_HAS_COMPONENT_ID(T);
+            static_assert(T::GetId() > 0, "Cannot add invalid component!");
             if (m_OwnerScene)
             {
                 m_OwnerScene->AddComponent<T>(m_Id, arguments...);
+            }
+        }
+
+        template<typename T>
+        requires std::derived_from<T, Component>
+        bool HasComponent()
+        {
+            if (m_OwnerScene)
+            {
+                return m_OwnerScene->HasComponent<T>(m_Id);
             }
         }
 

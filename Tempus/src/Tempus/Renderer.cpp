@@ -28,6 +28,8 @@
 #include "Events/EventDispatcher.h"
 #include "stb_image/stb_image.h"
 
+#include "Entities/Entity.h"
+
 #define NVIDIA_VENDOR_ID 0X10DE
 
 Tempus::Renderer::Renderer()
@@ -304,6 +306,14 @@ void Tempus::Renderer::DrawImGui()
 	ImGui::Begin("Scene");
 		ImGui::Text("Name: %s", currentScene->GetName().c_str());
 		ImGui::Text("Entity count: %u", currentScene->GetEntityCount());
+		if(ImGui::Button("Debug Add Entity"))
+		{
+			SCENE_MANAGER->GetActiveScene()->AddEntity("Debug Entity");
+		}
+		// if(ImGui::Button("Debug Remove Entity"))
+		// {
+		// 	SCENE_MANAGER->GetActiveScene()->AddEntity("Debug Entity");
+		// }
 		ImGui::Text("-----------------");
 		std::vector<std::string> entNames = currentScene->GetEntityNames();
 		for (uint32_t i = 0; i < currentScene->GetEntityCount(); i++)

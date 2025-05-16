@@ -28,12 +28,23 @@
 #error Tempus only supports Windows and Mac!
 #endif
 
+// Core includes
+#include <cstdint>
+#include "Log.h"
+
 // Helper macros
 #define BIT(x) (1 << x)
 #define ENUM_TO_STRING(name) #name
 
-#include <cstdint>
+// Assert macros
+#define TPS_STATIC_ASSERT(...) static_assert(__VA_ARGS__)
+#ifdef TPS_BUILD_DLL
+	#define TPS_ASSERT(condition, ...) if(!(condition)) {TPS_CORE_CRITICAL(__VA_ARGS__);}
+#else
+	#define TPS_ASSERT(condition, ...) if(!(condition)) {TPS_CRITICAL(__VA_ARGS__);}
+#endif
 
+// Global constants
 constexpr uint32_t MAX_ENTITIES = 5000;
 constexpr uint8_t MAX_COMPONENTS = 32;
 
