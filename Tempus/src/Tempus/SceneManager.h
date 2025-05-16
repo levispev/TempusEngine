@@ -31,7 +31,7 @@ namespace Tempus
         }
 
         Scene* CreateScene(const std::string& sceneName);
-        inline Scene* GetActiveScene() const;
+        inline Scene* GetActiveScene() const { return m_ActiveScene;}
         void SetActiveScene(Scene* scene);
         bool SetActiveScene(const std::string& sceneName);
 

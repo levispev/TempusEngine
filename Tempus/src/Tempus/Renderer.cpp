@@ -32,6 +32,7 @@
 
 Tempus::Renderer::Renderer()
 {
+	stbi_set_flip_vertically_on_load(true);
 }
 
 Tempus::Renderer::~Renderer()
@@ -876,13 +877,14 @@ void Tempus::Renderer::CreateDepthResources()
 void Tempus::Renderer::CreateTextureImage()
 {
 	int texWidth, texHeight, texChannels;
-	stbi_uc* pixels = stbi_load("Tempus/res/textures/owl.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	const char* path = "Tempus/res/textures/LogoTex.png";
+	stbi_uc* pixels = stbi_load(path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
 
 	if (!pixels) 
 	{
-		TPS_CORE_CRITICAL("Failed to load texture image!");
+		TPS_CORE_CRITICAL("Failed to load texture image! {0}", path);
 	}
 
 	VkBuffer stagingBuffer;
@@ -1487,7 +1489,7 @@ void Tempus::Renderer::TransitionImageLayout(VkImage image, VkFormat format, VkI
 	EndSingleTimeCommands(commandBuffer);
 }
 
-VkShaderModule Tempus::Renderer::CreateShaderModule(const std::vector<char>& code)
+VkShaderModule Tempus::Renderer::CreateShaderModule(const std::vector<unsigned char>& code)
 {
 	VkShaderModuleCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;

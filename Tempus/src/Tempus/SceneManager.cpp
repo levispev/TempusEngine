@@ -13,11 +13,6 @@ Tempus::Scene* Tempus::SceneManager::CreateScene(const std::string& sceneName)
     return m_ActiveScene;
 }
 
-Tempus::Scene* Tempus::SceneManager::GetActiveScene() const
-{
-    return m_ActiveScene;
-}
-
 void Tempus::SceneManager::SetActiveScene(Scene* scene)
 {
     m_ActiveScene = scene;

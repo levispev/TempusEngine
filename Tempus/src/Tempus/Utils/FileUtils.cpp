@@ -16,7 +16,7 @@
 #define ChangeDir chdir
 #endif
 
-std::vector<char> Tempus::FileUtils::ReadFile(const std::string& filename)
+std::vector<unsigned char> Tempus::FileUtils::ReadFile(const std::string& filename)
 {
     // Reading from end of file to determine its size
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
@@ -28,16 +28,15 @@ std::vector<char> Tempus::FileUtils::ReadFile(const std::string& filename)
 
     // Create Buffer
     size_t fileSize = (size_t) file.tellg();
-    std::vector<char> buffer(fileSize);
+    std::vector<unsigned char> buffer(fileSize);
 
     // Seek to start
     file.seekg(0);
     // Load buffer
-    file.read(buffer.data(), fileSize);
+    file.read(reinterpret_cast<char*>(buffer.data()), fileSize);
 
     file.close();
     return buffer;
-
 }
 
 void Tempus::FileUtils::PrintAbsolutePath(const std::string &relativePath)

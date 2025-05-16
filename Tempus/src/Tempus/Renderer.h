@@ -265,7 +265,7 @@ namespace Tempus {
 		// Transitions an images layout type using a buffer memory barrier
 		void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 
-		VkShaderModule CreateShaderModule(const std::vector<char>& code);
+		VkShaderModule CreateShaderModule(const std::vector<unsigned char>& code);
 		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 		bool IsDeviceSuitable(VkPhysicalDevice device);
 		uint32_t GetDeviceScore(VkPhysicalDevice device);

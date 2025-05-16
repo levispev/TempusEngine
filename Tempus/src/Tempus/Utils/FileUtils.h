@@ -13,7 +13,7 @@ namespace Tempus
 
     public:
 
-        static std::vector<char> ReadFile(const std::string& filename);
+        static std::vector<unsigned char> ReadFile(const std::string& filename);
         static void PrintAbsolutePath(const std::string& relativePath);
         static std::string GetExecutablePath();
         static void SetWorkingDirectory(const std::string& directory);
