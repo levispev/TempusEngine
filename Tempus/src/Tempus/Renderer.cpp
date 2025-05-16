@@ -312,6 +312,10 @@ void Tempus::Renderer::DrawImGui()
 		}
 	ImGui::End();
 
+	ImGui::Begin("Clear Color");
+		ImGui::ColorPicker3("Color", &m_ClearColor[0]);
+	ImGui::End();
+
 	ImGui::Render();
 }
 
