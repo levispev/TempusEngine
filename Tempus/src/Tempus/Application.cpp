@@ -19,6 +19,7 @@
 #include "SceneManager.h"
 #include "Entity/Entity.h"
 #include "Components/TransformComponent.h"
+#include "Utils/Time.h"
 
 
 Tempus::Application::Application() : CurrentEvent(SDL_Event()), AppName("Application Name")
@@ -131,6 +132,7 @@ void Tempus::Application::InitSDL()
 
 void Tempus::Application::CoreUpdate()
 {
+	Time::GetInstance()->CalculateDeltaTime();
 	EventUpdate();
 	Update();
 	m_Renderer->Update();

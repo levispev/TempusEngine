@@ -29,6 +29,7 @@
 #include "stb_image/stb_image.h"
 
 #include "Entity/Entity.h"
+#include "Utils/Time.h"
 
 #define NVIDIA_VENDOR_ID 0X10DE
 
@@ -231,21 +232,14 @@ void Tempus::Renderer::DrawFrame()
 
 void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 {
-	static auto startTime = std::chrono::high_resolution_clock::now();
-
-	auto currentTime = std::chrono::high_resolution_clock::now();
-	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
-
-	m_CamPos.x -= m_InputBits.test(1) * time * 0.01f;
-	m_CamPos.x += m_InputBits.test(3) * time * 0.01f;
-	m_CamPos.y -= m_InputBits.test(2) * time * 0.01f;
-	m_CamPos.y += m_InputBits.test(0) * time * 0.01f;
+	m_CamPos.x -= m_InputBits.test(1) * (Time::GetDeltaTime() * 10.0f);
+	m_CamPos.x += m_InputBits.test(3) * (Time::GetDeltaTime() * 10.0f);
+	m_CamPos.y -= m_InputBits.test(2) * (Time::GetDeltaTime() * 10.0f);
+	m_CamPos.y += m_InputBits.test(0) * (Time::GetDeltaTime() * 10.0f);
 	
-
 	UniformBufferObject ubo{};
-	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.model = glm::translate(ubo.model, glm::vec3(0.0f, 0.0f, glm::sin(time)));
+	ubo.model = glm::rotate(glm::mat4(1.0f), Time::GetTime() * glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.model = glm::translate(ubo.model, glm::vec3(0.0f, 0.0f, glm::sin(Time::GetTime())));
 	ubo.view = glm::lookAt(m_CamPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.proj = glm::perspective(glm::radians(65.0f), static_cast<float>(m_SwapChainExtent.width) / static_cast<float>(m_SwapChainExtent.height), 0.1f, 1000.0f);
 
@@ -326,6 +320,8 @@ void Tempus::Renderer::DrawImGui()
 	ImGui::Begin("Application Stats");
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::Text("Swapchain extent: %ux%u", m_SwapChainExtent.width, m_SwapChainExtent.height);
+		ImGui::Text("Delta Time: %f", Time::GetDeltaTime());
+		ImGui::Text("Time: %f", Time::GetTime());
 	ImGui::End();
 
 	ImGui::Begin("Device Info");

@@ -12,6 +12,7 @@
 #include "Events/IEventListener.h"
 #include "glm/glm.hpp"
 #include <array>
+#include <bitset>
 
 #ifdef TPS_PLATFORM_MAC
 #include "vulkan/vulkan_macos.h"
