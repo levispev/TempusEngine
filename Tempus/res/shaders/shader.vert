@@ -1,3 +1,5 @@
+// Copyright Levi Spevakow (C) 2025
+
 #version 450
 
 layout(binding = 0) uniform UniformBufferObject {

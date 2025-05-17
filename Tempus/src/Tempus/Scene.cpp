@@ -1,7 +1,7 @@
 // Copyright Levi Spevakow (C) 2025
 
 #include "Scene.h"
-#include "Entities/Entity.h"
+#include "Entity/Entity.h"
 #include "Log.h"
 
 Tempus::Scene::Scene(const std::string& sceneName) : m_SceneName(sceneName)

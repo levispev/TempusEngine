@@ -2,7 +2,7 @@
 
 #include "SceneManager.h"
 #include "Components/Component.h"
-#include "Entities/Entity.h"
+#include "Entity/Entity.h"
 #include "Components/TransformComponent.h"
 
 
@@ -31,14 +31,10 @@ void Tempus::SceneManager::DoTestScene()
         return;
     }
 
-    Entity e = m_ActiveScene->AddEntity("Test Entity1");
-    e.AddComponent<TransformComponent>();
-    Entity e1 = m_ActiveScene->AddEntity("Test Entity2");
-    e.AddComponent<TransformComponent>();
-    Entity e2 = m_ActiveScene->AddEntity("Test Entity3");
-    e.AddComponent<TransformComponent>();
-    Entity e3 = m_ActiveScene->AddEntity("Test Entity4");
-    e.AddComponent<TransformComponent>();
-    Entity e4 = m_ActiveScene->AddEntity("Test Entity5");
-    e.AddComponent<TransformComponent>();
+    for (int i = 0; i < 5; i++)
+    {
+        Entity e = m_ActiveScene->AddEntity("Test Entity" + std::to_string(i));
+        e.AddComponent<TransformComponent>();
+    }
+
 }

@@ -3,14 +3,14 @@
 #pragma once
 
 #include "Tempus/Core.h"
-#include <type_traits>
 
-// Used for declaring unique ID for component type
+// Used for declaring unique ID for a component type
+// Every component must have a component ID
 #define DECLARE_COMPONENT_ID(x) public:\
                                 static constexpr uint8_t GetId() { return m_Id; }\
                                 private:\
                                 static constexpr uint8_t m_Id = x;\
-                                TPS_STATIC_ASSERT(x >= 0);
+                                TPS_STATIC_ASSERT((x) >= 0);
 
 namespace Tempus
 {
@@ -21,9 +21,11 @@ namespace Tempus
     private:
 
         friend class Scene;
-        
         Component();
-        ~Component();
+
+    protected:
+        
+        virtual ~Component() = default;
     
     };
     

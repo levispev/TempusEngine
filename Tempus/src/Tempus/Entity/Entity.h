@@ -42,12 +42,14 @@ namespace Tempus {
 
         template<typename T>
         requires std::derived_from<T, Component>
-        bool HasComponent()
+        bool HasComponent() const
         {
             if (m_OwnerScene)
             {
                 return m_OwnerScene->HasComponent<T>(m_Id);
             }
+            TPS_CORE_WARN("Entity does not belong to a scene!");
+            return false;
         }
 
     };

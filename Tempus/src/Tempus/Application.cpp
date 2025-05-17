@@ -17,6 +17,8 @@
 #include "imgui/imgui_impl_sdl2.h"
 
 #include "SceneManager.h"
+#include "Entity/Entity.h"
+#include "Components/TransformComponent.h"
 
 
 Tempus::Application::Application() : CurrentEvent(SDL_Event()), AppName("Application Name")
@@ -59,9 +61,10 @@ R"(
 	InitWindow();
 
 	SCENE_MANAGER->CreateScene("Test Scene");
-	SCENE_MANAGER->DoTestScene();
 
 	InitRenderer();
+
+	SCENE_MANAGER->DoTestScene();
 
 	while (!bShouldQuit) 
 	{

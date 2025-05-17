@@ -12,7 +12,7 @@ namespace Tempus
     class TEMPUS_API TransformComponent : public Component
     {
 
-        DECLARE_COMPONENT_ID(1);
+        DECLARE_COMPONENT_ID(1)
 
     public:
 
