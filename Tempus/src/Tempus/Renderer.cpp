@@ -113,42 +113,20 @@ void Tempus::Renderer::OnEvent(const SDL_Event& event)
 	else if (event.type == SDL_KEYDOWN) // Temporary input handling 
 	{
 		char key = (char)event.key.keysym.sym;
-		TPS_CORE_TRACE("DOWN: {0}", key);
-		switch(key)
+		//TPS_CORE_TRACE("DOWN: {0}", (int)event.key.keysym.scancode);
+		if(m_InputMap.contains(event.key.keysym.scancode))
 		{
-			case 'w':
-				m_InputBits.set(0);
-			break;
-			case 'a':
-				m_InputBits.set(1);
-			break;
-			case 's':
-				m_InputBits.set(2);
-			break;
-			case 'd':
-				m_InputBits.set(3);
-			break;
-		}	
+			m_InputBits.set(m_InputMap[event.key.keysym.scancode]);	
+		}
 	}
 	else if (event.type == SDL_KEYUP)
 	{
 		char key = (char)event.key.keysym.sym;
-		TPS_CORE_TRACE("UP: {0}", key);
-		switch(key)
+		//TPS_CORE_TRACE("UP: {0}", (int)event.key.keysym.scancode);
+		if(m_InputMap.contains(event.key.keysym.scancode))
 		{
-			case 'w':
-				m_InputBits.reset(0);
-			break;
-			case 'a':
-				m_InputBits.reset(1);
-			break;
-			case 's':
-				m_InputBits.reset(2);
-			break;
-			case 'd':
-				m_InputBits.reset(3);
-			break;
-		}	
+			m_InputBits.reset(m_InputMap[event.key.keysym.scancode]);	
+		}
 	}
 }
 
@@ -1849,6 +1827,7 @@ VkFormat Tempus::Renderer::FindSupportedFormat(const std::vector<VkFormat>& cand
 	}
 	
 	TPS_CORE_CRITICAL("Failed to find supported format!");
+	return VkFormat();
 }
 
 VkFormat Tempus::Renderer::FindDepthFormat()

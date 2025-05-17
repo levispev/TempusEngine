@@ -202,6 +202,10 @@ namespace Tempus {
 		// Temporary input testing
 		std::bitset<8> m_InputBits;
 		glm::vec3 m_CamPos = glm::vec3(0.0f, -3.0f, 0.0f);
+		std::map<int, int> m_InputMap = 
+		{ {SDL_SCANCODE_W, 0}, {SDL_SCANCODE_A, 1}, {SDL_SCANCODE_S, 2}, {SDL_SCANCODE_D, 3},
+		  {SDL_SCANCODE_UP, 4}, {SDL_SCANCODE_DOWN, 5}, {SDL_SCANCODE_LEFT, 6}, {SDL_SCANCODE_RIGHT, 7} 
+		};
 
 		// Struct for potential queue families
 		// Currently only searching for graphics queue family but will add more later

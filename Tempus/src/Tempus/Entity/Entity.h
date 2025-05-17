@@ -3,8 +3,6 @@
 #pragma once
 
 #include "Tempus/Core.h"
-#include <bitset>
-#include <string>
 #include "Scene.h"
 
 using ComponentSignature = std::bitset<MAX_COMPONENTS>;
@@ -28,27 +26,38 @@ namespace Tempus {
 
         ~Entity();
 
-        template<typename T, typename ...Args>
-        requires std::derived_from<T, Component>
+        template<ValidComponent T, typename ...Args>
         void AddComponent(Args... arguments)
         {
-            STATIC_ASSERT_HAS_COMPONENT_ID(T);
-            static_assert(T::GetId() > 0, "Cannot add invalid component!");
             if (m_OwnerScene)
             {
                 m_OwnerScene->AddComponent<T>(m_Id, arguments...);
             }
+            else
+            {
+                TPS_CORE_ERROR("Entity [{0}] does not belong to a scene!", m_Id);
+            }
         }
 
-        template<typename T>
-        requires std::derived_from<T, Component>
+        template<ValidComponent T>
+        T* GetComponent()
+        {
+            if(m_OwnerScene)
+            {
+                return m_OwnerScene->GetComponent<T>(m_Id);
+            }
+            TPS_CORE_ERROR("Entity [{0}] does not belong to a scene!", m_Id);
+            return nullptr;
+        }
+
+        template<ValidComponent T>
         bool HasComponent() const
         {
             if (m_OwnerScene)
             {
                 return m_OwnerScene->HasComponent<T>(m_Id);
             }
-            TPS_CORE_WARN("Entity does not belong to a scene!");
+            TPS_CORE_ERROR("Entity [{0}] does not belong to a scene!", m_Id);
             return false;
         }
 

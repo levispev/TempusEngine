@@ -10,17 +10,10 @@
 #include <set>
 #include <string>
 #include "Log.h"
-
-template<typename T>
-constexpr auto has_static_getid(int) -> decltype(T::GetId(), std::true_type{}) { return {}; }
-template<typename T>
-constexpr std::false_type has_static_getid(...) { return {}; }
-
-#define STATIC_ASSERT_HAS_COMPONENT_ID(T) static_assert(decltype(has_static_getid<T>(0))::value, #T " must have a declared component ID!")
+#include "Components/Component.h"
 
 namespace Tempus
 {
-    class Component;
     using ComponentSignature = std::bitset<MAX_COMPONENTS>;
     
     class TEMPUS_API Scene
@@ -29,11 +22,9 @@ namespace Tempus
 
         class Entity AddEntity(const std::string& name);
         
-        template<typename T, typename ...Args>
-        requires std::derived_from<T, Component>
+        template<ValidComponent T, typename ...Args>
         void AddComponent(uint32_t id, Args... arguments)
         {
-            static_assert(T::GetId() > 0, "Cannot add invalid component!");
             m_EntityComponents[id].set(T::GetId());
             TPS_CORE_TRACE("Component added of ID [{0}] added to entity [{1}]", T::GetId(), m_EntityNames[id]);
         }
@@ -50,8 +41,18 @@ namespace Tempus
             return names;
         }
 
-        template<typename T>
-        requires std::derived_from<T, Component>
+        template<ValidComponent T>
+        T* GetComponent(uint32_t id)
+        {
+            if(HasComponent<T>(id))
+            {
+                //@TODO create component pools to fetch from
+                return nullptr;
+            }
+            return nullptr;
+        }
+
+        template<ValidComponent T>
         bool HasComponent(uint32_t id)
         {
             if(m_EntityComponents[id].test(T::GetId()))

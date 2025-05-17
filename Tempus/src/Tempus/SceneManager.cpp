@@ -35,6 +35,11 @@ void Tempus::SceneManager::DoTestScene()
     {
         Entity e = m_ActiveScene->AddEntity("Test Entity" + std::to_string(i));
         e.AddComponent<TransformComponent>();
+
+        if(TransformComponent* tc = e.GetComponent<TransformComponent>())
+        {
+
+        }
     }
 
 }
