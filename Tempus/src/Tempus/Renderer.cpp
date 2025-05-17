@@ -347,8 +347,12 @@ void Tempus::Renderer::DrawImGui()
 		ImGui::ColorPicker3("Color", &m_ClearColor[0]);
 	ImGui::End();
 
-	ImGui::Begin("Input Debug");
-		ImGui::Text("Debug input: %s", m_InputBits.to_string().c_str());
+	ImGui::Begin("Camera");
+		ImGui::Text("Position");
+		ImGui::Text("X: %.1f", m_CamPos.x);
+		ImGui::Text("Y: %.1f", m_CamPos.y);
+		ImGui::Text("Z: %.1f", m_CamPos.z);
+		ImGui::Text("Input: %s", m_InputBits.to_string().c_str());
 	ImGui::End();
 
 	ImGui::Render();
