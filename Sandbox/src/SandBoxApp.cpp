@@ -21,7 +21,7 @@ public:
 
 		if (event.type == SDL_KEYDOWN)
 		{
-			if (event.key.keysym.scancode == SDL_SCANCODE_A)
+			if (event.key.keysym.scancode == SDL_SCANCODE_Y)
 			{
 				TPS_WARN("Color Change!");
 

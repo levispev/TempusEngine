@@ -109,6 +109,46 @@ void Tempus::Renderer::OnEvent(const SDL_Event& event)
 			TPS_CORE_WARN("Window resized! {}x{}", event.window.data1, event.window.data2);
 		}
 	}
+	else if (event.type == SDL_KEYDOWN) // Temporary input handling 
+	{
+		char key = (char)event.key.keysym.sym;
+		TPS_CORE_TRACE("DOWN: {0}", key);
+		switch(key)
+		{
+			case 'w':
+				m_InputBits.set(0);
+			break;
+			case 'a':
+				m_InputBits.set(1);
+			break;
+			case 's':
+				m_InputBits.set(2);
+			break;
+			case 'd':
+				m_InputBits.set(3);
+			break;
+		}	
+	}
+	else if (event.type == SDL_KEYUP)
+	{
+		char key = (char)event.key.keysym.sym;
+		TPS_CORE_TRACE("UP: {0}", key);
+		switch(key)
+		{
+			case 'w':
+				m_InputBits.reset(0);
+			break;
+			case 'a':
+				m_InputBits.reset(1);
+			break;
+			case 's':
+				m_InputBits.reset(2);
+			break;
+			case 'd':
+				m_InputBits.reset(3);
+			break;
+		}	
+	}
 }
 
 void Tempus::Renderer::DrawFrame()
@@ -196,11 +236,18 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 	auto currentTime = std::chrono::high_resolution_clock::now();
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
+
+	m_CamPos.x -= m_InputBits.test(1) * time * 0.01f;
+	m_CamPos.x += m_InputBits.test(3) * time * 0.01f;
+	m_CamPos.y -= m_InputBits.test(2) * time * 0.01f;
+	m_CamPos.y += m_InputBits.test(0) * time * 0.01f;
+	
+
 	UniformBufferObject ubo{};
-	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.model = glm::translate(ubo.model, glm::vec3(0.0f, 0.0f, glm::sin(time)));
-	ubo.view = glm::lookAt(glm::vec3(0.0f, 3.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.proj = glm::perspective(glm::radians(65.0f), static_cast<float>(m_SwapChainExtent.width) / static_cast<float>(m_SwapChainExtent.height), 0.1f, 10.0f);
+	ubo.view = glm::lookAt(m_CamPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.proj = glm::perspective(glm::radians(65.0f), static_cast<float>(m_SwapChainExtent.width) / static_cast<float>(m_SwapChainExtent.height), 0.1f, 1000.0f);
 
 	// Accounting for inverted Y coordinate between OpenGL and Vulkan
 	ubo.proj[1][1] *= -1;
@@ -324,6 +371,10 @@ void Tempus::Renderer::DrawImGui()
 
 	ImGui::Begin("Clear Color");
 		ImGui::ColorPicker3("Color", &m_ClearColor[0]);
+	ImGui::End();
+
+	ImGui::Begin("Input Debug");
+		ImGui::Text("Debug input: %s", m_InputBits.to_string().c_str());
 	ImGui::End();
 
 	ImGui::Render();

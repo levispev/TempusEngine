@@ -198,6 +198,10 @@ namespace Tempus {
 
 		float m_ClearColor[4] = {0.25f, 0.5f, 0.1f, 0.0f};
 
+		// Temporary input testing
+		std::bitset<8> m_InputBits;
+		glm::vec3 m_CamPos = glm::vec3(0.0f, -3.0f, 0.0f);
+
 		// Struct for potential queue families
 		// Currently only searching for graphics queue family but will add more later
 		struct QueueFamilyIndices
