@@ -183,6 +183,11 @@ project "Sandbox"
             "{COPYFILE} %{wks.location}/Tempus/vendor/bin/sdl/SDL2.dll %{cfg.targetdir}"
         }
 
+    filter {"system:windows", "configurations:Dist"}
+        postbuildcommands
+        {
+            "call %{wks.location}/StageBuild.bat" .. outputdir
+        }
     
     filter "system:macosx"
         cppdialect "C++20"
