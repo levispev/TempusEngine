@@ -17,6 +17,7 @@ namespace Tempus
         static void PrintAbsolutePath(const std::string& relativePath);
         static std::string GetExecutablePath();
         static void SetWorkingDirectory(const std::string& directory);
+        static std::string GetWorkingDirectory();
     };
 
 }

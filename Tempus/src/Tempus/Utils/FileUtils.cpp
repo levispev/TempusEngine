@@ -80,3 +80,8 @@ void Tempus::FileUtils::SetWorkingDirectory(const std::string& directory)
         TPS_CORE_INFO("Changed working directory to: {0}", std::filesystem::current_path().string());
     }
 }
+
+std::string Tempus::FileUtils::GetWorkingDirectory()
+{
+    return std::filesystem::current_path().string();
+}

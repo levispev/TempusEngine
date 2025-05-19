@@ -216,7 +216,7 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 	m_CamPos.y += m_InputBits.test(0) * (Time::GetDeltaTime() * 10.0f);
 	
 	UniformBufferObject ubo{};
-	ubo.model = glm::rotate(glm::mat4(1.0f), Time::GetTime() * glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.model = glm::rotate(glm::mat4(1.0f), Time::GetTime() * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.model = glm::translate(ubo.model, glm::vec3(0.0f, 0.0f, glm::sin(Time::GetTime())));
 	ubo.view = glm::lookAt(m_CamPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.proj = glm::perspective(glm::radians(65.0f), static_cast<float>(m_SwapChainExtent.width) / static_cast<float>(m_SwapChainExtent.height), 0.1f, 1000.0f);

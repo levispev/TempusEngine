@@ -70,6 +70,13 @@ project "Tempus"
             "if not exist \"../bin/" .. outputdir .. "/Sandbox\" mkdir \"../bin/" .. outputdir .. "/Sandbox\"",
             "{COPYFILE} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox"
         }
+    
+            -- Override libdirs for Dist to exclude Vulkan SDK. This will link it to vulkan-1.dll in System32 instead.
+    filter {"system:windows", "configurations:Dist"}
+        libdirs
+        {
+            "%{prj.name}/vendor/bin/sdl/"
+        }
 
     filter "system:macosx"
         cppdialect "C++20"
