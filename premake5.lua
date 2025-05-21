@@ -110,7 +110,7 @@ project "Tempus"
         postbuildcommands
         {
             "{RMDIR} ../bin/" .. outputdir .. "/Sandbox",
-            "{MKDIR} ../bin/" .. outputdir .. "/Sandbox"
+            "{MKDIR} ../bin/" .. outputdir .. "/Sandbox",
         }
 
         externalincludedirs
@@ -200,6 +200,30 @@ project "Sandbox"
             "TPS_PLATFORM_MAC"
         }
 
+        postbuildcommands
+        {
+            -- Creating .app bundle structure
+            "mkdir -p ../bin/" .. outputdir .. "/%{prj.name}/%{prj.name}.app/Contents/MacOS",
+            "mkdir -p ../bin/" .. outputdir .. "/%{prj.name}/%{prj.name}.app/Contents/Frameworks",
+            "mkdir -p ../bin/" .. outputdir .. "/%{prj.name}/%{prj.name}.app/Contents/Resources",
+
+            -- Copy binary into the bundle
+            "cp %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/%{prj.name}/%{prj.name}.app/Contents/MacOS/",
+
+            -- Copy SDL2.framework
+            "cp -R /Library/Frameworks/SDL2.framework ../bin/" .. outputdir .. "/%{prj.name}/%{prj.name}.app/Contents/Frameworks/",
+
+            -- Copy MoltenVK if needed
+            -- "cp -R /path/to/libMoltenVK.dylib ../bin/" .. outputdir .. "/Sandbox.app/Contents/Frameworks/",
+
+            -- Copy Info.plist (create this file in your repo)
+            "cp %{wks.location}/Info.plist ../bin/" .. outputdir .. "/%{prj.name}/%{prj.name}.app/Contents/Info.plist",
+
+            --"cp bin/" .. outputdir .. "/%{prj.name}/%{prj.name}  bin/" .. outputdir .. "/%{prj.name}/%{prj.name}.app/Contents/MacOS/%{prj.name}"
+            "cp -R %{wks.location}/bin/" .. outputdir .. "/Tempus  %{wks.location}/bin/" .. outputdir .. "/%{prj.name}/%{prj.name}.app/Contents/Resources"
+        }
+
+
     filter "configurations:Debug"
         defines "TPS_DEBUG"
         symbols "On"
@@ -235,6 +259,7 @@ newaction {
             os.remove("**.make")
             os.remove("**.d")
             os.remove("**.o")
+            os.remove("**.app")
             -- Clean xcode project files
             os.rmdir("**.xcodeproj")
             os.rmdir("**.xcworkspace")

@@ -54,8 +54,13 @@ R"(
 
 	// Changing working directory to project root.
 	// @TODO in the future this will change if in a packaged build or if projects exist in a different location
+#ifndef TPS_PLATFORM_MAC
 	FileUtils::SetWorkingDirectory(FileUtils::GetExecutablePath());
 	FileUtils::SetWorkingDirectory("../../../");
+#else
+	FileUtils::SetWorkingDirectory(FileUtils::GetExecutablePath());
+	FileUtils::SetWorkingDirectory("../Resources");
+#endif
 
 	InitSDL();
 
