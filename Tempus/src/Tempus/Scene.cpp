@@ -4,7 +4,7 @@
 #include "Entity/Entity.h"
 #include "Log.h"
 
-Tempus::Scene::Scene(const std::string& sceneName) : m_SceneName(sceneName)
+Tempus::Scene::Scene(std::string sceneName) : m_SceneName(std::move(sceneName))
 {
     for (uint32_t entity = 0; entity < MAX_ENTITIES; entity++)
     {
@@ -12,7 +12,7 @@ Tempus::Scene::Scene(const std::string& sceneName) : m_SceneName(sceneName)
     }
 }
 
-Tempus::Entity Tempus::Scene::AddEntity(const std::string& name)
+Tempus::Entity Tempus::Scene::AddEntity(std::string name)
 {
     TPS_ASSERT(m_EntityCount < MAX_ENTITIES, "Max entity count reached! Cannot create entity");
 
@@ -24,12 +24,48 @@ Tempus::Entity Tempus::Scene::AddEntity(const std::string& name)
     newEntity.m_OwnerScene = this;
     newEntity.bActive = true;
 
-    m_Entities.insert(id);
-    m_EntityNames[id] = name;
-
     TPS_CORE_TRACE("Entity Created! Name: [{0}] ID: [{1}]", name, id);
-
-    //@TODO std::move
+    
+    m_Entities.insert(id);
+    m_EntityNames[id] = std::move(name);
+    
     return newEntity;
+}
+
+void Tempus::Scene::RemoveEntity(uint32_t id)
+{
+    TPS_ASSERT_WARN(m_EntityCount < MAX_ENTITIES, "Cannot remove entity of ID [{0}]. ID exceeds maximum!", id);
+
+    if (!m_EntityNames.contains(id))
+    {
+        TPS_CORE_WARN("Cannot remove entity of ID [{0}]. Does not exist!", id);
+        return;
+    }
+    
+    m_AvailableEntityIds.push(id);
+    m_EntityCount--;
+
+    m_Entities.erase(id);
+    m_EntityNames.erase(id);
+
+    m_EntityComponents[id].reset();
+    
+    TPS_CORE_TRACE("Entity Removed! ID: [{0}]", id);
+}
+
+std::vector<uint32_t> Tempus::Scene::GetEntityIDs()
+{
+    return std::vector(m_Entities.begin(), m_Entities.end());
+}
+
+std::string Tempus::Scene::GetEntityName(uint32_t id)
+{
+    if (m_EntityNames.contains(id))
+    {
+        return m_EntityNames[id];
+    }
+
+    TPS_CORE_WARN("Entity with ID [{0}] does not exist!", id);
+    return {};
 }
 

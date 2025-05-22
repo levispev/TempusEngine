@@ -13,9 +13,10 @@ namespace Tempus
     class TEMPUS_API SceneManager
     {
     private:
+        
         SceneManager() = default;
+        
         static std::unique_ptr<SceneManager> s_Instance;
-
         Scene* m_ActiveScene = nullptr;
 
     public:

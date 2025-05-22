@@ -16,7 +16,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_sdl2.h"
 
-#include "SceneManager.h"
+#include "Managers/SceneManager.h"
 #include "Entity/Entity.h"
 #include "Components/TransformComponent.h"
 #include "Utils/Time.h"
@@ -61,10 +61,9 @@ R"(
 
 	InitWindow();
 
-	SCENE_MANAGER->CreateScene("Test Scene");
-
 	InitRenderer();
 
+	SCENE_MANAGER->CreateScene("Test Scene");
 	SCENE_MANAGER->DoTestScene();
 
 	while (!bShouldQuit) 

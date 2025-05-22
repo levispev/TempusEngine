@@ -20,7 +20,9 @@ namespace Tempus
     {
     public:
 
-        class Entity AddEntity(const std::string& name);
+        class Entity AddEntity(std::string name);
+
+        void RemoveEntity(uint32_t id);
         
         template<ValidComponent T, typename ...Args>
         void AddComponent(uint32_t id, Args... arguments)
@@ -29,8 +31,11 @@ namespace Tempus
             TPS_CORE_TRACE("Component added of ID [{0}] added to entity [{1}]", T::GetId(), m_EntityNames[id]);
         }
 
-        inline uint32_t GetEntityCount() const { return m_EntityCount; }
-        inline const std::string& GetName() const { return m_SceneName; }
+        inline std::vector<uint32_t> GetEntityIDs();
+        std::string GetEntityName(uint32_t id);
+        uint32_t GetEntityCount() const { return m_EntityCount; }
+        const std::string& GetName() const { return m_SceneName; }
+        
         std::vector<std::string> GetEntityNames()
         {
             std::vector<std::string> names;
@@ -67,7 +72,7 @@ namespace Tempus
 
         friend class SceneManager;
         
-        Scene(const std::string& sceneName);
+        Scene(std::string sceneName);
         ~Scene();
         
         std::queue<uint32_t> m_AvailableEntityIds;

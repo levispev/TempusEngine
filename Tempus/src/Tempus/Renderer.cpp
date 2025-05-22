@@ -24,7 +24,7 @@
 
 #include "Application.h"
 #include "Scene.h"
-#include "SceneManager.h"
+#include "Managers/SceneManager.h"
 #include "Events/EventDispatcher.h"
 #include "stb_image/stb_image.h"
 
@@ -338,15 +338,17 @@ void Tempus::Renderer::DrawImGui()
 		{
 			SCENE_MANAGER->GetActiveScene()->AddEntity("Debug Entity");
 		}
-		// if(ImGui::Button("Debug Remove Entity"))
-		// {
-		// 	SCENE_MANAGER->GetActiveScene()->AddEntity("Debug Entity");
-		// }
-		ImGui::Text("-----------------");
-		std::vector<std::string> entNames = currentScene->GetEntityNames();
-		for (uint32_t i = 0; i < currentScene->GetEntityCount(); i++)
+		static int id = 0;
+		ImGui::InputInt("ID to remove", &id);
+		if(ImGui::Button("Debug Remove Entity"))
 		{
-			ImGui::Text("#%u: %s", i, entNames[i].c_str());
+			SCENE_MANAGER->GetActiveScene()->RemoveEntity(id);
+		}
+		ImGui::Text("-----------------");
+		std::vector<uint32_t> entIDs = currentScene->GetEntityIDs();
+		for (const uint32_t entID : entIDs)
+		{
+			ImGui::Text("#%u: %s", entID, currentScene->GetEntityName(entID).c_str());
 		}
 	ImGui::End();
 
