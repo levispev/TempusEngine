@@ -186,7 +186,7 @@ project "Sandbox"
     filter {"system:windows", "configurations:Dist"}
         postbuildcommands
         {
-            "call %{wks.location}/StageBuild.bat" .. outputdir
+            "call %{wks.location}/StageBuild.bat " .. outputdir
         }
     
     filter "system:macosx"
