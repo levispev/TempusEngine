@@ -119,18 +119,25 @@ project "Tempus"
         }
 
     filter "configurations:Debug"
-        defines "TPS_DEBUG"
-        symbols "On"
+    defines { 
+        "TPS_DEBUG",
+        "TPS_CONFIG_NAME=\"Debug\""
+    }
+    symbols "On"
 
     filter "configurations:Release"
-        defines "TPS_RELEASE"
+        defines { 
+            "TPS_RELEASE",
+            "TPS_CONFIG_NAME=\"Release\""
+        }
         optimize "On"
 
     filter "configurations:Dist"
-        defines "TPS_DIST"
+        defines { 
+            "TPS_DIST",
+            "TPS_CONFIG_NAME=\"Distribution\""
+        }
         optimize "On"
-
-
 
 project "Sandbox"
     location "Sandbox"
@@ -201,15 +208,24 @@ project "Sandbox"
         }
 
     filter "configurations:Debug"
-        defines "TPS_DEBUG"
-        symbols "On"
+    defines { 
+        "TPS_DEBUG",
+        "TPS_CONFIG_NAME=\"Debug\""
+    }
+    symbols "On"
 
     filter "configurations:Release"
-        defines "TPS_RELEASE"
+        defines { 
+            "TPS_RELEASE",
+            "TPS_CONFIG_NAME=\"Release\""
+        }
         optimize "On"
 
     filter "configurations:Dist"
-        defines "TPS_DIST"
+        defines { 
+            "TPS_DIST",
+            "TPS_CONFIG_NAME=\"Distribution\""
+        }
         optimize "On"
         
         

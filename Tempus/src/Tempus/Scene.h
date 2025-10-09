@@ -31,7 +31,7 @@ namespace Tempus
             TPS_CORE_TRACE("Component added of ID [{0}] added to entity [{1}]", T::GetId(), m_EntityNames[id]);
         }
 
-        inline std::vector<uint32_t> GetEntityIDs();
+        inline std::vector<uint32_t> GetEntityIDs() { return std::vector(m_Entities.begin(), m_Entities.end()); }
         std::string GetEntityName(uint32_t id);
         uint32_t GetEntityCount() const { return m_EntityCount; }
         const std::string& GetName() const { return m_SceneName; }

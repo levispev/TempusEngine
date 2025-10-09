@@ -53,11 +53,6 @@ void Tempus::Scene::RemoveEntity(uint32_t id)
     TPS_CORE_TRACE("Entity Removed! ID: [{0}]", id);
 }
 
-std::vector<uint32_t> Tempus::Scene::GetEntityIDs()
-{
-    return std::vector(m_Entities.begin(), m_Entities.end());
-}
-
 std::string Tempus::Scene::GetEntityName(uint32_t id)
 {
     if (m_EntityNames.contains(id))
