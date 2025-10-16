@@ -11,7 +11,6 @@
 #include <string>
 #include "Log.h"
 #include "Components/Component.h"
-#include "Entity/Entity.h"
 
 namespace Tempus
 {
@@ -21,7 +20,7 @@ namespace Tempus
     {
     public:
 
-        Entity AddEntity(std::string name);
+        class Entity AddEntity(std::string name);
 
         void RemoveEntity(uint32_t id);
         

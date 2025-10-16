@@ -4,9 +4,10 @@
 
 #include "Tempus/Core.h"
 #include "Components/Component.h"
+#include "Scene.h"
 
-namespace Tempus {
-
+namespace Tempus
+{
     class TEMPUS_API Entity
     {
     private:
@@ -60,7 +61,5 @@ namespace Tempus {
             TPS_CORE_ERROR("Entity [{0}] does not belong to a scene!", m_Id);
             return false;
         }
-
     };
-    
 }
