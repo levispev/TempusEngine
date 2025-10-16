@@ -28,6 +28,10 @@
 /bin/
 /bin-int/
 
+# Logs
+
+/logs/
+
 # MacOS Files
 .DS_Store
 

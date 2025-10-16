@@ -1872,6 +1872,7 @@ uint32_t Tempus::Renderer::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyF
 	}
 
 	TPS_CORE_CRITICAL("Failed to find suitable memory type!");
+	return 0;
 }
 
 void Tempus::Renderer::LogExtensionsAndLayers()

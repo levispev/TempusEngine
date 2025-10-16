@@ -5,6 +5,7 @@
 #include "Tempus/Core.h"
 #include <unordered_set>
 #include <iostream>
+#include <limits>
 
 namespace Tempus
 {
@@ -36,7 +37,7 @@ namespace TPS_Private
 // Every component must have a component ID 
 #define DECLARE_COMPONENT_ID(x) \
         TPS_STATIC_ASSERT(std::is_integral_v<decltype(x)>, "Component ID must be an integer"); \
-        TPS_STATIC_ASSERT((x) >= 0 && (x) <= 255, "Component ID must be a positive integer <= 255"); \
+        TPS_STATIC_ASSERT((x) >= 0 && (x) <= std::numeric_limits<Tempus::ComponentId>::max(), "Component ID must be a positive integer <= 255"); \
         private: \
         static inline bool _bIsComponentRegistered = TPS_Private::ComponentRegistry::Register(x); \
         public: \
@@ -57,13 +58,9 @@ namespace Tempus
     class TEMPUS_API Component
     {
 
-    private:
-
-        friend class Scene;
-        Component();
-
     protected:
         
+        Component() = default;
         virtual ~Component() = default;
 
     };

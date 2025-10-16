@@ -59,6 +59,8 @@
 #endif
 
 // Global constants
+// Max entities per scene
 constexpr uint32_t MAX_ENTITIES = 5000;
+// Max components per entity
 constexpr uint8_t MAX_COMPONENTS = 32;
 

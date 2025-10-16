@@ -48,6 +48,12 @@ void Tempus::Scene::RemoveEntity(uint32_t id)
     m_Entities.erase(id);
     m_EntityNames.erase(id);
 
+    // Remove all components from all pools for this entity
+    for (auto& [componentId, pool] : m_ComponentPools)
+    {
+        pool->RemoveComponent(id);
+    }
+
     m_EntityComponents[id].reset();
     
     TPS_CORE_TRACE("Entity Removed! ID: [{0}]", id);
@@ -63,4 +69,3 @@ std::string Tempus::Scene::GetEntityName(uint32_t id)
     TPS_CORE_WARN("Entity with ID [{0}] does not exist!", id);
     return {};
 }
-

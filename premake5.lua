@@ -11,6 +11,9 @@ workspace "Tempus"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+-- Project root directory (absolute path)
+projectRoot = path.getabsolute(".")
+
 project "Tempus"
     location "Tempus"
     kind "SharedLib"
@@ -56,7 +59,11 @@ project "Tempus"
         defines
         {
             "TPS_PLATFORM_WINDOWS",
-            "TPS_BUILD_DLL"
+            "TPS_BUILD_DLL",
+            "TPS_PROJECT_ROOT=\"" .. projectRoot .. "\"",
+            "TPS_CONTENT_DIR=\"" .. path.join(projectRoot, "Tempus/res") .. "\"",
+            "TPS_SHADER_DIR=\"" .. path.join(projectRoot, "Tempus/res/shaders") .. "\"",
+            "TPS_TEXTURE_DIR=\"" .. path.join(projectRoot, "Tempus/res/textures") .. "\""
         }
 
         buildoptions
@@ -104,7 +111,11 @@ project "Tempus"
         defines
         {
             "TPS_PLATFORM_MAC",
-            "TPS_BUILD_DLL"
+            "TPS_BUILD_DLL",
+            "TPS_PROJECT_ROOT=\"" .. projectRoot .. "\"",
+            "TPS_CONTENT_DIR=\"" .. path.join(projectRoot, "Tempus/res") .. "\"",
+            "TPS_SHADER_DIR=\"" .. path.join(projectRoot, "Tempus/res/shaders") .. "\"",
+            "TPS_TEXTURE_DIR=\"" .. path.join(projectRoot, "Tempus/res/textures") .. "\""
         }
 
         postbuildcommands

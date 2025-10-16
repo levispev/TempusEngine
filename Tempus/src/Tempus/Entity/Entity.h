@@ -25,7 +25,7 @@ namespace Tempus
 
         ~Entity();
 
-        uint32_t GetId() const { return m_Id; };
+        uint32_t GetId() const { return m_Id; }
 
         template<ValidComponent T, typename ...Args>
         void AddComponent(Args&&... arguments)
@@ -60,6 +60,19 @@ namespace Tempus
             }
             TPS_CORE_ERROR("Entity [{0}] does not belong to a scene!", m_Id);
             return false;
+        }
+
+        template<ValidComponent T>
+        void RemoveComponent()
+        {
+            if (m_OwnerScene)
+            {
+                m_OwnerScene->RemoveComponent<T>(m_Id);
+            }
+            else
+            {
+                TPS_CORE_ERROR("Entity [{0}] does not belong to a scene!", m_Id);
+            }
         }
     };
 }

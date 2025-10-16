@@ -2,7 +2,3 @@
 
 #include "Component.h"
 
-Tempus::Component::Component()
-{
-    
-}

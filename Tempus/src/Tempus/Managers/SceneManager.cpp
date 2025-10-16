@@ -12,6 +12,11 @@ std::unique_ptr<Tempus::SceneManager> Tempus::SceneManager::s_Instance = nullptr
 Tempus::Scene* Tempus::SceneManager::CreateScene(const std::string& sceneName)
 {
     m_ActiveScene = new Scene(sceneName);
+
+    Entity editorCam = m_ActiveScene->AddEntity("Editor Cam");
+    editorCam.AddComponent<TransformComponent>();
+    editorCam.AddComponent<CameraComponent>();
+    
     return m_ActiveScene;
 }
 
@@ -31,9 +36,6 @@ void Tempus::SceneManager::DoTestScene()
     {
         return;
     }
-
-    Entity e = m_ActiveScene->AddEntity("Editor Cam");
-    e.AddComponent<CameraComponent>();
 
     for (int i = 0; i < 5; i++)
     {

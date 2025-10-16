@@ -72,7 +72,7 @@ R"(
 	}
 
 	Cleanup();
-
+	
 }
 
 void Tempus::Application::InitWindow()
