@@ -11,6 +11,7 @@
 #include <string>
 #include "Log.h"
 #include "Components/Component.h"
+#include "Utils/TempusUtils.h"
 
 namespace Tempus
 {
@@ -28,7 +29,7 @@ namespace Tempus
         void AddComponent(uint32_t id, Args... arguments)
         {
             m_EntityComponents[id].set(T::GetId());
-            TPS_CORE_TRACE("{2} [{0}] added to entity [{1}]", T::GetId(), m_EntityNames[id], T::DebugName);
+            TPS_CORE_TRACE("{2} [{0}] added to entity [{1}]", T::GetId(), m_EntityNames[id], TempusUtils::GetClassDebugName<T>());
         }
 
         inline std::vector<uint32_t> GetEntityIDs() { return std::vector(m_Entities.begin(), m_Entities.end()); }

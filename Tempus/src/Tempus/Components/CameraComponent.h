@@ -16,7 +16,9 @@ namespace Tempus
 
 	class TEMPUS_API CameraComponent : public Component
 	{
-		DECLARE_COMPONENT(1, "Camera Component")
+		DECLARE_COMPONENT_ID(1)
+		
+		TPS_DEBUG_NAME("Camera Component")
 
 	public:
 

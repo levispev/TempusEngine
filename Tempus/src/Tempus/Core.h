@@ -36,14 +36,26 @@
 #define BIT(x) (1 << (x))
 #define STRINGIFY(name) #name
 
-// Assert macros
+// Static Assert
 #define TPS_STATIC_ASSERT(...) static_assert(__VA_ARGS__)
+
+// Runtime assertion macros
 #ifdef TPS_BUILD_DLL
 	#define TPS_ASSERT(condition, ...) if(!(condition)) {TPS_CORE_CRITICAL(__VA_ARGS__);}
 	#define TPS_ASSERT_WARN(condition, ...) if(!(condition)) {TPS_CORE_WARN(__VA_ARGS__);} 
 #else
 	#define TPS_ASSERT(condition, ...) if(!(condition)) {TPS_CRITICAL(__VA_ARGS__);}
 	#define TPS_ASSERT_WARN(condition, ...) if(!(condition)) {TPS_WARN(__VA_ARGS__);} 
+#endif
+
+// Human readable debug name for classes at runtime
+#ifndef TPS_DIST
+    #define TPS_DEBUG_NAME(name) \
+        public: \
+        static constexpr const char* DebugName = name; \
+        private:
+#else
+    #define TPS_DEBUG_NAME(name)
 #endif
 
 // Global constants

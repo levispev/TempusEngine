@@ -12,7 +12,9 @@ namespace Tempus
     class TEMPUS_API TransformComponent : public Component
     {
 
-        DECLARE_COMPONENT(0, "Transform Component")
+        DECLARE_COMPONENT_ID(0)
+        
+        TPS_DEBUG_NAME("Transform Component")
 
     public:
         

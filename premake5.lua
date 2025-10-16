@@ -79,7 +79,7 @@ project "Tempus"
         }
 
     filter "system:macosx"
-        cppdialect "C++23"
+        cppdialect "C++20"
         staticruntime "On"
         systemversion "14"
         toolset "clang"
@@ -197,7 +197,7 @@ project "Sandbox"
         }
     
     filter "system:macosx"
-        cppdialect "C++23"
+        cppdialect "C++20"
         staticruntime "On"
         systemversion "14"
         toolset "clang"

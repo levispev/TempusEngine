@@ -4,6 +4,7 @@
 #include "Components/Component.h"
 #include "Entity/Entity.h"
 #include "Components/TransformComponent.h"
+#include "Components/CameraComponent.h"
 
 
 std::unique_ptr<Tempus::SceneManager> Tempus::SceneManager::s_Instance = nullptr;
@@ -31,6 +32,9 @@ void Tempus::SceneManager::DoTestScene()
         return;
     }
 
+    Entity e = m_ActiveScene->AddEntity("Editor Cam");
+    e.AddComponent<CameraComponent>();
+
     for (int i = 0; i < 5; i++)
     {
         Entity e = m_ActiveScene->AddEntity("Test Entity" + std::to_string(i));
@@ -38,7 +42,7 @@ void Tempus::SceneManager::DoTestScene()
 
         if(TransformComponent* tc = e.GetComponent<TransformComponent>())
         {
-
+            
         }
     }
 
