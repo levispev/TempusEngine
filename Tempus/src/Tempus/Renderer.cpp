@@ -269,6 +269,7 @@ void Tempus::Renderer::DrawImGui()
 		if (ImGui::BeginMenu("Help")) 
 		{
 			if (ImGui::MenuItem("About")) { showAboutPopup = true;}
+			if (ImGui::MenuItem("Force Crash")) { TPS_CORE_CRITICAL("Force game crash!"); }
 			ImGui::EndMenu();
 		}
 

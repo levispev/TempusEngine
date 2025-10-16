@@ -12,10 +12,10 @@ namespace Tempus
     class TEMPUS_API TransformComponent : public Component
     {
 
-        DECLARE_COMPONENT_ID(0)
+        DECLARE_COMPONENT(0, "Transform Component")
 
     public:
-
+        
         // May want to remove the union as the vec3 layout isnt 100% guaranteed
         union
         {
@@ -27,7 +27,6 @@ namespace Tempus
                 float z;
             };
         };
-
 
         glm::vec3 Rotation;
         glm::vec3 Scale;

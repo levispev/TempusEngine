@@ -48,7 +48,7 @@ R"(
 )"
 #pragma endregion
 	
-	<< '\n' << COLOR_RESET;
+	<< '\n' << COLOR_RESET << std::flush;
 
 	Log::Init();
 

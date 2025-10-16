@@ -34,7 +34,7 @@
 
 // Helper macros
 #define BIT(x) (1 << (x))
-#define ENUM_TO_STRING(name) #name
+#define STRINGIFY(name) #name
 
 // Assert macros
 #define TPS_STATIC_ASSERT(...) static_assert(__VA_ARGS__)
