@@ -3,9 +3,7 @@
 #pragma once
 
 #include "Tempus/Core.h"
-#include "Scene.h"
-
-using ComponentSignature = std::bitset<MAX_COMPONENTS>;
+#include "Components/Component.h"
 
 namespace Tempus {
 
@@ -26,12 +24,14 @@ namespace Tempus {
 
         ~Entity();
 
+        uint32_t GetId() const { return m_Id; };
+
         template<ValidComponent T, typename ...Args>
-        void AddComponent(Args... arguments)
+        void AddComponent(Args&&... arguments)
         {
             if (m_OwnerScene)
             {
-                m_OwnerScene->AddComponent<T>(m_Id, arguments...);
+                m_OwnerScene->AddComponent<T>(m_Id, std::forward<Args>(arguments)...);
             }
             else
             {

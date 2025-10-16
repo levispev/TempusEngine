@@ -33,7 +33,7 @@
 #include "Log.h"
 
 // Helper macros
-#define BIT(x) (1 << x)
+#define BIT(x) (1 << (x))
 #define ENUM_TO_STRING(name) #name
 
 // Assert macros

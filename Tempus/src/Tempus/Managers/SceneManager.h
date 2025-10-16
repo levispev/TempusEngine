@@ -38,7 +38,7 @@ namespace Tempus
 
         // Testing function
         void DoTestScene();
-        
+      
     };
 
 }

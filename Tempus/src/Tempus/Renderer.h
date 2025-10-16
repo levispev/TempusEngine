@@ -83,7 +83,7 @@ namespace Tempus {
 
 		void SetClearColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
-		const int MAX_FRAMES_IN_FLIGHT = 2;
+		const int MAX_FRAMES_IN_FLIGHT = 3;
 
 	private:
 
@@ -161,8 +161,7 @@ namespace Tempus {
 			{{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 1.0f}, {0.0f, 0.0f}}, // 45 top-left
 			{{-0.5f, -1.5f, -0.5f}, {1.0f, 0.0f, 1.0f}, {1.0f, 1.0f}}, // 46 bottom-right
 			{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 1.0f}, {1.0f, 0.0f}}, // 47 top-right
-
-
+			
 		};
 
 		const std::vector<uint16_t> indices = {
