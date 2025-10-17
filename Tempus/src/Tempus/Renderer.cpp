@@ -24,6 +24,8 @@
 
 #include "Application.h"
 #include "Scene.h"
+#include "Components/CameraComponent.h"
+#include "Components/TransformComponent.h"
 #include "Managers/SceneManager.h"
 #include "Events/EventDispatcher.h"
 #include "stb_image/stb_image.h"
@@ -210,15 +212,39 @@ void Tempus::Renderer::DrawFrame()
 
 void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 {
-	m_CamPos.x -= m_InputBits.test(1) * (Time::GetDeltaTime() * 10.0f);
-	m_CamPos.x += m_InputBits.test(3) * (Time::GetDeltaTime() * 10.0f);
-	m_CamPos.y -= m_InputBits.test(2) * (Time::GetDeltaTime() * 10.0f);
-	m_CamPos.y += m_InputBits.test(0) * (Time::GetDeltaTime() * 10.0f);
+	Scene* activeScene = SCENE_MANAGER->GetActiveScene();
+
+	if (!activeScene)
+	{
+		return;
+	}
+
+	CameraComponent* editorCam = activeScene->GetComponent<CameraComponent>(0);
+	TransformComponent* editorCamTransform = activeScene->GetComponent<TransformComponent>(0);
+
+	if (editorCam && editorCamTransform)
+	{
+		editorCamTransform->Position.x += m_InputBits.test(0) * (Time::GetDeltaTime() * 10.0f);
+		editorCamTransform->Position.y += m_InputBits.test(1) * (Time::GetDeltaTime() * 10.0f);
+		editorCamTransform->Position.x -= m_InputBits.test(2) * (Time::GetDeltaTime() * 10.0f);
+		editorCamTransform->Position.y -= m_InputBits.test(3) * (Time::GetDeltaTime() * 10.0f);
+
+		editorCamTransform->Position.z -= m_InputBits.test(4) * (Time::GetDeltaTime() * 10.0f);
+		editorCamTransform->Position.z += m_InputBits.test(5) * (Time::GetDeltaTime() * 10.0f);
+
+		m_EditorCamPos = editorCamTransform->Position;
+		m_EditorCamForward = editorCamTransform->GetForwardVector();
+	}
+	else
+	{
+		m_EditorCamPos = glm::vec3(-3.0f, 0.0f, 0.0f);
+		m_EditorCamForward = glm::vec3(1.0f, 0.0f, 0.0f);
+	}
 	
 	UniformBufferObject ubo{};
 	ubo.model = glm::rotate(glm::mat4(1.0f), Time::GetTime() * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.model = glm::translate(ubo.model, glm::vec3(0.0f, 0.0f, glm::sin(Time::GetTime())));
-	ubo.view = glm::lookAt(m_CamPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.view = glm::lookAt(m_EditorCamPos, m_EditorCamPos + m_EditorCamForward, glm::vec3(0.0f, 0.0f, 1.0f));
 	
 	float aspectRatio = 0;
 	// Zero divide check
@@ -357,14 +383,14 @@ void Tempus::Renderer::DrawImGui()
 		ImGui::ColorPicker3("Color", &m_ClearColor[0]);
 	ImGui::End();
 
-	ImGui::Begin("Camera");
+	ImGui::Begin("Editor Camera");
 		ImGui::Text("Position");
-		ImGui::Text("X: %.1f", m_CamPos.x);
-		ImGui::Text("Y: %.1f", m_CamPos.y);
-		ImGui::Text("Z: %.1f", m_CamPos.z);
+		ImGui::Text("X: %.1f", m_EditorCamPos.x);
+		ImGui::Text("Y: %.1f", m_EditorCamPos.y);
+		ImGui::Text("Z: %.1f", m_EditorCamPos.z);
 		ImGui::Text("Input: %s", m_InputBits.to_string().c_str());
 	ImGui::End();
-
+	
 	ImGui::Render();
 }
 

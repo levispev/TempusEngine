@@ -199,11 +199,13 @@ namespace Tempus {
 		float m_ClearColor[4] = {0.25f, 0.5f, 0.1f, 0.0f};
 
 		// Temporary input testing
-		std::bitset<8> m_InputBits;
-		glm::vec3 m_CamPos = glm::vec3(0.0f, -3.0f, 0.0f);
+		std::bitset<10> m_InputBits;
+		glm::vec3 m_EditorCamPos = glm::vec3(0.0f, -3.0f, 0.0f);
+		glm::vec3 m_EditorCamForward = glm::vec3(1.0f, 0.0f, 0.0f);
 		std::map<int, int> m_InputMap = 
 		{ {SDL_SCANCODE_W, 0}, {SDL_SCANCODE_A, 1}, {SDL_SCANCODE_S, 2}, {SDL_SCANCODE_D, 3},
-		  {SDL_SCANCODE_UP, 4}, {SDL_SCANCODE_DOWN, 5}, {SDL_SCANCODE_LEFT, 6}, {SDL_SCANCODE_RIGHT, 7} 
+		  {SDL_SCANCODE_Q, 4}, {SDL_SCANCODE_E, 5}, {SDL_SCANCODE_UP, 6}, {SDL_SCANCODE_DOWN, 7},
+		  {SDL_SCANCODE_RIGHT, 8}, {SDL_SCANCODE_LEFT, 9}
 		};
 
 		// Struct for potential queue families

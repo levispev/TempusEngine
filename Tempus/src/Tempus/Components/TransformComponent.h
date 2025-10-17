@@ -32,6 +32,8 @@ namespace Tempus
 
         glm::vec3 Rotation;
         glm::vec3 Scale;
+
+        glm::vec3 GetForwardVector() const;
         
     };
     
