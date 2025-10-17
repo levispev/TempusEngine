@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "Component.h"
 #include "Core.h"
+#include "Component.h"
 
 namespace Tempus 
 {
@@ -16,7 +16,7 @@ namespace Tempus
 
 	class TEMPUS_API CameraComponent : public Component
 	{
-		DECLARE_COMPONENT_ID(1)
+		DECLARE_COMPONENT(CameraComponent, 1)
 		
 		TPS_DEBUG_NAME("Camera Component")
 

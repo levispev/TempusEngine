@@ -307,7 +307,7 @@ void Tempus::Renderer::DrawImGui()
 		ImGui::OpenPopup("About"); 
 		if (ImGui::BeginPopupModal("About", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove)) 
 		{
-			ImGui::Text("Tempus Engine v0.0.0");
+			ImGui::Text("Tempus Engine v0.0.1");
 			ImGui::Text("Built with SDL2 and ImGui");
 			ImGui::Text("Created by Levi Spevakow");
 			ImGui::Separator();
@@ -358,7 +358,7 @@ void Tempus::Renderer::DrawImGui()
 	ImGui::End();
 
 	Scene* currentScene = SCENE_MANAGER->GetActiveScene();
-	ImGui::Begin("Scene");
+	ImGui::Begin("Scene Info");
 		ImGui::Text("Name: %s", currentScene->GetName().c_str());
 		ImGui::Text("Entity count: %u", currentScene->GetEntityCount());
 		if(ImGui::Button("Debug Add Entity"))
@@ -371,11 +371,15 @@ void Tempus::Renderer::DrawImGui()
 		{
 			SCENE_MANAGER->GetActiveScene()->RemoveEntity(id);
 		}
-		ImGui::Text("-----------------");
-		std::vector<uint32_t> entIDs = currentScene->GetEntityIDs();
-		for (const uint32_t entID : entIDs)
+	ImGui::End();
+
+	ImGui::Begin("Scene Outliner");
 		{
-			ImGui::Text("#%u: %s", entID, currentScene->GetEntityName(entID).c_str());
+			std::vector<uint32_t> entIDs = currentScene->GetEntityIDs();
+			for (const uint32_t entID : entIDs)
+			{
+				ImGui::Text("#%u: %s", entID, currentScene->GetEntityName(entID).c_str());
+			}
 		}
 	ImGui::End();
 

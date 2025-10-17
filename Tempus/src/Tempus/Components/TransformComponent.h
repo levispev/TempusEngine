@@ -2,9 +2,9 @@
 
 #pragma once
 
+#include "Core.h"
 #include <glm/vec3.hpp>
 #include "Component.h"
-#include "Core.h"
 
 namespace Tempus
 {
@@ -12,7 +12,7 @@ namespace Tempus
     class TEMPUS_API TransformComponent : public Component
     {
 
-        DECLARE_COMPONENT_ID(0)
+        DECLARE_COMPONENT(TransformComponent, 0)
         
         TPS_DEBUG_NAME("Transform Component")
 

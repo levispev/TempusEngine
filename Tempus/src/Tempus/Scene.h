@@ -11,7 +11,6 @@
 #include <string>
 #include <memory>
 #include "Log.h"
-#include "Components/Component.h"
 #include "Utils/TempusUtils.h"
 
 namespace Tempus

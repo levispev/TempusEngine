@@ -66,6 +66,12 @@ R"(
 	SCENE_MANAGER->CreateScene("Test Scene");
 	SCENE_MANAGER->DoTestScene();
 
+	std::vector<std::string> compNames = TPS_Private::ComponentRegistry::GetRegisteredComponents();
+
+	for(std::string name : compNames){
+		TPS_CORE_WARN(name);
+	}
+
 	while (!bShouldQuit) 
 	{
 		CoreUpdate();
