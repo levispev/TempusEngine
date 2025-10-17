@@ -5,6 +5,7 @@
 #include "Core.h"
 #include <unordered_set>
 #include <functional>
+#include <iostream>
 #include <vector>
 #include "Scene.h"
 
@@ -12,8 +13,6 @@ namespace TPS_Private
 {
     struct ComponentRegistry
     {
-        public:
-
         struct ComponentTypeInfo
         {
             std::string name;
@@ -42,22 +41,27 @@ namespace TPS_Private
                 scene->AddComponent<T>(entityId);
             };
             
-            RegisteredComponents.push_back(data);
+            RegisteredComponents.emplace_back(data);
 
             return true;
         }
 
-        static std::vector<std::string> GetRegisteredComponents()
+        static std::vector<std::string> GetRegisteredComponentNames()
         {
             std::vector<std::string> componentNames;
-            for (ComponentTypeInfo info : RegisteredComponents)
+            for (const ComponentTypeInfo& info : RegisteredComponents)
             {
-                componentNames.push_back(info.name);
+                componentNames.emplace_back(info.name);
             }
             return componentNames;
         }
 
+        static const std::vector<ComponentTypeInfo>& GetRegisteredComponents()
+        {
+            return RegisteredComponents;
+        }
+
         private:
-        static std::vector<ComponentTypeInfo> RegisteredComponents;
+        static inline std::vector<ComponentTypeInfo> RegisteredComponents;
     };
 }

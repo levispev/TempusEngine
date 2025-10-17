@@ -245,14 +245,26 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 	ubo.model = glm::rotate(glm::mat4(1.0f), Time::GetTime() * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.model = glm::translate(ubo.model, glm::vec3(0.0f, 0.0f, glm::sin(Time::GetTime())));
 	ubo.view = glm::lookAt(m_EditorCamPos, m_EditorCamPos + m_EditorCamForward, glm::vec3(0.0f, 0.0f, 1.0f));
-	
-	float aspectRatio = 0;
-	// Zero divide check
-	if (m_SwapChainExtent.height > 0)
+
+	switch (editorCam->ProjectionType)
 	{
-		aspectRatio = static_cast<float>(m_SwapChainExtent.width) / static_cast<float>(m_SwapChainExtent.height);
+		case CamProjectionType::Perspective:
+			ubo.proj = glm::perspective(glm::radians(editorCam->Fov), editorCam->AspectRatio, editorCam->NearClip, editorCam->FarClip);
+		break;
+		case CamProjectionType::Orthographic:
+			// Ortho size is the total height
+			float halfHeight = editorCam->OrthoSize * 0.5f;
+			float halfWidth  = halfHeight * editorCam->AspectRatio;
+
+			float left   = -halfWidth;
+			float right  =  halfWidth;
+			float bottom = -halfHeight;
+			float top    =  halfHeight;
+
+			// Preferred for Vulkan. right-handed, zero-to-one depth
+			ubo.proj = glm::orthoRH_ZO(left, right, bottom, top, editorCam->NearClip, editorCam->FarClip);
+		break;
 	}
-	ubo.proj = glm::perspective(glm::radians(65.0f), aspectRatio, 0.1f, 1000.0f);
 
 	// Accounting for inverted Y coordinate between OpenGL and Vulkan
 	ubo.proj[1][1] *= -1;
@@ -353,9 +365,9 @@ void Tempus::Renderer::DrawImGui()
 		ImGui::Text("Vendor ID: %u", m_DeviceDetails.vendorId);
 	ImGui::End();
 
-	ImGui::Begin("Event Dispatcher");
-		ImGui::Text("Subscriber count: %u", EVENT_DISPATCHER->GetSubscriberCount());
-	ImGui::End();
+	// ImGui::Begin("Event Dispatcher");
+	// 	ImGui::Text("Subscriber count: %u", EVENT_DISPATCHER->GetSubscriberCount());
+	// ImGui::End();
 
 	Scene* currentScene = SCENE_MANAGER->GetActiveScene();
 	ImGui::Begin("Scene Info");
@@ -375,10 +387,66 @@ void Tempus::Renderer::DrawImGui()
 
 	ImGui::Begin("Scene Outliner");
 		{
-			std::vector<uint32_t> entIDs = currentScene->GetEntityIDs();
-			for (const uint32_t entID : entIDs)
+			ImGui::SetNextItemOpen(true);
+			if (ImGui::TreeNode("Entities"))
 			{
-				ImGui::Text("#%u: %s", entID, currentScene->GetEntityName(entID).c_str());
+				std::vector<uint32_t> entIDs = currentScene->GetEntityIDs();
+				for (const uint32_t entID : entIDs)
+				{
+					if (currentScene->GetComponentCount(entID))
+					{
+						// Setting to open by default for editor camera (temp)
+						if (entID == 0)
+						{
+							ImGui::SetNextItemOpen(true);
+						}
+						if (ImGui::TreeNode(std::format("#{}: {}", entID, currentScene->GetEntityName(entID)).c_str()))
+						{
+							if (TransformComponent* transformComp = currentScene->GetComponent<TransformComponent>(entID))
+							{
+								// Setting to open by default for editor camera (temp)
+								if (entID == 0)
+								{
+									ImGui::SetNextItemOpen(true);
+								}
+								if (ImGui::TreeNode(TempusUtils::GetClassDebugName<TransformComponent>()))
+								{
+									ImGui::InputFloat3("Position", &transformComp->Position.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+									ImGui::InputFloat3("Rotation", &transformComp->Rotation.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+									ImGui::InputFloat3("Scale", &transformComp->Scale.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+
+									ImGui::TreePop();
+								}
+							}
+							if (CameraComponent* cameraComp = currentScene->GetComponent<CameraComponent>(entID))
+							{
+								// Setting to open by default for editor camera (temp)
+								if (entID == 0)
+								{
+									ImGui::SetNextItemOpen(true);
+								}
+								if (ImGui::TreeNode(TempusUtils::GetClassDebugName<CameraComponent>()))
+								{
+									ImGui::Text("Project Type: %s", cameraComp->ProjectionType == CamProjectionType::Perspective ? "Perspective" : "Orthographic");
+									ImGui::SliderFloat("FOV", &cameraComp->Fov, 1.0f, 179.0f, "%.3f");
+									ImGui::Text("Ortho Size: %.1f", cameraComp->OrthoSize);
+									ImGui::Text("Near Clip: %.1f", cameraComp->NearClip);
+									ImGui::Text("Far Clip: %.1f", cameraComp->FarClip);
+
+									ImGui::TreePop();
+								}
+							}
+							
+							ImGui::TreePop();
+						}
+					}
+					else
+					{
+						ImGui::Text(std::format("#{}: {}", entID, currentScene->GetEntityName(entID)).c_str());
+					}
+				}
+
+				ImGui::TreePop();
 			}
 		}
 	ImGui::End();
@@ -387,11 +455,7 @@ void Tempus::Renderer::DrawImGui()
 		ImGui::ColorPicker3("Color", &m_ClearColor[0]);
 	ImGui::End();
 
-	ImGui::Begin("Editor Camera");
-		ImGui::Text("Position");
-		ImGui::Text("X: %.1f", m_EditorCamPos.x);
-		ImGui::Text("Y: %.1f", m_EditorCamPos.y);
-		ImGui::Text("Z: %.1f", m_EditorCamPos.z);
+	ImGui::Begin("Input");
 		ImGui::Text("Input: %s", m_InputBits.to_string().c_str());
 	ImGui::End();
 	

@@ -146,7 +146,12 @@ namespace Tempus
                 TPS_CORE_TRACE("{2} [{0}] removed from entity [{1}]", componentId, m_EntityNames[id], TempusUtils::GetClassDebugName<T>());
             }
         }
-
+        
+        ComponentId GetComponentCount(uint32_t id) const
+        {
+            return static_cast<ComponentId>(m_EntityComponents[id].count());
+        }
+        
     private:
 
         friend class SceneManager;

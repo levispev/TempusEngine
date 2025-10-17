@@ -66,9 +66,10 @@ R"(
 	SCENE_MANAGER->CreateScene("Test Scene");
 	SCENE_MANAGER->DoTestScene();
 
-	std::vector<std::string> compNames = TPS_Private::ComponentRegistry::GetRegisteredComponents();
+	std::vector<std::string> compNames = TPS_Private::ComponentRegistry::GetRegisteredComponentNames();
 
-	for(std::string name : compNames){
+	for(std::string name : compNames)
+	{
 		TPS_CORE_WARN(name);
 	}
 
@@ -84,7 +85,7 @@ R"(
 void Tempus::Application::InitWindow()
 {
 	// Window creation
-	if (!m_Window || !m_Window->Init(AppName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1000, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE))
+	if (!m_Window || !m_Window->Init(AppName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE))
 	{
 		TPS_CORE_CRITICAL("Failed to initialize window!");
 	}

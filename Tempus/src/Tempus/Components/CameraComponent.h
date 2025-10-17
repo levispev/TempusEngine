@@ -24,7 +24,7 @@ namespace Tempus
 
 		CamProjectionType ProjectionType = CamProjectionType::Perspective;
 
-		float Fov = 90.0f;
+		float Fov = 60.0f;
 		float OrthoSize = 10.0f;
 		float NearClip = 0.1f;
 		float FarClip = 1000.0f;
