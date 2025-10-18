@@ -214,7 +214,6 @@ void Tempus::Renderer::DrawFrame()
 void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 {
 	Scene* activeScene = SCENE_MANAGER->GetActiveScene();
-
 	if (!activeScene)
 	{
 		return;
@@ -222,19 +221,35 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 
 	CameraComponent* editorCam = activeScene->GetComponent<CameraComponent>(0);
 	TransformComponent* editorCamTransform = activeScene->GetComponent<TransformComponent>(0);
-
+	CamProjectionType projType = CamProjectionType::Perspective;
+	// @TODO Temporary editor camera movement, this will all be handled in a proper input system in the future
 	if (editorCam && editorCamTransform)
 	{
-		editorCamTransform->Position.x += m_InputBits.test(0) * (Time::GetDeltaTime() * 10.0f);
-		editorCamTransform->Position.y += m_InputBits.test(1) * (Time::GetDeltaTime() * 10.0f);
-		editorCamTransform->Position.x -= m_InputBits.test(2) * (Time::GetDeltaTime() * 10.0f);
-		editorCamTransform->Position.y -= m_InputBits.test(3) * (Time::GetDeltaTime() * 10.0f);
 
+		// Forward / Back Movement
+		editorCamTransform->Position += editorCamTransform->GetForwardVector() * (m_InputBits.test(0) * (Time::GetDeltaTime() * 10.0f));
+		editorCamTransform->Position -= editorCamTransform->GetForwardVector() * (m_InputBits.test(2) * (Time::GetDeltaTime() * 10.0f));
+		// Right / Left Movement
+		editorCamTransform->Position -= editorCamTransform->GetRightVector() * (m_InputBits.test(1) * (Time::GetDeltaTime() * 10.0f));
+		editorCamTransform->Position += editorCamTransform->GetRightVector() * (m_InputBits.test(3) * (Time::GetDeltaTime() * 10.0f));
+		// Up / Down Movement
 		editorCamTransform->Position.z -= m_InputBits.test(4) * (Time::GetDeltaTime() * 10.0f);
 		editorCamTransform->Position.z += m_InputBits.test(5) * (Time::GetDeltaTime() * 10.0f);
-
+		// Pitch rotation
+		editorCamTransform->Rotation.x += m_InputBits.test(6) * (Time::GetDeltaTime() * 100.0f);
+		editorCamTransform->Rotation.x -= m_InputBits.test(7) * (Time::GetDeltaTime() * 100.0f);
+		editorCamTransform->Rotation.x = glm::clamp(editorCamTransform->Rotation.x, -89.0f, 89.0f);
+		// Yaw Rotation
+		editorCamTransform->Rotation.y += m_InputBits.test(8) * (Time::GetDeltaTime() * 100.0f);
+		editorCamTransform->Rotation.y -= m_InputBits.test(9) * (Time::GetDeltaTime() * 100.0f);
+		if (editorCamTransform->Rotation.y > 360.0f || editorCamTransform->Rotation.y < -360.0f)
+		{
+			editorCamTransform->Rotation.y = 0.0f;
+		}
+		
 		m_EditorCamPos = editorCamTransform->Position;
 		m_EditorCamForward = editorCamTransform->GetForwardVector();
+		projType = editorCam->ProjectionType;
 	}
 	else
 	{
@@ -245,12 +260,12 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 	UniformBufferObject ubo{};
 	ubo.model = glm::rotate(glm::mat4(1.0f), Time::GetTime() * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.model = glm::translate(ubo.model, glm::vec3(0.0f, 0.0f, glm::sin(Time::GetTime())));
-	ubo.view = glm::lookAt(m_EditorCamPos, m_EditorCamPos + m_EditorCamForward, glm::vec3(0.0f, 0.0f, 1.0f));
-
-	switch (editorCam->ProjectionType)
+	ubo.view = glm::lookAtLH(m_EditorCamPos, m_EditorCamPos + m_EditorCamForward, glm::vec3(0.0f, 0.0f, 1.0f));
+	
+	switch (projType)
 	{
-		case CamProjectionType::Perspective:
-			ubo.proj = glm::perspective(glm::radians(editorCam->Fov), editorCam->AspectRatio, editorCam->NearClip, editorCam->FarClip);
+	case CamProjectionType::Perspective:
+			ubo.proj = glm::perspectiveLH_ZO(glm::radians(editorCam->Fov), editorCam->AspectRatio, editorCam->NearClip, editorCam->FarClip);
 		break;
 		case CamProjectionType::Orthographic:
 			// Ortho size is the total height
@@ -261,9 +276,8 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 			float right  =  halfWidth;
 			float bottom = -halfHeight;
 			float top    =  halfHeight;
-
-			// Preferred for Vulkan. right-handed, zero-to-one depth
-			ubo.proj = glm::orthoRH_ZO(left, right, bottom, top, editorCam->NearClip, editorCam->FarClip);
+		
+			ubo.proj = glm::orthoLH_ZO(left, right, bottom, top, editorCam->NearClip, editorCam->FarClip);
 		break;
 	}
 
@@ -319,6 +333,10 @@ void Tempus::Renderer::DrawImGui()
 	// -- Menu bar "About" popup
 	if (showAboutPopup) 
 	{
+		ImVec2 centerPos = ImGui::GetMainViewport()->GetCenter();
+		centerPos.y *= 0.85f;
+		centerPos.x *= 0.85f;
+		ImGui::SetNextWindowPos(centerPos);
 		ImGui::OpenPopup("About"); 
 		if (ImGui::BeginPopupModal("About", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove)) 
 		{
@@ -334,7 +352,7 @@ void Tempus::Renderer::DrawImGui()
 			float windowWidth = ImGui::GetWindowContentRegionMax().x - ImGui::GetWindowContentRegionMin().x;
 			float offset = (windowWidth - buttonWidth) * 0.5f; 
 			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset); 
-
+			
 			if (ImGui::Button("Close")) 
 			{
 				showAboutPopup = false; 
@@ -387,9 +405,7 @@ void Tempus::Renderer::DrawImGui()
 	// 	ImGui::Text("Subscriber count: %u", EVENT_DISPATCHER->GetSubscriberCount());
 	// ImGui::End();
 
-	Scene* currentScene = SCENE_MANAGER->GetActiveScene();
-
-	if (currentScene)
+	if (Scene* currentScene = SCENE_MANAGER->GetActiveScene())
 	{
 		// --- Scene info
 		ImGui::Begin("Scene Info");
@@ -399,17 +415,18 @@ void Tempus::Renderer::DrawImGui()
 			{
 				currentScene->AddEntity("Debug Entity");
 			}
+			ImGui::SameLine();
 			static int id = 0;
-			ImGui::InputInt("Selected Entity", &id);
 			if(ImGui::Button("Remove Entity"))
 			{
 				currentScene->RemoveEntity(id);
 			}
+			ImGui::InputInt("Selected Entity", &id);
 
 			static TPS_Private::ComponentRegistry::ComponentTypeInfo selectedComponent;
 			if (ImGui::BeginCombo("Components", selectedComponent.name.c_str()))
 			{
-				const std::vector<TPS_Private::ComponentRegistry::ComponentTypeInfo>& registeredComponents = TPS_Private::ComponentRegistry::GetRegisteredComponents();
+				const auto& registeredComponents = TPS_Private::ComponentRegistry::GetRegisteredComponents();
 				for (const auto& component : registeredComponents)
 				{
 					if (ImGui::Selectable(component.name.c_str()))
@@ -435,62 +452,54 @@ void Tempus::Renderer::DrawImGui()
 		// --- Scene outliner
 		ImGui::Begin("Scene Outliner");
 			{
-				TPS_CALL_ONCE(ImGui::SetNextItemOpen, true);
-				if (ImGui::TreeNode("Entities"))
+				std::vector<uint32_t> entIDs = currentScene->GetEntityIDs();
+				for (const uint32_t entID : entIDs)
 				{
-					std::vector<uint32_t> entIDs = currentScene->GetEntityIDs();
-					for (const uint32_t entID : entIDs)
+					if (currentScene->GetComponentCount(entID))
 					{
-						if (currentScene->GetComponentCount(entID))
+						TPS_CALL_ONCE(ImGui::SetNextItemOpen, true);
+						if (ImGui::TreeNode(std::format("[{}] {}", entID, currentScene->GetEntityName(entID)).c_str()))
 						{
-							TPS_CALL_ONCE(ImGui::SetNextItemOpen, true);
-							if (ImGui::TreeNode(std::format("[{}] {}", entID, currentScene->GetEntityName(entID)).c_str()))
+							// @TODO Components should probably store their own virtual ImGui rendering function which can be invoked from here
+							if (TransformComponent* transformComp = currentScene->GetComponent<TransformComponent>(entID))
 							{
-								if (TransformComponent* transformComp = currentScene->GetComponent<TransformComponent>(entID))
+								TPS_CALL_ONCE(ImGui::SetNextItemOpen, true);
+								if (ImGui::TreeNode(TempusUtils::GetClassDebugName<TransformComponent>()))
 								{
-									TPS_CALL_ONCE(ImGui::SetNextItemOpen, true);
-									if (ImGui::TreeNode(TempusUtils::GetClassDebugName<TransformComponent>()))
-									{
-										ImGui::InputFloat3("Position", &transformComp->Position.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
-										ImGui::InputFloat3("Rotation", &transformComp->Rotation.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
-										ImGui::InputFloat3("Scale", &transformComp->Scale.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
-
-										ImGui::TreePop();
-									}
+									ImGui::InputFloat3("Position", &transformComp->Position.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+									ImGui::InputFloat3("Rotation", &transformComp->Rotation.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+									ImGui::InputFloat3("Scale", &transformComp->Scale.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+									ImGui::TreePop();
 								}
-								if (CameraComponent* cameraComp = currentScene->GetComponent<CameraComponent>(entID))
-								{
-									TPS_CALL_ONCE(ImGui::SetNextItemOpen, true);
-									if (ImGui::TreeNode(TempusUtils::GetClassDebugName<CameraComponent>()))
-									{
-										ImGui::Text("Project Type: %s", cameraComp->ProjectionType == CamProjectionType::Perspective ? "Perspective" : "Orthographic");
-										ImGui::SliderFloat("FOV", &cameraComp->Fov, 1.0f, 179.0f, "%.3f");
-										ImGui::Text("Ortho Size: %.1f", cameraComp->OrthoSize);
-										ImGui::Text("Near Clip: %.1f", cameraComp->NearClip);
-										ImGui::Text("Far Clip: %.1f", cameraComp->FarClip);
-
-										ImGui::TreePop();
-									}
-								}
-								if (StaticMeshComponent* meshComp = currentScene->GetComponent<StaticMeshComponent>(entID))
-								{
-									if (ImGui::TreeNode(TempusUtils::GetClassDebugName<StaticMeshComponent>()))
-									{
-										ImGui::Text("WIP");
-										ImGui::TreePop();
-									}
-								}
-								
-								ImGui::TreePop();
 							}
-						}
-						else
-						{
-							ImGui::Text(std::format("#{}: {}", entID, currentScene->GetEntityName(entID)).c_str());
+							if (CameraComponent* cameraComp = currentScene->GetComponent<CameraComponent>(entID))
+							{
+								TPS_CALL_ONCE(ImGui::SetNextItemOpen, true);
+								if (ImGui::TreeNode(TempusUtils::GetClassDebugName<CameraComponent>()))
+								{
+									ImGui::Text("Project Type: %s", cameraComp->ProjectionType == CamProjectionType::Perspective ? "Perspective" : "Orthographic");
+									ImGui::SliderFloat("FOV", &cameraComp->Fov, 1.0f, 179.0f, "%.3f");
+									ImGui::Text("Ortho Size: %.1f", cameraComp->OrthoSize);
+									ImGui::Text("Near Clip: %.1f", cameraComp->NearClip);
+									ImGui::Text("Far Clip: %.1f", cameraComp->FarClip);
+									ImGui::TreePop();
+								}
+							}
+							if (StaticMeshComponent* meshComp = currentScene->GetComponent<StaticMeshComponent>(entID))
+							{
+								if (ImGui::TreeNode(TempusUtils::GetClassDebugName<StaticMeshComponent>()))
+								{
+									ImGui::Text("WIP");
+									ImGui::TreePop();
+								}
+							}
+							ImGui::TreePop();
 						}
 					}
-
-					ImGui::TreePop();
+					else
+					{
+						ImGui::Text(std::format("#{}: {}", entID, currentScene->GetEntityName(entID)).c_str());
+					}
 				}
 			}
 		ImGui::End();
@@ -914,7 +923,7 @@ void Tempus::Renderer::CreateGraphicsPipeline()
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	rasterizer.depthBiasEnable = VK_FALSE;
 	rasterizer.depthBiasConstantFactor = 0.0f; // Optional
 	rasterizer.depthBiasClamp = 0.0f; // Optional

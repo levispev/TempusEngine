@@ -10,21 +10,16 @@ namespace Tempus
 {
     class TEMPUS_API Entity
     {
-    private:
-
         friend class Scene;
 
+        Entity(uint32_t id);
+        
         const uint32_t m_Id;
         bool bActive = true;
-
         Scene* m_OwnerScene = nullptr;
-        
-        Entity(uint32_t id);
     
     public:
-
-        ~Entity();
-
+        
         uint32_t GetId() const { return m_Id; }
 
         template<ValidComponent T, typename ...Args>

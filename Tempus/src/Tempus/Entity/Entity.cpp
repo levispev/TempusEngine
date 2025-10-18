@@ -7,7 +7,4 @@ Tempus::Entity::Entity(uint32_t id) :  m_Id(id)
 {
 }
 
-Tempus::Entity::~Entity()
-{
-}
 

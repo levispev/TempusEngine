@@ -11,9 +11,7 @@ namespace Tempus
 
     class TEMPUS_API TransformComponent : public Component
     {
-
         DECLARE_COMPONENT(TransformComponent, 0)
-        
         TPS_DEBUG_NAME("Transform Component")
 
     public:
@@ -34,9 +32,8 @@ namespace Tempus
         glm::vec3 Scale = glm::vec3(0.0f);
 
         glm::vec3 GetForwardVector() const;
-
-        TransformComponent();
-        ~TransformComponent() override;
+        glm::vec3 GetRightVector() const;
+        glm::vec3 GetUpVector() const;
         
     };
     

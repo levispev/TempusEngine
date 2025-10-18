@@ -2,13 +2,13 @@
 
 #include "TransformComponent.h"
 #include <glm/trigonometric.hpp>
-#include <glm/detail/func_geometric.inl>
+#include <glm/gtc/matrix_transform.hpp>
+
 
 glm::vec3 Tempus::TransformComponent::GetForwardVector() const
 {
-    // Rotation is Euler angles in degrees: x = pitch, y = yaw, z = roll
     float pitch = glm::radians(Rotation.x);
-    float yaw   = glm::radians(Rotation.y);
+    float yaw = glm::radians(Rotation.y);
 
     glm::vec3 forward;
     forward.x = glm::cos(pitch) * glm::cos(yaw);
@@ -24,11 +24,20 @@ glm::vec3 Tempus::TransformComponent::GetForwardVector() const
     return forward / len;
 }
 
-Tempus::TransformComponent::TransformComponent()
+glm::vec3 Tempus::TransformComponent::GetRightVector() const
 {
+    glm::vec3 forward = GetForwardVector();
+    glm::vec3 worldUp = glm::vec3(0.0f, 0.0f, 1.0f);
+
+    glm::vec3 right = glm::normalize(glm::cross(worldUp, forward));
+    return right;
 }
 
-Tempus::TransformComponent::~TransformComponent()
+glm::vec3 Tempus::TransformComponent::GetUpVector() const
 {
-    Component::~Component();
+    glm::vec3 forward = GetForwardVector();
+    glm::vec3 right = GetRightVector();
+
+    glm::vec3 up = glm::normalize(glm::cross(right, forward));
+    return up;
 }

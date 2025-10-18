@@ -26,8 +26,8 @@ namespace Tempus
 
     protected:
         
-        Component();
-        virtual ~Component();
+        Component() = default;
+        virtual ~Component() = default;
 
     };
     
