@@ -24,18 +24,21 @@ namespace TPS_Private
         template<typename T>
         static bool Register(Tempus::ComponentId id)
         {
-            static std::unordered_set<Tempus::ComponentId> ids;
-            if (ids.contains(id)) 
+            // Component ID's must be unique
+            if (ComponentIds.contains(id))
             {
                 // Throwing an exception here instead of a critical log as the logger is not initialized yet
                 throw std::runtime_error(std::format("Duplicate component ID's detected! {0}", id));
             }
 
-            ids.insert(id);
+            // Insert new unique ID
+            ComponentIds.insert(id);
 
+            // Reflection data
             ComponentTypeInfo data;
             data.name = Tempus::TempusUtils::GetClassDebugName<T>();
             data.id = id;
+            // Templated function pointer for adding the component to a scene
             data.defaultConstructor = [](Tempus::Scene* scene, uint32_t entityId)
             {   
                 scene->AddComponent<T>(entityId);
@@ -63,5 +66,6 @@ namespace TPS_Private
 
         private:
         static inline std::vector<ComponentTypeInfo> RegisteredComponents;
+        static inline std::unordered_set<Tempus::ComponentId> ComponentIds;
     };
 }

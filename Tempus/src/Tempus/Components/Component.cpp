@@ -2,3 +2,10 @@
 
 #include "Component.h"
 
+Tempus::Component::Component()
+{
+}
+
+Tempus::Component::~Component()
+{
+}

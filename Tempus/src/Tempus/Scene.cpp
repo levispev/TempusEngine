@@ -38,7 +38,7 @@ void Tempus::Scene::RemoveEntity(uint32_t id)
 
     if (!m_EntityNames.contains(id))
     {
-        TPS_CORE_WARN("Cannot remove entity of ID [{0}]. Does not exist!", id);
+        TPS_CORE_ERROR("Cannot remove entity of ID [{0}]. Does not exist!", id);
         return;
     }
     
@@ -66,6 +66,6 @@ std::string Tempus::Scene::GetEntityName(uint32_t id)
         return m_EntityNames[id];
     }
 
-    TPS_CORE_WARN("Entity with ID [{0}] does not exist!", id);
+    TPS_CORE_ERROR("Entity with ID [{0}] does not exist!", id);
     return {};
 }

@@ -36,10 +36,19 @@ namespace Tempus
             m_ComponentArray.fill(std::nullopt);
         }
 
-        void AddComponent(uint32_t entityId, T&& component)
+        template<typename... Args>
+        void AddComponent(uint32_t entityId, Args&&... args)
         {
-            TPS_ASSERT(!m_ComponentArray[entityId].has_value(), "Component already exists for entity [{0}]!", entityId);
-            m_ComponentArray[entityId] = std::move(component);
+            // By this point the Scene class should have already checked for the component existence, checking just incase
+            if (!m_ComponentArray[entityId].has_value())
+            {
+                m_ComponentArray[entityId].emplace(std::forward<Args>(args)...);
+                //m_ComponentArray[entityId] = std::move(component);
+            }
+            else
+            {
+                TPS_CORE_ERROR("Component already exists for entity [{0}]!", entityId);
+            }
         }
 
         void RemoveComponent(uint32_t entityId) override
@@ -79,7 +88,20 @@ namespace Tempus
         template<ValidComponent T, typename ...Args>
         void AddComponent(uint32_t id, Args&&... arguments)
         {
+            if (!m_Entities.contains(id))
+            {
+                TPS_CORE_ERROR("Entity of ID [{0}] does not exist!", id);
+                return;
+            }
+            
             ComponentId componentId = T::GetId();
+
+            // Check if the entity already has the component
+            if (m_EntityComponents[id].test(componentId))
+            {
+                TPS_CORE_ERROR("{1} already exists for entity [{0}]!", id, TempusUtils::GetClassDebugName<T>());
+                return;
+            }
             
             // Create pool if it doesn't exist
             if (!m_ComponentPools.contains(componentId))
@@ -89,7 +111,7 @@ namespace Tempus
 
             // Add component to the pool
             auto* pool = static_cast<ComponentPool<T>*>(m_ComponentPools[componentId].get());
-            pool->AddComponent(id, T{std::forward<Args>(arguments)...});
+            pool->AddComponent(id, std::forward<Args>(arguments)...);
             
             // Update signature
             m_EntityComponents[id].set(componentId);
@@ -97,7 +119,7 @@ namespace Tempus
             TPS_CORE_TRACE("{2} [{0}] added to entity [{1}]", componentId, m_EntityNames[id], TempusUtils::GetClassDebugName<T>());
         }
 
-        inline std::vector<uint32_t> GetEntityIDs() { return std::vector(m_Entities.begin(), m_Entities.end()); }
+        std::vector<uint32_t> GetEntityIDs() { return std::vector(m_Entities.begin(), m_Entities.end()); }
         std::string GetEntityName(uint32_t id);
         uint32_t GetEntityCount() const { return m_EntityCount; }
         const std::string& GetName() const { return m_SceneName; }
@@ -115,6 +137,12 @@ namespace Tempus
         template<ValidComponent T>
         T* GetComponent(uint32_t id)
         {
+            if (!m_Entities.contains(id))
+            {
+                TPS_CORE_ERROR("Entity of ID [{0}] does not exist!", id);
+                return nullptr;
+            }
+            
             ComponentId componentId = T::GetId();
             
             if (!m_ComponentPools.contains(componentId))
@@ -135,6 +163,12 @@ namespace Tempus
         template<ValidComponent T>
         void RemoveComponent(uint32_t id)
         {
+            if (!m_Entities.contains(id))
+            {
+                TPS_CORE_ERROR("Entity of ID [{0}] does not exist!", id);
+                return;
+            }
+            
             ComponentId componentId = T::GetId();
             
             if (m_ComponentPools.contains(componentId))
@@ -151,19 +185,19 @@ namespace Tempus
         {
             return static_cast<ComponentId>(m_EntityComponents[id].count());
         }
+
+        // Deleting copy and move operations since Scene owns unique resources
+        Scene(const Scene&) = delete;
+        Scene& operator=(const Scene&) = delete;
+        Scene(Scene&&) = delete;
+        Scene& operator=(Scene&&) = delete;
         
     private:
 
         friend class SceneManager;
         
         Scene(std::string sceneName);
-        ~Scene();
-        
-        // Deleting copy and move operations since Scene owns unique resources
-        Scene(const Scene&) = delete;
-        Scene& operator=(const Scene&) = delete;
-        Scene(Scene&&) = delete;
-        Scene& operator=(Scene&&) = delete;
+        ~Scene() = default;
         
         std::queue<uint32_t> m_AvailableEntityIds;
         std::array<ComponentSignature, MAX_ENTITIES> m_EntityComponents;

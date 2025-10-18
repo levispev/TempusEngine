@@ -25,6 +25,7 @@
 #include "Application.h"
 #include "Scene.h"
 #include "Components/CameraComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Components/TransformComponent.h"
 #include "Managers/SceneManager.h"
 #include "Events/EventDispatcher.h"
@@ -280,6 +281,7 @@ void Tempus::Renderer::DrawImGui()
 	ImGui_ImplSDL2_NewFrame();
 	ImGui::NewFrame();
 
+	// -- Main menu bar
 	if (ImGui::BeginMainMenuBar()) 
 	{
 		if (ImGui::BeginMenu("File")) 
@@ -314,6 +316,7 @@ void Tempus::Renderer::DrawImGui()
 		ImGui::EndMainMenuBar();
 	}
 
+	// -- Menu bar "About" popup
 	if (showAboutPopup) 
 	{
 		ImGui::OpenPopup("About"); 
@@ -341,6 +344,7 @@ void Tempus::Renderer::DrawImGui()
 		}
 	}
 
+	// -- Application stats
 	ImGui::Begin("Application Stats");
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::Text("Swapchain extent: %ux%u", m_SwapChainExtent.width, m_SwapChainExtent.height);
@@ -348,6 +352,7 @@ void Tempus::Renderer::DrawImGui()
 		ImGui::Text("Time: %f", Time::GetTime());
 	ImGui::End();
 
+	// -- Device info
 	ImGui::Begin("Device Info");
 		ImGui::Text("Name: %s", m_DeviceDetails.name.c_str());
 		ImGui::Text("Type: %s", m_DeviceDetails.type.c_str());
@@ -365,99 +370,131 @@ void Tempus::Renderer::DrawImGui()
 		ImGui::Text("Vendor ID: %u", m_DeviceDetails.vendorId);
 	ImGui::End();
 
+	// -- Clear color
+	ImGui::Begin("Clear Color");
+	ImGui::ColorPicker3("Color", &m_ClearColor[0]);
+	ImGui::End();
+
+	// -- Input visualization
+	ImGui::Begin("Input");
+	ImGui::Text("Input: %s", m_InputBits.to_string().c_str());
+	ImGui::End();
+
+	// -- Demo window for testing
+	ImGui::ShowDemoWindow();
+
 	// ImGui::Begin("Event Dispatcher");
 	// 	ImGui::Text("Subscriber count: %u", EVENT_DISPATCHER->GetSubscriberCount());
 	// ImGui::End();
 
 	Scene* currentScene = SCENE_MANAGER->GetActiveScene();
-	ImGui::Begin("Scene Info");
-		ImGui::Text("Name: %s", currentScene->GetName().c_str());
-		ImGui::Text("Entity count: %u", currentScene->GetEntityCount());
-		if(ImGui::Button("Debug Add Entity"))
-		{
-			SCENE_MANAGER->GetActiveScene()->AddEntity("Debug Entity");
-		}
-		static int id = 0;
-		ImGui::InputInt("ID to remove", &id);
-		if(ImGui::Button("Debug Remove Entity"))
-		{
-			SCENE_MANAGER->GetActiveScene()->RemoveEntity(id);
-		}
-	ImGui::End();
 
-	ImGui::Begin("Scene Outliner");
-		{
-			ImGui::SetNextItemOpen(true);
-			if (ImGui::TreeNode("Entities"))
+	if (currentScene)
+	{
+		// --- Scene info
+		ImGui::Begin("Scene Info");
+			ImGui::Text("Name: %s", currentScene->GetName().c_str());
+			ImGui::Text("Entity count: %u", currentScene->GetEntityCount());
+			if(ImGui::Button("Add Entity"))
 			{
-				std::vector<uint32_t> entIDs = currentScene->GetEntityIDs();
-				for (const uint32_t entID : entIDs)
+				currentScene->AddEntity("Debug Entity");
+			}
+			static int id = 0;
+			ImGui::InputInt("Selected Entity", &id);
+			if(ImGui::Button("Remove Entity"))
+			{
+				currentScene->RemoveEntity(id);
+			}
+
+			static TPS_Private::ComponentRegistry::ComponentTypeInfo selectedComponent;
+			if (ImGui::BeginCombo("Components", selectedComponent.name.c_str()))
+			{
+				const std::vector<TPS_Private::ComponentRegistry::ComponentTypeInfo>& registeredComponents = TPS_Private::ComponentRegistry::GetRegisteredComponents();
+				for (const auto& component : registeredComponents)
 				{
-					if (currentScene->GetComponentCount(entID))
+					if (ImGui::Selectable(component.name.c_str()))
 					{
-						// Setting to open by default for editor camera (temp)
-						if (entID == 0)
-						{
-							ImGui::SetNextItemOpen(true);
-						}
-						if (ImGui::TreeNode(std::format("#{}: {}", entID, currentScene->GetEntityName(entID)).c_str()))
-						{
-							if (TransformComponent* transformComp = currentScene->GetComponent<TransformComponent>(entID))
-							{
-								// Setting to open by default for editor camera (temp)
-								if (entID == 0)
-								{
-									ImGui::SetNextItemOpen(true);
-								}
-								if (ImGui::TreeNode(TempusUtils::GetClassDebugName<TransformComponent>()))
-								{
-									ImGui::InputFloat3("Position", &transformComp->Position.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
-									ImGui::InputFloat3("Rotation", &transformComp->Rotation.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
-									ImGui::InputFloat3("Scale", &transformComp->Scale.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
-
-									ImGui::TreePop();
-								}
-							}
-							if (CameraComponent* cameraComp = currentScene->GetComponent<CameraComponent>(entID))
-							{
-								// Setting to open by default for editor camera (temp)
-								if (entID == 0)
-								{
-									ImGui::SetNextItemOpen(true);
-								}
-								if (ImGui::TreeNode(TempusUtils::GetClassDebugName<CameraComponent>()))
-								{
-									ImGui::Text("Project Type: %s", cameraComp->ProjectionType == CamProjectionType::Perspective ? "Perspective" : "Orthographic");
-									ImGui::SliderFloat("FOV", &cameraComp->Fov, 1.0f, 179.0f, "%.3f");
-									ImGui::Text("Ortho Size: %.1f", cameraComp->OrthoSize);
-									ImGui::Text("Near Clip: %.1f", cameraComp->NearClip);
-									ImGui::Text("Far Clip: %.1f", cameraComp->FarClip);
-
-									ImGui::TreePop();
-								}
-							}
-							
-							ImGui::TreePop();
-						}
-					}
-					else
-					{
-						ImGui::Text(std::format("#{}: {}", entID, currentScene->GetEntityName(entID)).c_str());
+						selectedComponent = component;
 					}
 				}
-
-				ImGui::TreePop();
+				ImGui::EndCombo();
 			}
-		}
-	ImGui::End();
+			if(ImGui::Button("Add Component to entity"))
+			{
+				if (selectedComponent.defaultConstructor)
+				{
+					selectedComponent.defaultConstructor(currentScene, id);
+				}
+				else
+				{
+					TPS_CORE_ERROR("Cannot add component, no valid component selected!");	
+				}
+			}
+		ImGui::End();
 
-	ImGui::Begin("Clear Color");
-		ImGui::ColorPicker3("Color", &m_ClearColor[0]);
-	ImGui::End();
+		// --- Scene outliner
+		ImGui::Begin("Scene Outliner");
+			{
+				TPS_CALL_ONCE(ImGui::SetNextItemOpen, true);
+				if (ImGui::TreeNode("Entities"))
+				{
+					std::vector<uint32_t> entIDs = currentScene->GetEntityIDs();
+					for (const uint32_t entID : entIDs)
+					{
+						if (currentScene->GetComponentCount(entID))
+						{
+							TPS_CALL_ONCE(ImGui::SetNextItemOpen, true);
+							if (ImGui::TreeNode(std::format("[{}] {}", entID, currentScene->GetEntityName(entID)).c_str()))
+							{
+								if (TransformComponent* transformComp = currentScene->GetComponent<TransformComponent>(entID))
+								{
+									TPS_CALL_ONCE(ImGui::SetNextItemOpen, true);
+									if (ImGui::TreeNode(TempusUtils::GetClassDebugName<TransformComponent>()))
+									{
+										ImGui::InputFloat3("Position", &transformComp->Position.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+										ImGui::InputFloat3("Rotation", &transformComp->Rotation.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+										ImGui::InputFloat3("Scale", &transformComp->Scale.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
 
-	ImGui::Begin("Input");
-		ImGui::Text("Input: %s", m_InputBits.to_string().c_str());
-	ImGui::End();
+										ImGui::TreePop();
+									}
+								}
+								if (CameraComponent* cameraComp = currentScene->GetComponent<CameraComponent>(entID))
+								{
+									TPS_CALL_ONCE(ImGui::SetNextItemOpen, true);
+									if (ImGui::TreeNode(TempusUtils::GetClassDebugName<CameraComponent>()))
+									{
+										ImGui::Text("Project Type: %s", cameraComp->ProjectionType == CamProjectionType::Perspective ? "Perspective" : "Orthographic");
+										ImGui::SliderFloat("FOV", &cameraComp->Fov, 1.0f, 179.0f, "%.3f");
+										ImGui::Text("Ortho Size: %.1f", cameraComp->OrthoSize);
+										ImGui::Text("Near Clip: %.1f", cameraComp->NearClip);
+										ImGui::Text("Far Clip: %.1f", cameraComp->FarClip);
+
+										ImGui::TreePop();
+									}
+								}
+								if (StaticMeshComponent* meshComp = currentScene->GetComponent<StaticMeshComponent>(entID))
+								{
+									if (ImGui::TreeNode(TempusUtils::GetClassDebugName<StaticMeshComponent>()))
+									{
+										ImGui::Text("WIP");
+										ImGui::TreePop();
+									}
+								}
+								
+								ImGui::TreePop();
+							}
+						}
+						else
+						{
+							ImGui::Text(std::format("#{}: {}", entID, currentScene->GetEntityName(entID)).c_str());
+						}
+					}
+
+					ImGui::TreePop();
+				}
+			}
+		ImGui::End();
+	}
 	
 	ImGui::Render();
 }

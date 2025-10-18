@@ -63,15 +63,18 @@ R"(
 
 	InitRenderer();
 
+	// Printing registered components
+	auto components = TPS_Private::ComponentRegistry::GetRegisteredComponents();
+	std::stringstream ss;
+	ss << "Registered Components: \n";
+	for(auto component : components)
+	{
+		ss << " - " << component.name << '[' << static_cast<uint32_t>(component.id) << ']' << "\n";
+	}
+	TPS_CORE_INFO(ss.str());
+	
 	SCENE_MANAGER->CreateScene("Test Scene");
 	SCENE_MANAGER->DoTestScene();
-
-	std::vector<std::string> compNames = TPS_Private::ComponentRegistry::GetRegisteredComponentNames();
-
-	for(std::string name : compNames)
-	{
-		TPS_CORE_WARN(name);
-	}
 
 	while (!bShouldQuit) 
 	{

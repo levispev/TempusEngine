@@ -7,7 +7,6 @@
 
 namespace Tempus 
 {
-
 	enum class CamProjectionType : uint8_t
 	{
 		Perspective,
@@ -17,7 +16,6 @@ namespace Tempus
 	class TEMPUS_API CameraComponent : public Component
 	{
 		DECLARE_COMPONENT(CameraComponent, 1)
-		
 		TPS_DEBUG_NAME("Camera Component")
 
 	public:
@@ -29,9 +27,7 @@ namespace Tempus
 		float NearClip = 0.1f;
 		float FarClip = 1000.0f;
 		float AspectRatio = 16.0f / 9.0f;
-
 	};
-
 }
 
 

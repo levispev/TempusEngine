@@ -23,3 +23,12 @@ glm::vec3 Tempus::TransformComponent::GetForwardVector() const
 
     return forward / len;
 }
+
+Tempus::TransformComponent::TransformComponent()
+{
+}
+
+Tempus::TransformComponent::~TransformComponent()
+{
+    Component::~Component();
+}

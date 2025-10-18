@@ -59,6 +59,18 @@
     #define TPS_DEBUG_NAME(name)
 #endif
 
+#define TPS_MACRO_JOIN(a, b) TPS_MACRO_JOIN_PRIVATE(a,b)
+#define TPS_MACRO_JOIN_PRIVATE(a, b) a##b
+
+#ifdef __COUNTER__
+#define ANONYMOUS_VARIABLE(Name) TPS_MACRO_JOIN(Name, __COUNTER__)
+#else
+#define ANONYMOUS_VARIABLE(Name) PREPROCESSOR_JOIN(Name, __LINE__)
+#endif
+
+// Macro for calling a void function once
+#define TPS_CALL_ONCE(Func, ...) static int32_t ANONYMOUS_VARIABLE(UniqueOnce) = ((Func)(__VA_ARGS__), 1)
+
 // Global constants
 // Max entities per scene
 constexpr uint32_t MAX_ENTITIES = 5000;

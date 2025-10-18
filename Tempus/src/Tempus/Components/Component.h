@@ -3,10 +3,6 @@
 #pragma once
 
 #include "Tempus/Core.h"
-#include <unordered_set>
-#include <iostream>
-#include <limits>
-#include "Utils/TempusUtils.h"
 #include "ComponentRegistry.h"
 
 // Used for declaring a unique component type
@@ -26,11 +22,12 @@ namespace Tempus
     
     class TEMPUS_API Component
     {
+        TPS_DEBUG_NAME("Component")
 
     protected:
         
-        Component() = default;
-        virtual ~Component() = default;
+        Component();
+        virtual ~Component();
 
     };
     

@@ -21,7 +21,7 @@ namespace Tempus
         // May want to remove the union as the vec3 layout isnt 100% guaranteed
         union
         {
-            glm::vec3 Position;
+            glm::vec3 Position = glm::vec3(0.0f);
             struct
             {
                 float x;
@@ -30,10 +30,13 @@ namespace Tempus
             };
         };
 
-        glm::vec3 Rotation;
-        glm::vec3 Scale;
+        glm::vec3 Rotation = glm::vec3(0.0f);
+        glm::vec3 Scale = glm::vec3(0.0f);
 
         glm::vec3 GetForwardVector() const;
+
+        TransformComponent();
+        ~TransformComponent() override;
         
     };
     
