@@ -31,7 +31,7 @@ namespace Tempus
             }
             else
             {
-                TPS_CORE_ERROR("Entity [{0}] does not belong to a scene!", m_Id);
+                TPS_ERROR("Entity [{0}] does not belong to a scene!", m_Id);
             }
         }
 
@@ -42,7 +42,7 @@ namespace Tempus
             {
                 return m_OwnerScene->GetComponent<T>(m_Id);
             }
-            TPS_CORE_ERROR("Entity [{0}] does not belong to a scene!", m_Id);
+            TPS_ERROR("Entity [{0}] does not belong to a scene!", m_Id);
             return nullptr;
         }
 
@@ -53,7 +53,7 @@ namespace Tempus
             {
                 return m_OwnerScene->HasComponent<T>(m_Id);
             }
-            TPS_CORE_ERROR("Entity [{0}] does not belong to a scene!", m_Id);
+            TPS_ERROR("Entity [{0}] does not belong to a scene!", m_Id);
             return false;
         }
 
@@ -66,7 +66,7 @@ namespace Tempus
             }
             else
             {
-                TPS_CORE_ERROR("Entity [{0}] does not belong to a scene!", m_Id);
+                TPS_ERROR("Entity [{0}] does not belong to a scene!", m_Id);
             }
         }
     };

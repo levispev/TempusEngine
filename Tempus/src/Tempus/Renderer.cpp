@@ -225,7 +225,6 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 	// @TODO Temporary editor camera movement, this will all be handled in a proper input system in the future
 	if (editorCam && editorCamTransform)
 	{
-
 		// Forward / Back Movement
 		editorCamTransform->Position += editorCamTransform->GetForwardVector() * (m_InputBits.test(0) * (Time::GetDeltaTime() * 10.0f));
 		editorCamTransform->Position -= editorCamTransform->GetForwardVector() * (m_InputBits.test(2) * (Time::GetDeltaTime() * 10.0f));
@@ -477,7 +476,7 @@ void Tempus::Renderer::DrawImGui()
 								TPS_CALL_ONCE(ImGui::SetNextItemOpen, true);
 								if (ImGui::TreeNode(TempusUtils::GetClassDebugName<CameraComponent>()))
 								{
-									ImGui::Text("Project Type: %s", cameraComp->ProjectionType == CamProjectionType::Perspective ? "Perspective" : "Orthographic");
+									ImGui::Text("Projection Type: %s", cameraComp->ProjectionType == CamProjectionType::Perspective ? "Perspective" : "Orthographic");
 									ImGui::SliderFloat("FOV", &cameraComp->Fov, 1.0f, 179.0f, "%.3f");
 									ImGui::Text("Ortho Size: %.1f", cameraComp->OrthoSize);
 									ImGui::Text("Near Clip: %.1f", cameraComp->NearClip);

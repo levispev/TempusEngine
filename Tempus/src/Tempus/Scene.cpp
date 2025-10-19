@@ -34,7 +34,7 @@ Tempus::Entity Tempus::Scene::AddEntity(std::string name)
 
 void Tempus::Scene::RemoveEntity(uint32_t id)
 {
-    TPS_ASSERT_WARN(m_EntityCount < MAX_ENTITIES, "Cannot remove entity of ID [{0}]. ID exceeds maximum!", id);
+    TPS_ASSERT(m_EntityCount < MAX_ENTITIES, "Cannot remove entity of ID [{0}]. ID exceeds maximum!", id);
 
     if (!m_EntityNames.contains(id))
     {

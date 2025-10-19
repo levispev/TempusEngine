@@ -1,8 +1,12 @@
 // Copyright Levi Spevakow (C) 2025
 
 #include "Tempus.h"
-
+#include "Tempus/Scene.h"
+#include "Tempus/Managers/SceneManager.h"
+#include "Tempus/Entity/Entity.h"
 #include <random>
+
+#include "Components/TransformComponent.h"
 
 class SandBox : public Tempus::Application
 {
@@ -30,6 +34,15 @@ public:
 				std::uniform_int_distribution<> dis(0, 255);
 
 				SetRenderClearColor(dis(gen), dis(gen), dis(gen), 255);
+
+				if (Tempus::Scene* scene = Tempus::SceneManager::GetInstance()->GetActiveScene())
+				{
+					for (int i = 0; i < 100; i++)
+					{
+						Tempus::Entity e = scene->AddEntity("Entity_" + std::to_string(i));
+						e.AddComponent<Tempus::TransformComponent>();
+					}
+				}
 			}
 		}
 	}

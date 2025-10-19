@@ -46,7 +46,7 @@ project "Tempus"
 
     filter "system:windows"
         cppdialect "C++23"
-        staticruntime "On"
+        staticruntime "Off"
         systemversion "latest"
 
         links
@@ -130,17 +130,19 @@ project "Tempus"
         }
 
     filter "configurations:Debug"
-    defines { 
-        "TPS_DEBUG",
-        "TPS_CONFIG_NAME=\"Debug\""
-    }
-    symbols "On"
+        defines { 
+            "TPS_DEBUG",
+            "TPS_CONFIG_NAME=\"Debug\""
+        }
+        runtime "Debug"
+        symbols "On"
 
     filter "configurations:Release"
         defines { 
             "TPS_RELEASE",
             "TPS_CONFIG_NAME=\"Release\""
         }
+        runtime "Release"
         optimize "On"
 
     filter "configurations:Dist"
@@ -167,6 +169,7 @@ project "Sandbox"
     includedirs
     {
         "Tempus/src",
+        "Tempus/src/Tempus",
         path.join(os.getenv("VULKAN_SDK"), "Include"),
         "Tempus/vendor/include"
     }
@@ -183,7 +186,7 @@ project "Sandbox"
 
     filter "system:windows"
         cppdialect "C++23"
-        staticruntime "On"
+        staticruntime "Off"
         systemversion "latest"
 
         defines
@@ -193,7 +196,8 @@ project "Sandbox"
 
         buildoptions
         {
-            "/utf-8"
+            "/utf-8",
+            "/wd4251"
         }
 
         postbuildcommands
@@ -219,17 +223,19 @@ project "Sandbox"
         }
 
     filter "configurations:Debug"
-    defines { 
-        "TPS_DEBUG",
-        "TPS_CONFIG_NAME=\"Debug\""
-    }
-    symbols "On"
+        defines { 
+            "TPS_DEBUG",
+            "TPS_CONFIG_NAME=\"Debug\""
+        }
+        runtime "Debug"
+        symbols "On"
 
     filter "configurations:Release"
         defines { 
             "TPS_RELEASE",
             "TPS_CONFIG_NAME=\"Release\""
         }
+        runtime "Release"
         optimize "On"
 
     filter "configurations:Dist"

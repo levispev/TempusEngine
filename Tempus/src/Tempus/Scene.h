@@ -47,7 +47,7 @@ namespace Tempus
             }
             else
             {
-                TPS_CORE_ERROR("Component already exists for entity [{0}]!", entityId);
+                TPS_ERROR("Component already exists for entity [{0}]!", entityId);
             }
         }
 
@@ -90,7 +90,7 @@ namespace Tempus
         {
             if (!m_Entities.contains(id))
             {
-                TPS_CORE_ERROR("Entity of ID [{0}] does not exist!", id);
+                TPS_ERROR("Entity of ID [{0}] does not exist!", id);
                 return;
             }
             
@@ -99,7 +99,7 @@ namespace Tempus
             // Check if the entity already has the component
             if (m_EntityComponents[id].test(componentId))
             {
-                TPS_CORE_ERROR("{1} already exists for entity [{0}]!", id, TempusUtils::GetClassDebugName<T>());
+                TPS_ERROR("{1} already exists for entity [{0}]!", id, TempusUtils::GetClassDebugName<T>());
                 return;
             }
             
@@ -116,7 +116,7 @@ namespace Tempus
             // Update signature
             m_EntityComponents[id].set(componentId);
             
-            TPS_CORE_TRACE("{2} [{0}] added to entity [{1}]", componentId, m_EntityNames[id], TempusUtils::GetClassDebugName<T>());
+            TPS_TRACE("{2} [{0}] added to entity [{1}]", componentId, m_EntityNames[id], TempusUtils::GetClassDebugName<T>());
         }
 
         std::vector<uint32_t> GetEntityIDs() { return std::vector(m_Entities.begin(), m_Entities.end()); }
@@ -139,7 +139,7 @@ namespace Tempus
         {
             if (!m_Entities.contains(id))
             {
-                TPS_CORE_ERROR("Entity of ID [{0}] does not exist!", id);
+                TPS_ERROR("Entity of ID [{0}] does not exist!", id);
                 return nullptr;
             }
             
@@ -165,7 +165,7 @@ namespace Tempus
         {
             if (!m_Entities.contains(id))
             {
-                TPS_CORE_ERROR("Entity of ID [{0}] does not exist!", id);
+                TPS_ERROR("Entity of ID [{0}] does not exist!", id);
                 return;
             }
             
@@ -177,7 +177,7 @@ namespace Tempus
                 pool->RemoveComponent(id);
                 m_EntityComponents[id].reset(componentId);
                 
-                TPS_CORE_TRACE("{2} [{0}] removed from entity [{1}]", componentId, m_EntityNames[id], TempusUtils::GetClassDebugName<T>());
+                TPS_TRACE("{2} [{0}] removed from entity [{1}]", componentId, m_EntityNames[id], TempusUtils::GetClassDebugName<T>());
             }
         }
         

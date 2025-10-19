@@ -16,6 +16,7 @@ Tempus::Scene* Tempus::SceneManager::CreateScene(const std::string& sceneName)
     Entity editorCam = m_ActiveScene->AddEntity("Editor Cam");
     editorCam.AddComponent<TransformComponent>();
     editorCam.AddComponent<CameraComponent>();
+    editorCam.GetComponent<TransformComponent>()->Position = glm::vec3(-5.0f, 0.0f, 0.0f);
     
     return m_ActiveScene;
 }
