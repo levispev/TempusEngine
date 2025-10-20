@@ -80,12 +80,11 @@ constexpr uint8_t MAX_COMPONENTS = 32;
 namespace Tempus
 {
     using ComponentId = uint8_t;
-
     class Component;
 
     // Concept for valid component
     // Constraint #1: Must derive from Component class
-    // Constraint #2: Must implement valid ID using 'DECLARE_COMPONENT_ID(x)'
+    // Constraint #2: Must implement valid ID using 'DECLARE_COMPONENT(ComponentName, ID)'
     template<typename T>
     concept ValidComponent = std::derived_from<T, Component> && requires {{T::GetId()} -> std::convertible_to<ComponentId>;};
 }

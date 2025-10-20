@@ -248,13 +248,9 @@ project "Sandbox"
         
 newaction {
     trigger = "clean",
-    description = "Remove all build files and intermediate files",
+    description = "Remove all generated build files",
     execute = function()
         print("Cleaning build files...")
-        
-        -- Common directories to clean for all platforms
-        os.rmdir("./bin")
-        os.rmdir("./bin-int")
         
         if os.host() == "windows" then
             print("Cleaning Windows-specific files...")
