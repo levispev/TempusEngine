@@ -36,6 +36,8 @@ namespace Tempus
         void SetActiveScene(Scene* scene);
         bool SetActiveScene(const std::string& sceneName);
 
+        void OnUpdate(float DeltaTime);
+
         // Testing function
         void DoTestScene();
       

@@ -4,6 +4,11 @@
 #include "Entity/Entity.h"
 #include "Log.h"
 
+void Tempus::Scene::OnUpdate(float DeltaTime)
+{
+    m_SceneTime += DeltaTime;
+}
+
 Tempus::Scene::Scene(std::string sceneName) : m_SceneName(std::move(sceneName))
 {
     for (uint32_t entity = 0; entity < MAX_ENTITIES; entity++)

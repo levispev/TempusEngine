@@ -89,6 +89,7 @@ namespace Tempus
         std::string GetEntityName(uint32_t id);
         uint32_t GetEntityCount() const { return m_EntityCount; }
         const std::string& GetName() const { return m_SceneName; }
+        double GetSceneTime() const { return m_SceneTime; }
         
         template<ValidComponent T, typename ...Args>
         void AddComponent(uint32_t id, Args&&... arguments)
@@ -191,6 +192,8 @@ namespace Tempus
         Scene& operator=(const Scene&) = delete;
         Scene(Scene&&) = delete;
         Scene& operator=(Scene&&) = delete;
+
+        void OnUpdate(float DeltaTime);
         
     private:
 
@@ -198,6 +201,8 @@ namespace Tempus
         
         Scene(std::string sceneName);
         ~Scene() = default;
+
+        void ResetSceneTime() { m_SceneTime = 0.0f; }
         
         std::queue<uint32_t> m_AvailableEntityIds;
         std::array<ComponentSignature, MAX_ENTITIES> m_EntityComponents;
@@ -209,6 +214,8 @@ namespace Tempus
         std::map<ComponentId, std::unique_ptr<IComponentPool>> m_ComponentPools;
         
         std::string m_SceneName;
+
+        double m_SceneTime = 0.0;
         
     };
     

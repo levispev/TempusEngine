@@ -144,6 +144,9 @@ void Tempus::Application::InitSDL()
 void Tempus::Application::CoreUpdate()
 {
 	Time::GetInstance()->CalculateDeltaTime();
+	float dt = Time::GetDeltaTime() * Time::GetTimeScale();
+	// @TODO In the future this will be handled more elegantly with a shared Tickable interface
+	SCENE_MANAGER->OnUpdate(dt);
 	EventUpdate();
 	Update();
 	m_Renderer->Update();

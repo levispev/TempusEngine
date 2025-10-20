@@ -21,6 +21,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include <chrono>
+#include <imgui_internal.h>
 
 #include "Application.h"
 #include "Scene.h"
@@ -258,8 +259,8 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 	}
 	
 	UniformBufferObject ubo{};
-	ubo.model = glm::rotate(glm::mat4(1.0f), Time::GetTime() * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.model = glm::translate(ubo.model, glm::vec3(0.0f, 0.0f, glm::sin(Time::GetTime())));
+	ubo.model = glm::rotate(glm::mat4(1.0f), Time::GetAppTime() * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.model = glm::translate(ubo.model, glm::vec3(0.0f, 0.0f, glm::sin(Time::GetAppTime())));
 	ubo.view = glm::lookAtLH(m_EditorCamPos, m_EditorCamPos + m_EditorCamForward, glm::vec3(0.0f, 0.0f, 1.0f));
 	
 	switch (projType)
@@ -367,7 +368,7 @@ void Tempus::Renderer::DrawImGui()
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::Text("Swapchain extent: %ux%u", m_SwapChainExtent.width, m_SwapChainExtent.height);
 		ImGui::Text("Delta Time: %f", Time::GetDeltaTime());
-		ImGui::Text("Time: %f", Time::GetTime());
+		ImGui::Text("Time: %f", Time::GetAppTime());
 	ImGui::End();
 
 	// -- Device info
@@ -410,6 +411,7 @@ void Tempus::Renderer::DrawImGui()
 		// --- Scene info
 		ImGui::Begin("Scene Info");
 			ImGui::Text("Name: %s", currentScene->GetName().c_str());
+			ImGui::Text("Scene Time: %.3f", currentScene->GetSceneTime());
 			ImGui::Text("Entity count: %u", currentScene->GetEntityCount());
 			if(ImGui::Button("Add Entity"))
 			{
@@ -530,6 +532,13 @@ void Tempus::Renderer::DrawImGui()
 			}
 		ImGui::End();
 	}
+
+	ImGui::Begin("Debug");
+		if (ImGui::Button("Debug Button"))
+		{
+			SCENE_MANAGER->CreateScene("Debug Scene");
+		}
+	ImGui::End();
 	
 	ImGui::Render();
 }

@@ -25,11 +25,24 @@ Tempus::Scene* Tempus::SceneManager::CreateScene(const std::string& sceneName)
 void Tempus::SceneManager::SetActiveScene(Scene* scene)
 {
     m_ActiveScene = scene;
+
+    if (m_ActiveScene)
+    {
+        m_ActiveScene->ResetSceneTime();
+    }
 }
 
 bool Tempus::SceneManager::SetActiveScene(const std::string& sceneName)
 {
     return false;
+}
+
+void Tempus::SceneManager::OnUpdate(float DeltaTime)
+{
+    if (m_ActiveScene)
+    {
+        m_ActiveScene->OnUpdate(DeltaTime);
+    }
 }
 
 void Tempus::SceneManager::DoTestScene()

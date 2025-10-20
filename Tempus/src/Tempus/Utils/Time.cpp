@@ -9,7 +9,7 @@
 std::unique_ptr<Tempus::Time> Tempus::Time::s_Instance = nullptr;
 
 float Tempus::Time::m_DeltaTime = 0.0f;
-float Tempus::Time::m_Time = 0.0f;
+float Tempus::Time::m_AppTime = 0.0f;
 float Tempus::Time::m_TimeScale = 1.0f;
 
 Tempus::Time* Tempus::Time::GetInstance()
@@ -26,9 +26,9 @@ float Tempus::Time::GetDeltaTime()
     return m_DeltaTime;
 }
 
-float Tempus::Time::GetTime()
+float Tempus::Time::GetAppTime()
 {
-    return m_Time;
+    return m_AppTime;
 }
 
 float Tempus::Time::GetTimeScale()
@@ -54,7 +54,7 @@ void Tempus::Time::CalculateDeltaTime()
     // Calculate deltatime
     m_DeltaTime = std::chrono::duration_cast<std::chrono::duration<float>>(currentTime - lastFrameTime).count();
     // Update current time since application start
-    m_Time += m_DeltaTime;
+    m_AppTime += m_DeltaTime;
     
     lastFrameTime = currentTime;
 }
