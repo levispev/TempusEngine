@@ -28,6 +28,7 @@ namespace Tempus {
 
 	protected:
 
+		virtual void AppStart();
 		virtual void Update();
 		virtual void Cleanup();
 

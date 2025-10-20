@@ -25,6 +25,7 @@
 #include "Application.h"
 #include "Scene.h"
 #include "Components/CameraComponent.h"
+#include "Components/EditorDataComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/TransformComponent.h"
 #include "Managers/SceneManager.h"
@@ -418,7 +419,20 @@ void Tempus::Renderer::DrawImGui()
 			static int id = 0;
 			if(ImGui::Button("Remove Entity"))
 			{
-				currentScene->RemoveEntity(id);
+				bool bCanDeleteEntity = true;
+				if (EditorDataComponent* editorData = currentScene->GetComponent<EditorDataComponent>(id))
+				{
+					if (EnumCheckFlag(editorData->flags, EditorEntityDataFlags::NoDelete))
+					{
+						bCanDeleteEntity = false;
+						TPS_CORE_ERROR("Cannot remove entity [{}], it is marked as NoDelete!", id);
+					}
+				}
+
+				if (bCanDeleteEntity)
+				{
+					currentScene->RemoveEntity(id);
+				}
 			}
 			ImGui::InputInt("Selected Entity", &id);
 
@@ -439,7 +453,20 @@ void Tempus::Renderer::DrawImGui()
 			{
 				if (selectedComponent.defaultConstructor)
 				{
-					selectedComponent.defaultConstructor(currentScene, id);
+					bool bCanAddComponent = true;
+					if (EditorDataComponent* editorData = currentScene->GetComponent<EditorDataComponent>(id))
+					{
+						if (EnumCheckFlag(editorData->flags, EditorEntityDataFlags::NoAddComponent))
+						{
+							TPS_CORE_ERROR("Cannot add component to entity [{}], it is marked as NoAddComponent!", id);
+							bCanAddComponent = false;
+						}
+					}
+					
+					if (bCanAddComponent)
+					{
+						selectedComponent.defaultConstructor(currentScene, id);
+					}
 				}
 				else
 				{

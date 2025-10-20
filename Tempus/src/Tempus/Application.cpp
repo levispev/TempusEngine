@@ -74,7 +74,9 @@ R"(
 	TPS_CORE_INFO(ss.str());
 	
 	SCENE_MANAGER->CreateScene("Test Scene");
-	SCENE_MANAGER->DoTestScene();
+	//SCENE_MANAGER->DoTestScene();
+
+	AppStart();
 
 	while (!bShouldQuit) 
 	{
@@ -163,6 +165,10 @@ void Tempus::Application::EventUpdate()
 	{
 		EVENT_DISPATCHER->Propagate(CurrentEvent);
 	}
+}
+
+void Tempus::Application::AppStart()
+{
 }
 
 void Tempus::Application::Update()

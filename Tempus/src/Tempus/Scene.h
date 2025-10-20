@@ -39,11 +39,10 @@ namespace Tempus
         template<typename... Args>
         void AddComponent(uint32_t entityId, Args&&... args)
         {
-            // By this point the Scene class should have already checked for the component existence, checking just incase
+            // By this point the Scene class should have already checked for the component existence, checking again for safety
             if (!m_ComponentArray[entityId].has_value())
             {
                 m_ComponentArray[entityId].emplace(std::forward<Args>(args)...);
-                //m_ComponentArray[entityId] = std::move(component);
             }
             else
             {
@@ -74,6 +73,8 @@ namespace Tempus
         }
 
     private:
+
+        // @TODO This is poor for memory usage, this will be converted to a more efficient structure later
         std::array<std::optional<T>, MAX_ENTITIES> m_ComponentArray;
     };
     
@@ -82,8 +83,12 @@ namespace Tempus
     public:
 
         class Entity AddEntity(std::string name);
-
         void RemoveEntity(uint32_t id);
+
+        std::vector<uint32_t> GetEntityIDs() { return std::vector(m_Entities.begin(), m_Entities.end()); }
+        std::string GetEntityName(uint32_t id);
+        uint32_t GetEntityCount() const { return m_EntityCount; }
+        const std::string& GetName() const { return m_SceneName; }
         
         template<ValidComponent T, typename ...Args>
         void AddComponent(uint32_t id, Args&&... arguments)
@@ -118,11 +123,6 @@ namespace Tempus
             
             TPS_TRACE("{2} [{0}] added to entity [{1}]", componentId, m_EntityNames[id], TempusUtils::GetClassDebugName<T>());
         }
-
-        std::vector<uint32_t> GetEntityIDs() { return std::vector(m_Entities.begin(), m_Entities.end()); }
-        std::string GetEntityName(uint32_t id);
-        uint32_t GetEntityCount() const { return m_EntityCount; }
-        const std::string& GetName() const { return m_SceneName; }
         
         std::vector<std::string> GetEntityNames() const
         {

@@ -19,6 +19,23 @@ public:
 
 	~SandBox() override = default;
 
+	virtual void AppStart() override
+	{
+		if (Tempus::Scene* scene = Tempus::SceneManager::GetInstance()->GetActiveScene())
+		{
+			for (int i = 0; i < 5; i++)
+			{
+				Tempus::Entity e = scene->AddEntity("Test Entity" + std::to_string(i));
+				e.AddComponent<Tempus::TransformComponent>(glm::vec3(1.0f));
+
+				if(Tempus::TransformComponent* tc = e.GetComponent<Tempus::TransformComponent>())
+				{
+	            
+				}
+			}
+		}
+	}
+
 	virtual void Update() override
 	{
 		SDL_Event event = GetCurrentEvent();

@@ -15,6 +15,11 @@ namespace Tempus
         TPS_DEBUG_NAME("Transform Component")
 
     public:
+
+        TransformComponent() = default;
+        TransformComponent(glm::vec3 position) : Position(position) {}
+        TransformComponent(glm::vec3 position, glm::vec3 rotation) : Position(position), Rotation(rotation) {}
+        TransformComponent(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale) : Position(position), Rotation(rotation), Scale(scale) {}
         
         // May want to remove the union as the vec3 layout isnt 100% guaranteed
         union
