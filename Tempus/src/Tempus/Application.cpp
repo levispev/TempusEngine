@@ -143,11 +143,11 @@ void Tempus::Application::InitSDL()
 
 void Tempus::Application::CoreUpdate()
 {
-	Time::GetInstance()->CalculateDeltaTime();
+	Time::CalculateDeltaTime();
 	float dt = Time::GetDeltaTime() * Time::GetTimeScale();
+	EventUpdate();
 	// @TODO In the future this will be handled more elegantly with a shared Tickable interface
 	SCENE_MANAGER->OnUpdate(dt);
-	EventUpdate();
 	Update();
 	m_Renderer->Update();
 	//std::this_thread::sleep_for(std::chrono::milliseconds(1));

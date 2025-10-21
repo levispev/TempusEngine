@@ -89,7 +89,7 @@ namespace Tempus
         std::string GetEntityName(uint32_t id);
         uint32_t GetEntityCount() const { return m_EntityCount; }
         const std::string& GetName() const { return m_SceneName; }
-        double GetSceneTime() const { return m_SceneTime; }
+        float GetSceneTime() const { return m_SceneTime; }
         
         template<ValidComponent T, typename ...Args>
         void AddComponent(uint32_t id, Args&&... arguments)
@@ -170,6 +170,12 @@ namespace Tempus
                 return;
             }
             
+            if (!HasComponent<T>(id))
+            {
+                TPS_ERROR("Cannot remove {1} from Entity [{0}], component not found!", m_EntityNames[id], TempusUtils::GetClassDebugName<T>());
+                return;
+            }
+            
             ComponentId componentId = T::GetId();
             
             if (m_ComponentPools.contains(componentId))
@@ -215,7 +221,7 @@ namespace Tempus
         
         std::string m_SceneName;
 
-        double m_SceneTime = 0.0;
+        float m_SceneTime = 0.0f;
         
     };
     

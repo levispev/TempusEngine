@@ -7,7 +7,6 @@
 
 namespace Tempus
 {
-
     class TEMPUS_API Time
     {
     public:
@@ -16,10 +15,9 @@ namespace Tempus
         static float GetDeltaTime();
         static float GetAppTime();
         static float GetTimeScale();
+        static float GetSceneTime();
         static void SetTimeScale(float scale);
-        // @TODO Make proper event system and have this automatically calculate on application tick event
-        // For now it's unsafely public and manually being called by application
-        void CalculateDeltaTime();
+        static void CalculateDeltaTime();
 
     private:
 
@@ -30,8 +28,5 @@ namespace Tempus
         static float m_DeltaTime;
         static float m_AppTime;
         static float m_TimeScale;
-        
     };
-
-    
 }

@@ -232,7 +232,6 @@ namespace Tempus {
 
 		void DrawFrame();
 		void UpdateUniformBuffer(uint32_t currentImage);
-		void DrawImGui();
 
 		void CreateVulkanInstance();
 		void SetupDebugMessenger();
@@ -303,6 +302,11 @@ namespace Tempus {
 
 		void CleanupSwapChain();
 		void Cleanup();
+
+		// ImGui Draw Functions
+		void DrawImGui();
+		void DrawSceneInfo(class Scene* currentScene);
+		void DrawSceneOutliner(class Scene* currentScene);
 
 	private:
 

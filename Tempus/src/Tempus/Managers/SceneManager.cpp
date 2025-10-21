@@ -12,12 +12,8 @@ std::unique_ptr<Tempus::SceneManager> Tempus::SceneManager::s_Instance = nullptr
 Tempus::Scene* Tempus::SceneManager::CreateScene(const std::string& sceneName)
 {
     m_ActiveScene = new Scene(sceneName);
-
-    Entity editorCam = m_ActiveScene->AddEntity("Editor Cam");
-    editorCam.AddComponent<TransformComponent>(glm::vec3(-5.0f, 0.0f, 0.0f));
-    editorCam.AddComponent<CameraComponent>();
-    editorCam.GetComponent<TransformComponent>()->Position = glm::vec3(-5.0f, 0.0f, 0.0f);
-    editorCam.AddComponent<EditorDataComponent>(EditorEntityDataFlags::NoDelete | EditorEntityDataFlags::NoSerialize | EditorEntityDataFlags::NoAddComponent);
+    
+    CreateEditorCamera();
     
     return m_ActiveScene;
 }
@@ -63,4 +59,16 @@ void Tempus::SceneManager::DoTestScene()
         }
     }
 
+}
+
+void Tempus::SceneManager::CreateEditorCamera()
+{
+    if (m_ActiveScene)
+    {
+        Entity editorCam = m_ActiveScene->AddEntity("Editor Cam");
+        editorCam.AddComponent<TransformComponent>(glm::vec3(-5.0f, 0.0f, 0.0f));
+        editorCam.AddComponent<CameraComponent>();
+        editorCam.GetComponent<TransformComponent>()->Position = glm::vec3(-5.0f, 0.0f, 0.0f);
+        editorCam.AddComponent<EditorDataComponent>(EditorEntityDataFlags::NoDelete | EditorEntityDataFlags::NoSerialize | EditorEntityDataFlags::NoAddComponent | EditorEntityDataFlags::NoRemoveComponent);
+    }
 }

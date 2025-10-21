@@ -39,6 +39,8 @@ namespace Tempus
         glm::vec3 GetForwardVector() const;
         glm::vec3 GetRightVector() const;
         glm::vec3 GetUpVector() const;
+
+        void OnDrawImGui() override;
         
     };
     

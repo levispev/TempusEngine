@@ -1,9 +1,10 @@
 // Copyright Levi Spevakow (C) 2025
 
 #include "TransformComponent.h"
+
+#include <imgui.h>
 #include <glm/trigonometric.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
 
 glm::vec3 Tempus::TransformComponent::GetForwardVector() const
 {
@@ -40,4 +41,12 @@ glm::vec3 Tempus::TransformComponent::GetUpVector() const
 
     glm::vec3 up = glm::normalize(glm::cross(right, forward));
     return up;
+}
+
+void Tempus::TransformComponent::OnDrawImGui()
+{
+    ImGui::Text("Transform Component");
+    ImGui::DragFloat3("Position", &Position.x, 0.1f);
+    ImGui::DragFloat3("Rotation", &Rotation.x, 0.1f);
+    ImGui::DragFloat3("Scale", &Scale.x, 0.1f);
 }

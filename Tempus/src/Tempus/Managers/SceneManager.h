@@ -40,6 +40,10 @@ namespace Tempus
 
         // Testing function
         void DoTestScene();
+
+    private:
+
+        void CreateEditorCamera();
       
     };
 

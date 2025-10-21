@@ -5,6 +5,7 @@
 
 #include "Events/EventDispatcher.h"
 #include "Events/IEventListener.h"
+#include "Managers/SceneManager.h"
 
 std::unique_ptr<Tempus::Time> Tempus::Time::s_Instance = nullptr;
 
@@ -34,6 +35,17 @@ float Tempus::Time::GetAppTime()
 float Tempus::Time::GetTimeScale()
 {
     return m_TimeScale;   
+}
+
+float Tempus::Time::GetSceneTime()
+{
+    if (Scene* activeScene = SCENE_MANAGER->GetActiveScene())
+    {
+        return activeScene->GetSceneTime();
+    }
+
+    TPS_CORE_WARN("No active scene found when getting scene time!");
+    return 0.0f;
 }
 
 void Tempus::Time::SetTimeScale(float scale)
