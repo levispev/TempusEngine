@@ -10,7 +10,6 @@
 #include "Scene.h"
 #include "Utils/EnumClassFlagUtils.h"
 
-
 // Used for declaring a unique component type
 // - Must have a component ID 
 // - Must have a debug name declared with TPS_DEBUG_NAME()
@@ -20,13 +19,14 @@
         TPS_STATIC_ASSERT((id) >= 0 && (id) <= std::numeric_limits<Tempus::ComponentId>::max(), "Component ID must be a positive integer <= 255"); \
         public: \
         static constexpr ComponentId GetId() { return m_Id; } \
+        static ComponentMetaData GetMetaData() { return m_MetaData; } \
         private: \
         static constexpr ComponentId m_Id = id; \
-        static const inline bool _bIsComponentRegistered = TPS_Private::ComponentRegistry::Register<type>(id, ##__VA_ARGS__);
+        static const inline ComponentMetaData m_MetaData = TPS_Private::ComponentRegistry::Register<type>(id, ##__VA_ARGS__);
 
 namespace Tempus
 {
-    // Editor meta data flags for reflected components
+    // Component meta data flags
     enum class ComponentMetaData : uint8_t
     {
         None = 0,
@@ -55,13 +55,14 @@ namespace TPS_Private
 
         // I am unable to use the ValidComponent concept here as it's called before the class is fully created
         template<typename T>
-        static bool Register(Tempus::ComponentId id, Tempus::ComponentMetaData metadata = Tempus::ComponentMetaData::None)
+        static Tempus::ComponentMetaData Register(Tempus::ComponentId id, Tempus::ComponentMetaData metadata = Tempus::ComponentMetaData::None)
         {
             // Component ID's must be unique
             if (ComponentIds.contains(id))
             {
                 // Throwing an exception here instead of a critical log as the logger is not initialized yet
                 throw std::runtime_error(std::format("Duplicate component ID's detected! {0}", id));
+                return Tempus::ComponentMetaData::None;
             }
 
             // Insert new unique ID
@@ -84,7 +85,7 @@ namespace TPS_Private
             
             RegisteredComponents.emplace_back(data);
 
-            return true;
+            return metadata;
         }
 
         static std::vector<std::string> GetRegisteredComponentNames()

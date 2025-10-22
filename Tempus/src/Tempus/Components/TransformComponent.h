@@ -11,7 +11,7 @@ namespace Tempus
 
     class TEMPUS_API TransformComponent : public Component
     {
-        DECLARE_COMPONENT(TransformComponent, 0)
+        DECLARE_COMPONENT(TransformComponent, 0, ComponentMetaData::NoDuplicate)
         TPS_DEBUG_NAME("Transform Component")
 
     public:
