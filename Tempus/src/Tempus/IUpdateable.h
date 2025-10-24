@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "Application.h"
 #include "Core.h"
 
 namespace Tempus
@@ -11,24 +10,9 @@ namespace Tempus
     {
     public:
 
-        IUpdateable()
-        {
-            if (GApp)
-            {
-                GApp->RegisterUpdateable(this);
-            }
-        }
-        
-        virtual ~IUpdateable()
-        {
-            if (GApp)
-            {
-                GApp->UnregisterUpdateable(this);
-            }
-        }
-        
-        virtual void OnUpdate(float DeltaTime) = 0;
-    
+        IUpdateable() = default;
+        virtual ~IUpdateable() = default;
+        virtual void OnUpdate(float DeltaTime) {}
+        virtual bool IsUpdating() const { return false; }
     };
-
 }

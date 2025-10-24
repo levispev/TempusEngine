@@ -79,6 +79,11 @@ constexpr uint8_t MAX_COMPONENTS = 32;
 
 namespace Tempus
 {
+	extern TEMPUS_API class Application* GApp;
+}
+
+namespace Tempus
+{
     using ComponentId = uint8_t;
     class Component;
 

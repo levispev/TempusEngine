@@ -11,6 +11,7 @@
 #include <string>
 #include <memory>
 #include "Log.h"
+#include "Systems/System.h"
 #include "Utils/TempusUtils.h"
 
 namespace Tempus
@@ -78,7 +79,7 @@ namespace Tempus
         std::array<std::optional<T>, MAX_ENTITIES> m_ComponentArray;
     };
     
-    class TEMPUS_API Scene
+    class TEMPUS_API Scene : public IUpdateable
     {
     public:
 
@@ -199,7 +200,6 @@ namespace Tempus
         Scene(Scene&&) = delete;
         Scene& operator=(Scene&&) = delete;
 
-        void OnUpdate(float DeltaTime);
         
     private:
 
@@ -209,6 +209,9 @@ namespace Tempus
         ~Scene() = default;
 
         void ResetSceneTime() { m_SceneTime = 0.0f; }
+
+        bool IsUpdating() const override { return true; }
+        void OnUpdate(float DeltaTime) override;
         
         std::queue<uint32_t> m_AvailableEntityIds;
         std::array<ComponentSignature, MAX_ENTITIES> m_EntityComponents;
@@ -218,6 +221,8 @@ namespace Tempus
 
         // Component pools indexed by component ID
         std::map<ComponentId, std::unique_ptr<IComponentPool>> m_ComponentPools;
+
+        std::vector<std::unique_ptr<System>> m_Systems;
         
         std::string m_SceneName;
 

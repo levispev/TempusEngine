@@ -12,6 +12,11 @@
 #include "sdl/SDL.h"
 
 namespace Tempus {
+	
+	class IUpdateable;
+	class SceneManager;
+	class Window;
+	class Renderer;
 
 	class TEMPUS_API Application
 	{
@@ -20,11 +25,8 @@ namespace Tempus {
 		Application();
 		virtual ~Application();
 		void Run();
-
-		void RegisterUpdateable(class IUpdateable* updatable);
-		void UnregisterUpdateable(class IUpdateable* updatable);
-
-		uint32_t GetUpdateableCount() const;
+		
+		SceneManager* GetSceneManager() const { return m_SceneManager; }
 
 		static void RequestExit()
 		{
@@ -40,18 +42,18 @@ namespace Tempus {
 		virtual void Cleanup();
 
 		SDL_Event GetCurrentEvent() const { return CurrentEvent; }
-
 		void SetRenderClearColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
-
-		class Window* GetWindow() const { return m_Window; }
+		Window* GetWindow() const { return m_Window; }
 
 	private:
 
 		void InitWindow();
 		void InitRenderer();
 		void InitSDL();
+		void InitManagers();
 
 		void CoreUpdate();
+		void ManagerUpdate();
 		void EventUpdate();
 
 		// Temporary input 
@@ -67,13 +69,16 @@ namespace Tempus {
 	private:
 
 		VkInstance m_Instance = nullptr;
-		class Window* m_Window = nullptr;
-		class Renderer* m_Renderer = nullptr;
+		Window* m_Window = nullptr;
+		Renderer* m_Renderer = nullptr;
+
+		// Managers
+		SceneManager* m_SceneManager = nullptr;
 
 		bool bShouldQuit = false;
 		SDL_Event CurrentEvent;
 
-		static inline std::unordered_set<class IUpdateable*> m_Updateables;
+		static inline std::unordered_set<IUpdateable*> m_Managers;
 		
 	protected:
 		
@@ -82,8 +87,6 @@ namespace Tempus {
 	};
 
 	Application* CreateApplication();
-
-	extern Application* GApp;
 
 }
 

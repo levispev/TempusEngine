@@ -24,7 +24,7 @@
 
 namespace Tempus
 {
-	Application* GApp = nullptr;
+	TEMPUS_API Application* GApp = nullptr;
 }
 
 Tempus::Application::Application() : CurrentEvent(SDL_Event()), AppName("Application Name")
@@ -66,6 +66,8 @@ R"(
 
 	InitSDL();
 
+	InitManagers();
+
 	InitWindow();
 
 	InitRenderer();
@@ -92,21 +94,6 @@ R"(
 
 	Cleanup();
 	
-}
-
-void Tempus::Application::RegisterUpdateable(IUpdateable* updatable)
-{
-	m_Updateables.insert(updatable);
-}
-
-void Tempus::Application::UnregisterUpdateable(IUpdateable* updatable)
-{
-	m_Updateables.erase(updatable);
-}
-
-uint32_t Tempus::Application::GetUpdateableCount() const
-{
-	return m_Updateables.size();
 }
 
 void Tempus::Application::InitWindow()
@@ -163,20 +150,33 @@ void Tempus::Application::InitSDL()
 	}
 }
 
+void Tempus::Application::InitManagers()
+{
+	m_SceneManager = new SceneManager();
+
+	m_Managers.insert(m_SceneManager);
+}
+
 void Tempus::Application::CoreUpdate()
 {
 	Time::CalculateDeltaTime();
 	float dt = Time::GetDeltaTime() * Time::GetTimeScale();
 	EventUpdate();
-
-	for (IUpdateable* updatable : m_Updateables)
-	{
-		updatable->OnUpdate(Time::GetDeltaTime() * Time::GetTimeScale());
-	}
-	
+	ManagerUpdate();
 	Update();
 	m_Renderer->Update();
 	//std::this_thread::sleep_for(std::chrono::milliseconds(1));
+}
+
+void Tempus::Application::ManagerUpdate()
+{
+	for (IUpdateable* manager : m_Managers)
+	{
+		if (manager->IsUpdating())
+		{
+			manager->OnUpdate(Time::GetDeltaTime() * Time::GetTimeScale());
+		}
+	}
 }
 
 void Tempus::Application::EventUpdate()
@@ -188,7 +188,6 @@ void Tempus::Application::EventUpdate()
 	if (CurrentEvent.type == SDL_QUIT)
 	{
 		bShouldQuit = true;
-		return;
 	}
 	else 
 	{
@@ -270,6 +269,7 @@ void Tempus::Application::Cleanup()
 {
 	delete m_Renderer;
 	delete m_Window;
+	delete m_SceneManager;
 	
 	SDL_Vulkan_UnloadLibrary();
 	SDL_Quit();

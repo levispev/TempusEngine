@@ -1,11 +1,10 @@
 // Copyright Levi Spevakow (C) 2025
 
 #include "Utils/Time.h"
-#include <time.h>
 
-#include "Events/EventDispatcher.h"
 #include "Events/IEventListener.h"
 #include "Managers/SceneManager.h"
+#include "Application.h"
 
 std::unique_ptr<Tempus::Time> Tempus::Time::s_Instance = nullptr;
 

@@ -3,10 +3,20 @@
 #include "Scene.h"
 #include "Entity/Entity.h"
 #include "Log.h"
+#include "Systems/EditorCameraSystem.h"
 
 void Tempus::Scene::OnUpdate(float DeltaTime)
 {
     m_SceneTime += DeltaTime;
+
+    // Update all systems in scene with update enabled
+     for (const auto& system : m_Systems)
+     {
+         if (system->IsUpdating())
+         {
+             system->OnUpdate(DeltaTime);
+         }
+     }
 }
 
 Tempus::Scene::Scene(std::string sceneName) : m_SceneName(std::move(sceneName))
@@ -15,6 +25,9 @@ Tempus::Scene::Scene(std::string sceneName) : m_SceneName(std::move(sceneName))
     {
         m_AvailableEntityIds.push(entity); 
     }
+
+    // Core systems
+    m_Systems.push_back(std::make_unique<EditorCameraSystem>());
 }
 
 Tempus::Entity Tempus::Scene::AddEntity(std::string name)

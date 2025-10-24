@@ -337,10 +337,6 @@ void Tempus::Renderer::DrawImGui()
 		ImGui::Text("Swapchain extent: %ux%u", m_SwapChainExtent.width, m_SwapChainExtent.height);
 		ImGui::Text("Delta Time: %f", Time::GetDeltaTime());
 		ImGui::Text("Time: %f", Time::GetAppTime());
-		if (GApp)
-		{
-			ImGui::Text("Ticking: %u", GApp->GetUpdateableCount());
-		}
 	ImGui::End();
 
 	// -- Device info

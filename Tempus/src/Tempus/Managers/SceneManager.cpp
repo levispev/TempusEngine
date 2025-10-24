@@ -7,8 +7,6 @@
 #include "Components/CameraComponent.h"
 #include "Components/EditorDataComponent.h"
 
-std::unique_ptr<Tempus::SceneManager> Tempus::SceneManager::s_Instance = nullptr;
-
 Tempus::Scene* Tempus::SceneManager::CreateScene(const std::string& sceneName)
 {
     m_ActiveScene = new Scene(sceneName);
