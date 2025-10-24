@@ -5,7 +5,6 @@
 #include "Tempus/Managers/SceneManager.h"
 #include "Tempus/Entity/Entity.h"
 #include <random>
-
 #include "Components/TransformComponent.h"
 
 class SandBox : public Tempus::Application
@@ -21,7 +20,7 @@ public:
 
 	virtual void AppStart() override
 	{
-		if (Tempus::Scene* scene = Tempus::SceneManager::GetInstance()->GetActiveScene())
+		if (Tempus::Scene* scene = SCENE_MANAGER->GetActiveScene())
 		{
 			for (int i = 0; i < 5; i++)
 			{
@@ -52,7 +51,7 @@ public:
 
 				SetRenderClearColor(dis(gen), dis(gen), dis(gen), 255);
 
-				if (Tempus::Scene* scene = Tempus::SceneManager::GetInstance()->GetActiveScene())
+				if (Tempus::Scene* scene = SCENE_MANAGER->GetActiveScene())
 				{
 					for (int i = 0; i < 100; i++)
 					{
