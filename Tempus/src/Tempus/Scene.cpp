@@ -28,6 +28,11 @@ Tempus::Scene::Scene(std::string sceneName) : m_SceneName(std::move(sceneName))
 
     // Core systems
     m_Systems.push_back(std::make_unique<EditorCameraSystem>());
+    
+    for (const auto& system : m_Systems)
+    {
+        system->OnInit(this);
+    }
 }
 
 Tempus::Entity Tempus::Scene::AddEntity(std::string name)

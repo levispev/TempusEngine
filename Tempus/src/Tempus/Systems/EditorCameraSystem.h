@@ -12,7 +12,7 @@ namespace Tempus
     public:
 
         EditorCameraSystem();
-        void OnInit() override;
+        void OnInit(class Scene* ownerScene) override;
         void OnUpdate(float DeltaTime) override;
         
     };

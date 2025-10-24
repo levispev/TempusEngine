@@ -5,6 +5,7 @@
 #include "Core.h"
 #include "IUpdateable.h"
 #include <bitset>
+#include <set>
 
 namespace Tempus
 {
@@ -15,7 +16,7 @@ namespace Tempus
     public:
 
         virtual ~System() override = default;
-        virtual void OnInit() {}
+        virtual void OnInit(class Scene* ownerScene) { m_OwnerScene = ownerScene; }
         bool IsUpdating() const override { return true; }
         virtual void OnUpdate(float DeltaTime) override {}
         
@@ -24,7 +25,8 @@ namespace Tempus
     protected:
 
         ComponentSignature m_Signature;
-        //std::vector<Entity> m_Entities;
+        std::set<uint32_t> m_Entities;
+        Scene* m_OwnerScene = nullptr;
     };
 
 }

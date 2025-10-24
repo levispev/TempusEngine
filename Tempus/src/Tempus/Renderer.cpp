@@ -441,7 +441,7 @@ void Tempus::Renderer::DrawSceneOutliner(class Scene* currentScene)
 				}
 				else
 				{
-					ImGui::Text("%s", std::format("#{}: {}", entID, currentScene->GetEntityName(entID)).c_str());
+					ImGui::Text("%s", std::format("[{}] {}", entID, currentScene->GetEntityName(entID)).c_str());
 				}
 			}
 		}

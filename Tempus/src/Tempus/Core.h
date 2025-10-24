@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <concepts>
 #include "Log.h"
+#include "CoreGlobals.h"
 
 // Helper macros
 #define BIT(x) (1 << (x))
@@ -76,11 +77,6 @@
 constexpr uint32_t MAX_ENTITIES = 5000;
 // Max components per entity
 constexpr uint8_t MAX_COMPONENTS = 32;
-
-namespace Tempus
-{
-	extern TEMPUS_API class Application* GApp;
-}
 
 namespace Tempus
 {
