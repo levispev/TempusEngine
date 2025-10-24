@@ -82,6 +82,7 @@ namespace Tempus {
 		bool Init(class Window* window);
 
 		void SetClearColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
+		void SetActiveCamera(uint32_t cameraEntityId);
 
 		const int MAX_FRAMES_IN_FLIGHT = 3;
 
@@ -198,15 +199,7 @@ namespace Tempus {
 
 		float m_ClearColor[4] = {0.25f, 0.5f, 0.1f, 0.0f};
 
-		// Temporary input testing
-		std::bitset<10> m_InputBits;
-		glm::vec3 m_EditorCamPos = glm::vec3(0.0f, -3.0f, 0.0f);
-		glm::vec3 m_EditorCamForward = glm::vec3(1.0f, 0.0f, 0.0f);
-		std::map<int, int> m_InputMap = 
-		{ {SDL_SCANCODE_W, 0}, {SDL_SCANCODE_A, 1}, {SDL_SCANCODE_S, 2}, {SDL_SCANCODE_D, 3},
-		  {SDL_SCANCODE_Q, 4}, {SDL_SCANCODE_E, 5}, {SDL_SCANCODE_UP, 6}, {SDL_SCANCODE_DOWN, 7},
-		  {SDL_SCANCODE_RIGHT, 8}, {SDL_SCANCODE_LEFT, 9}
-		};
+		uint32_t m_ActiveCamEntityId = 0;
 
 		// Struct for potential queue families
 		// Currently only searching for graphics queue family but will add more later

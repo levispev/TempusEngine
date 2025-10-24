@@ -2,8 +2,19 @@
 
 #pragma once
 
-class System
+#include "Core.h"
+#include "IUpdateable.h"
+
+namespace Tempus
 {
-public:
+    class TEMPUS_API System : IUpdateable
+    {
+    public:
+
+        virtual ~System() = default;
+        virtual void OnInit() {}
+        virtual void OnUpdate(float DeltaTime) override {}
     
-};
+    };
+
+}

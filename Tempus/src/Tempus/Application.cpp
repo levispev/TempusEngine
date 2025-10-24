@@ -8,6 +8,7 @@
 
 #include "Window.h"
 #include "Renderer.h"
+#include "Components/CameraComponent.h"
 #include "Events/EventDispatcher.h"
 
 #include "sdl/SDL_vulkan.h"
@@ -21,15 +22,21 @@
 #include "Components/TransformComponent.h"
 #include "Utils/Time.h"
 
+namespace Tempus
+{
+	Application* GApp = nullptr;
+}
 
 Tempus::Application::Application() : CurrentEvent(SDL_Event()), AppName("Application Name")
 {
+	GApp = this;
 	m_Window = new Window();
 	m_Renderer = new Renderer();
 }
 
 Tempus::Application::~Application()
 {
+	GApp = nullptr;
 }
 
 void Tempus::Application::Run()
@@ -85,6 +92,21 @@ R"(
 
 	Cleanup();
 	
+}
+
+void Tempus::Application::RegisterUpdateable(IUpdateable* updatable)
+{
+	m_Updateables.insert(updatable);
+}
+
+void Tempus::Application::UnregisterUpdateable(IUpdateable* updatable)
+{
+	m_Updateables.erase(updatable);
+}
+
+uint32_t Tempus::Application::GetUpdateableCount() const
+{
+	return m_Updateables.size();
 }
 
 void Tempus::Application::InitWindow()
@@ -146,8 +168,12 @@ void Tempus::Application::CoreUpdate()
 	Time::CalculateDeltaTime();
 	float dt = Time::GetDeltaTime() * Time::GetTimeScale();
 	EventUpdate();
-	// @TODO In the future this will be handled more elegantly with a shared Tickable interface
-	SCENE_MANAGER->OnUpdate(dt);
+
+	for (IUpdateable* updatable : m_Updateables)
+	{
+		updatable->OnUpdate(Time::GetDeltaTime() * Time::GetTimeScale());
+	}
+	
 	Update();
 	m_Renderer->Update();
 	//std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -166,7 +192,69 @@ void Tempus::Application::EventUpdate()
 	}
 	else 
 	{
+		// @TODO Temporarily manually managing input here
+		ProcessInput(CurrentEvent);
 		EVENT_DISPATCHER->Propagate(CurrentEvent);
+	}
+}
+
+void Tempus::Application::ProcessInput(SDL_Event event)
+{
+	if (event.type == SDL_KEYDOWN) // Temporary input handling 
+	{
+		char key = (char)event.key.keysym.sym;
+		//TPS_CORE_TRACE("DOWN: {0}", (int)event.key.keysym.scancode);
+		if(m_InputMap.contains(event.key.keysym.scancode))
+		{
+			m_InputBits.set(m_InputMap[event.key.keysym.scancode]);	
+		}
+	}
+	else if (event.type == SDL_KEYUP)
+	{
+		char key = (char)event.key.keysym.sym;
+		//TPS_CORE_TRACE("UP: {0}", (int)event.key.keysym.scancode);
+		if(m_InputMap.contains(event.key.keysym.scancode))
+		{
+			m_InputBits.reset(m_InputMap[event.key.keysym.scancode]);	
+		}
+	}
+	
+	UpdateEditorCamera();
+}
+
+void Tempus::Application::UpdateEditorCamera()
+{
+	Scene* activeScene = SCENE_MANAGER->GetActiveScene();
+	if (!activeScene)
+	{
+		return;
+	}
+
+	CameraComponent* camComp = activeScene->GetComponent<CameraComponent>(0);
+	TransformComponent* transComp = activeScene->GetComponent<TransformComponent>(0);
+
+	if (camComp && transComp)
+	{
+		// Forward / Back Movement
+		transComp->Position += transComp->GetForwardVector() * (m_InputBits.test(0) * (Time::GetDeltaTime() * 10.0f));
+		transComp->Position -= transComp->GetForwardVector() * (m_InputBits.test(2) * (Time::GetDeltaTime() * 10.0f));
+		// Right / Left Movement
+		transComp->Position -= transComp->GetRightVector() * (m_InputBits.test(1) * (Time::GetDeltaTime() * 10.0f));
+		transComp->Position += transComp->GetRightVector() * (m_InputBits.test(3) * (Time::GetDeltaTime() * 10.0f));
+		// Up / Down Movement
+		transComp->Position.z -= m_InputBits.test(4) * (Time::GetDeltaTime() * 10.0f);
+		transComp->Position.z += m_InputBits.test(5) * (Time::GetDeltaTime() * 10.0f);
+		// Pitch rotation
+		transComp->Rotation.x += m_InputBits.test(6) * (Time::GetDeltaTime() * 100.0f);
+		transComp->Rotation.x -= m_InputBits.test(7) * (Time::GetDeltaTime() * 100.0f);
+		transComp->Rotation.x = glm::clamp(transComp->Rotation.x, -89.0f, 89.0f);
+		// Yaw Rotation
+		transComp->Rotation.y += m_InputBits.test(8) * (Time::GetDeltaTime() * 100.0f);
+		transComp->Rotation.y -= m_InputBits.test(9) * (Time::GetDeltaTime() * 100.0f);
+		if (transComp->Rotation.y > 360.0f || transComp->Rotation.y < -360.0f)
+		{
+			transComp->Rotation.y = 0.0f;
+		}
 	}
 }
 

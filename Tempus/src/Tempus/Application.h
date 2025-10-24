@@ -7,6 +7,8 @@
 #include "vulkan/vulkan.h"
 #define SDL_MAIN_HANDLED
 
+#include <bitset>
+#include <unordered_set>
 #include "sdl/SDL.h"
 
 namespace Tempus {
@@ -18,6 +20,11 @@ namespace Tempus {
 		Application();
 		virtual ~Application();
 		void Run();
+
+		void RegisterUpdateable(class IUpdateable* updatable);
+		void UnregisterUpdateable(class IUpdateable* updatable);
+
+		uint32_t GetUpdateableCount() const;
 
 		static void RequestExit()
 		{
@@ -47,6 +54,16 @@ namespace Tempus {
 		void CoreUpdate();
 		void EventUpdate();
 
+		// Temporary input 
+		void ProcessInput(SDL_Event event);
+		void UpdateEditorCamera();
+		static inline std::bitset<10> m_InputBits;
+		static inline std::map<int, int> m_InputMap = 
+		{ {SDL_SCANCODE_W, 0}, {SDL_SCANCODE_A, 1}, {SDL_SCANCODE_S, 2}, {SDL_SCANCODE_D, 3},
+		  {SDL_SCANCODE_Q, 4}, {SDL_SCANCODE_E, 5}, {SDL_SCANCODE_UP, 6}, {SDL_SCANCODE_DOWN, 7},
+		  {SDL_SCANCODE_RIGHT, 8}, {SDL_SCANCODE_LEFT, 9}
+		};
+
 	private:
 
 		VkInstance m_Instance = nullptr;
@@ -55,6 +72,8 @@ namespace Tempus {
 
 		bool bShouldQuit = false;
 		SDL_Event CurrentEvent;
+
+		static inline std::unordered_set<class IUpdateable*> m_Updateables;
 		
 	protected:
 		
@@ -63,6 +82,8 @@ namespace Tempus {
 	};
 
 	Application* CreateApplication();
+
+	extern Application* GApp;
 
 }
 

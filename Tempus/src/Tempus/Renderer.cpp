@@ -106,31 +106,18 @@ void Tempus::Renderer::SetClearColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 	m_ClearColor[3] = a / 255.0f;
 }
 
+void Tempus::Renderer::SetActiveCamera(uint32_t cameraEntityId)
+{
+	m_ActiveCamEntityId = cameraEntityId;
+}
+
 void Tempus::Renderer::OnEvent(const SDL_Event& event)
 {
 	if (event.type == SDL_WINDOWEVENT) 
 	{
 		if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) 
 		{
-			TPS_CORE_WARN("Window resized! {}x{}", event.window.data1, event.window.data2);
-		}
-	}
-	else if (event.type == SDL_KEYDOWN) // Temporary input handling 
-	{
-		char key = (char)event.key.keysym.sym;
-		//TPS_CORE_TRACE("DOWN: {0}", (int)event.key.keysym.scancode);
-		if(m_InputMap.contains(event.key.keysym.scancode))
-		{
-			m_InputBits.set(m_InputMap[event.key.keysym.scancode]);	
-		}
-	}
-	else if (event.type == SDL_KEYUP)
-	{
-		char key = (char)event.key.keysym.sym;
-		//TPS_CORE_TRACE("UP: {0}", (int)event.key.keysym.scancode);
-		if(m_InputMap.contains(event.key.keysym.scancode))
-		{
-			m_InputBits.reset(m_InputMap[event.key.keysym.scancode]);	
+			TPS_CORE_WARN("Window resized! [{}x{}]", event.window.data1, event.window.data2);
 		}
 	}
 }
@@ -221,64 +208,45 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 		return;
 	}
 
-	CameraComponent* editorCam = activeScene->GetComponent<CameraComponent>(0);
-	TransformComponent* editorCamTransform = activeScene->GetComponent<TransformComponent>(0);
-	CamProjectionType projType = CamProjectionType::Perspective;
-	// @TODO Temporary editor camera movement, this will all be handled in a proper input system in the future
-	if (editorCam && editorCamTransform)
+	CameraComponent camComponent = CameraComponent();
+	TransformComponent camTransform = TransformComponent();
+	glm::vec3 camForward = glm::vec3(1.0f, 0.0f, 0.0f);
+	if (CameraComponent* camComp = activeScene->GetComponent<CameraComponent>(m_ActiveCamEntityId))
 	{
-		// Forward / Back Movement
-		editorCamTransform->Position += editorCamTransform->GetForwardVector() * (m_InputBits.test(0) * (Time::GetDeltaTime() * 10.0f));
-		editorCamTransform->Position -= editorCamTransform->GetForwardVector() * (m_InputBits.test(2) * (Time::GetDeltaTime() * 10.0f));
-		// Right / Left Movement
-		editorCamTransform->Position -= editorCamTransform->GetRightVector() * (m_InputBits.test(1) * (Time::GetDeltaTime() * 10.0f));
-		editorCamTransform->Position += editorCamTransform->GetRightVector() * (m_InputBits.test(3) * (Time::GetDeltaTime() * 10.0f));
-		// Up / Down Movement
-		editorCamTransform->Position.z -= m_InputBits.test(4) * (Time::GetDeltaTime() * 10.0f);
-		editorCamTransform->Position.z += m_InputBits.test(5) * (Time::GetDeltaTime() * 10.0f);
-		// Pitch rotation
-		editorCamTransform->Rotation.x += m_InputBits.test(6) * (Time::GetDeltaTime() * 100.0f);
-		editorCamTransform->Rotation.x -= m_InputBits.test(7) * (Time::GetDeltaTime() * 100.0f);
-		editorCamTransform->Rotation.x = glm::clamp(editorCamTransform->Rotation.x, -89.0f, 89.0f);
-		// Yaw Rotation
-		editorCamTransform->Rotation.y += m_InputBits.test(8) * (Time::GetDeltaTime() * 100.0f);
-		editorCamTransform->Rotation.y -= m_InputBits.test(9) * (Time::GetDeltaTime() * 100.0f);
-		if (editorCamTransform->Rotation.y > 360.0f || editorCamTransform->Rotation.y < -360.0f)
-		{
-			editorCamTransform->Rotation.y = 0.0f;
-		}
-		
-		m_EditorCamPos = editorCamTransform->Position;
-		m_EditorCamForward = editorCamTransform->GetForwardVector();
-		projType = editorCam->ProjectionType;
+		camComponent = *camComp;
 	}
-	else
+	if (TransformComponent* transComp = activeScene->GetComponent<TransformComponent>(m_ActiveCamEntityId))
 	{
-		m_EditorCamPos = glm::vec3(-3.0f, 0.0f, 0.0f);
-		m_EditorCamForward = glm::vec3(1.0f, 0.0f, 0.0f);
+		camTransform = *transComp;
 	}
+	
+	if (camTransform.Rotation.y > 360.0f || camTransform.Rotation.y < -360.0f)
+	{
+		camTransform.Rotation.y = 0.0f;
+	}
+	camForward = camTransform.GetForwardVector();
 	
 	UniformBufferObject ubo{};
 	ubo.model = glm::rotate(glm::mat4(1.0f), Time::GetAppTime() * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.model = glm::translate(ubo.model, glm::vec3(0.0f, 0.0f, glm::sin(Time::GetAppTime())));
-	ubo.view = glm::lookAtLH(m_EditorCamPos, m_EditorCamPos + m_EditorCamForward, glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.view = glm::lookAtLH(camTransform.Position, camTransform.Position + camForward, glm::vec3(0.0f, 0.0f, 1.0f));
 	
-	switch (projType)
+	switch (camComponent.ProjectionType)
 	{
 	case CamProjectionType::Perspective:
-			ubo.proj = glm::perspectiveLH_ZO(glm::radians(editorCam->Fov), editorCam->AspectRatio, editorCam->NearClip, editorCam->FarClip);
+			ubo.proj = glm::perspectiveLH_ZO(glm::radians(camComponent.Fov), camComponent.AspectRatio, camComponent.NearClip, camComponent.FarClip);
 		break;
 		case CamProjectionType::Orthographic:
 			// Ortho size is the total height
-			float halfHeight = editorCam->OrthoSize * 0.5f;
-			float halfWidth  = halfHeight * editorCam->AspectRatio;
+			float halfHeight = camComponent.OrthoSize * 0.5f;
+			float halfWidth  = halfHeight * camComponent.AspectRatio;
 
-			float left   = -halfWidth;
-			float right  =  halfWidth;
+			float left = -halfWidth;
+			float right = halfWidth;
 			float bottom = -halfHeight;
-			float top    =  halfHeight;
+			float top = halfHeight;
 		
-			ubo.proj = glm::orthoLH_ZO(left, right, bottom, top, editorCam->NearClip, editorCam->FarClip);
+			ubo.proj = glm::orthoLH_ZO(left, right, bottom, top, camComponent.NearClip, camComponent.FarClip);
 		break;
 	}
 
@@ -339,7 +307,7 @@ void Tempus::Renderer::DrawImGui()
 		centerPos.x *= 0.85f;
 		ImGui::SetNextWindowPos(centerPos);
 		ImGui::OpenPopup("About"); 
-		if (ImGui::BeginPopupModal("About", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove)) 
+		if (ImGui::BeginPopupModal("About", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove)) 
 		{
 			ImGui::Text("Tempus Engine v0.0.1");
 			ImGui::Text("Built with SDL2 and ImGui");
@@ -369,6 +337,10 @@ void Tempus::Renderer::DrawImGui()
 		ImGui::Text("Swapchain extent: %ux%u", m_SwapChainExtent.width, m_SwapChainExtent.height);
 		ImGui::Text("Delta Time: %f", Time::GetDeltaTime());
 		ImGui::Text("Time: %f", Time::GetAppTime());
+		if (GApp)
+		{
+			ImGui::Text("Ticking: %u", GApp->GetUpdateableCount());
+		}
 	ImGui::End();
 
 	// -- Device info
@@ -395,9 +367,9 @@ void Tempus::Renderer::DrawImGui()
 	ImGui::End();
 
 	// -- Input visualization
-	ImGui::Begin("Input");
-	ImGui::Text("Input: %s", m_InputBits.to_string().c_str());
-	ImGui::End();
+	// ImGui::Begin("Input");
+	// ImGui::Text("Input: %s", m_InputBits.to_string().c_str());
+	// ImGui::End();
 
 	// -- Demo window for testing
 	ImGui::ShowDemoWindow();

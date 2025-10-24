@@ -4,13 +4,15 @@
 
 #include "Core.h"
 #include <memory>
+
+#include "IUpdateable.h"
 #include "Scene.h"
 
 #define SCENE_MANAGER SceneManager::GetInstance()
 
 namespace Tempus
 {
-    class TEMPUS_API SceneManager
+    class TEMPUS_API SceneManager : public IUpdateable
     {
     private:
         
@@ -36,7 +38,7 @@ namespace Tempus
         void SetActiveScene(Scene* scene);
         bool SetActiveScene(const std::string& sceneName);
 
-        void OnUpdate(float DeltaTime);
+        void OnUpdate(float DeltaTime) override;
 
         // Testing function
         void DoTestScene();
