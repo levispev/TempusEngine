@@ -292,7 +292,7 @@ void Tempus::Renderer::DrawImGui()
 		if (ImGui::BeginMenu("Help")) 
 		{
 			if (ImGui::MenuItem("About")) { showAboutPopup = true;}
-			if (ImGui::MenuItem("Force Crash")) { TPS_CORE_CRITICAL("Force game crash!"); }
+			if (ImGui::MenuItem("Force Crash")) { TPS_CORE_CRITICAL("Force engine crash!"); }
 			ImGui::EndMenu();
 		}
 
@@ -338,7 +338,6 @@ void Tempus::Renderer::DrawImGui()
 		ImGui::Text("Delta Time: %f", Time::GetUnscaledDeltaTime());
 		ImGui::Text("Time: %f", Time::GetAppTime());
 		float timeScale = Time::GetTimeScale();
-		ImGui::SliderFloat("Time Scale", &timeScale, 0.0f, 100.0f);
 		Time::SetTimeScale(timeScale);
 	ImGui::End();
 
@@ -388,6 +387,7 @@ void Tempus::Renderer::DrawImGui()
 		{
 			SCENE_MANAGER->CreateScene("Debug Scene");
 		}
+		ImGui::SliderFloat("Time Scale", &timeScale, 0.0f, 100.0f);
 	ImGui::End();
 	
 	ImGui::Render();
