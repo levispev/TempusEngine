@@ -13,6 +13,7 @@ namespace Tempus
 
         static Time* GetInstance();
         static float GetDeltaTime();
+        static float GetUnscaledDeltaTime();
         static float GetAppTime();
         static float GetTimeScale();
         static float GetSceneTime();
@@ -26,6 +27,7 @@ namespace Tempus
         static std::unique_ptr<Time> s_Instance;
         
         static float m_DeltaTime;
+        static float m_UnscaledDeltaTime;
         static float m_AppTime;
         static float m_TimeScale;
     };

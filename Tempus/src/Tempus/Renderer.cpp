@@ -335,8 +335,11 @@ void Tempus::Renderer::DrawImGui()
 	ImGui::Begin("Application Stats");
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::Text("Swapchain extent: %ux%u", m_SwapChainExtent.width, m_SwapChainExtent.height);
-		ImGui::Text("Delta Time: %f", Time::GetDeltaTime());
+		ImGui::Text("Delta Time: %f", Time::GetUnscaledDeltaTime());
 		ImGui::Text("Time: %f", Time::GetAppTime());
+		float timeScale = Time::GetTimeScale();
+		ImGui::SliderFloat("Time Scale", &timeScale, 0.0f, 100.0f);
+		Time::SetTimeScale(timeScale);
 	ImGui::End();
 
 	// -- Device info
@@ -453,7 +456,7 @@ void Tempus::Renderer::DrawSceneInfo(class Scene* currentScene)
 	// --- Scene info
 	ImGui::Begin("Scene Info");
 	ImGui::Text("Name: %s", currentScene->GetName().c_str());
-	ImGui::Text("Scene Time: %.3f", currentScene->GetSceneTime());
+	ImGui::Text("Scene Time: %f", currentScene->GetSceneTime());
 	ImGui::Text("Entity count: %u", currentScene->GetEntityCount());
 	if(ImGui::Button("Add Entity"))
 	{

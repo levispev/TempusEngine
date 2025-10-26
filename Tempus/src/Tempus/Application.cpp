@@ -160,7 +160,6 @@ void Tempus::Application::InitManagers()
 void Tempus::Application::CoreUpdate()
 {
 	Time::CalculateDeltaTime();
-	float dt = Time::GetDeltaTime() * Time::GetTimeScale();
 	EventUpdate();
 	ManagerUpdate();
 	Update();
@@ -174,7 +173,7 @@ void Tempus::Application::ManagerUpdate()
 	{
 		if (manager->IsUpdating())
 		{
-			manager->OnUpdate(Time::GetDeltaTime() * Time::GetTimeScale());
+			manager->OnUpdate(Time::GetDeltaTime());
 		}
 	}
 }
