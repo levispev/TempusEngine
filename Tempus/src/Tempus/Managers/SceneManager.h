@@ -6,12 +6,15 @@
 #include "IUpdateable.h"
 #include "Scene.h"
 
-#define SCENE_MANAGER Tempus::GApp->GetSceneManager()
+#define SCENE_MANAGER Tempus::GApp->GetManager<Tempus::SceneManager>()
 
 namespace Tempus
 {
     class TEMPUS_API SceneManager : public IUpdateable
     {
+
+        TPS_DEBUG_NAME("Scene Manager")
+        
     private:
 
         friend class Application;
@@ -39,3 +42,4 @@ namespace Tempus
     };
 
 }
+

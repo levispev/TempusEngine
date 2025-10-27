@@ -152,9 +152,7 @@ void Tempus::Application::InitSDL()
 
 void Tempus::Application::InitManagers()
 {
-	m_SceneManager = new SceneManager();
-
-	m_Managers.insert(m_SceneManager);
+	CreateManager<SceneManager>();
 }
 
 void Tempus::Application::CoreUpdate()
@@ -169,11 +167,11 @@ void Tempus::Application::CoreUpdate()
 
 void Tempus::Application::ManagerUpdate()
 {
-	for (IUpdateable* manager : m_Managers)
+	for (auto& manager : m_Managers)
 	{
-		if (manager->IsUpdating())
+		if (manager.second->IsUpdating())
 		{
-			manager->OnUpdate(Time::GetDeltaTime());
+			manager.second->OnUpdate(Time::GetDeltaTime());
 		}
 	}
 }
@@ -268,7 +266,6 @@ void Tempus::Application::Cleanup()
 {
 	delete m_Renderer;
 	delete m_Window;
-	delete m_SceneManager;
 	
 	SDL_Vulkan_UnloadLibrary();
 	SDL_Quit();

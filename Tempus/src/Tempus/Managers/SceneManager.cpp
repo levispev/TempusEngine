@@ -1,6 +1,8 @@
 // Copyright Levi Spevakow (C) 2025
 
 #include "SceneManager.h"
+
+#include "Application.h"
 #include "Components/Component.h"
 #include "Entity/Entity.h"
 #include "Components/TransformComponent.h"

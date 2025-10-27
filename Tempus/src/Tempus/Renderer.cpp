@@ -337,8 +337,6 @@ void Tempus::Renderer::DrawImGui()
 		ImGui::Text("Swapchain extent: %ux%u", m_SwapChainExtent.width, m_SwapChainExtent.height);
 		ImGui::Text("Delta Time: %f", Time::GetUnscaledDeltaTime());
 		ImGui::Text("Time: %f", Time::GetAppTime());
-		float timeScale = Time::GetTimeScale();
-		Time::SetTimeScale(timeScale);
 	ImGui::End();
 
 	// -- Device info
@@ -387,7 +385,9 @@ void Tempus::Renderer::DrawImGui()
 		{
 			SCENE_MANAGER->CreateScene("Debug Scene");
 		}
+		float timeScale = Time::GetTimeScale();
 		ImGui::SliderFloat("Time Scale", &timeScale, 0.0f, 100.0f);
+		Time::SetTimeScale(timeScale);
 	ImGui::End();
 	
 	ImGui::Render();

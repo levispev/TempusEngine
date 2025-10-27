@@ -7,9 +7,11 @@
 #include "vulkan/vulkan.h"
 #define SDL_MAIN_HANDLED
 
+#include <typeindex>
 #include <bitset>
 #include <unordered_set>
 #include "sdl/SDL.h"
+#include "Utils/TempusUtils.h"
 
 namespace Tempus {
 	
@@ -25,14 +27,23 @@ namespace Tempus {
 		Application();
 		virtual ~Application();
 		void Run();
-		
-		SceneManager* GetSceneManager() const { return m_SceneManager; }
 
 		static void RequestExit()
 		{
 			SDL_Event quitEvent;
 			quitEvent.type = SDL_QUIT;
 			SDL_PushEvent(&quitEvent);
+		}
+
+		template<typename T>
+		T* GetManager()
+		{
+			auto it = m_Managers.find(std::type_index(typeid(T)));
+			if (it != m_Managers.end())
+			{
+				return static_cast<T*>(it->second);
+			}
+			return nullptr;
 		}
 
 	protected:
@@ -56,6 +67,20 @@ namespace Tempus {
 		void ManagerUpdate();
 		void EventUpdate();
 
+		template<typename T>
+		void CreateManager()
+		{
+			std::type_index typeIndex = std::type_index(typeid(T));
+			if (!m_Managers.contains(typeIndex))
+			{
+				m_Managers[std::type_index(typeid(T))] = new T();
+			}
+			else
+			{
+				TPS_WARN("Attempted to create manager of type [{0}] but it already exists!", TempusUtils::GetClassDebugName<T>());
+			}
+		}
+
 		// Temporary input 
 		void ProcessInput(SDL_Event event);
 		void UpdateEditorCamera();
@@ -72,13 +97,10 @@ namespace Tempus {
 		Window* m_Window = nullptr;
 		Renderer* m_Renderer = nullptr;
 
-		// Managers
-		SceneManager* m_SceneManager = nullptr;
-
 		bool bShouldQuit = false;
 		SDL_Event CurrentEvent;
 
-		static inline std::unordered_set<IUpdateable*> m_Managers;
+		static inline std::unordered_map<std::type_index, IUpdateable*> m_Managers;
 		
 	protected:
 		
