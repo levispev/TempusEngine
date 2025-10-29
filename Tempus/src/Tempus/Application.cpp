@@ -226,9 +226,14 @@ void Tempus::Application::UpdateEditorCamera()
 		return;
 	}
 
+	if (!activeScene->HasEntity(0))
+	{
+		return;
+	}
+
 	CameraComponent* camComp = activeScene->GetComponent<CameraComponent>(0);
 	TransformComponent* transComp = activeScene->GetComponent<TransformComponent>(0);
-
+	
 	if (camComp && transComp)
 	{
 		// Forward / Back Movement

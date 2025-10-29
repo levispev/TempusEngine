@@ -92,3 +92,8 @@ std::string Tempus::Scene::GetEntityName(uint32_t id)
     TPS_CORE_ERROR("Entity with ID [{0}] does not exist!", id);
     return {};
 }
+
+bool Tempus::Scene::HasEntity(uint32_t id) const
+{
+    return m_Entities.contains(id);
+}

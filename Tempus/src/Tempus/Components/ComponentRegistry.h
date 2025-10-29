@@ -84,6 +84,7 @@ namespace TPS_Private
             };
             
             RegisteredComponents.emplace_back(data);
+            ComponentMap[data.id] = data;
 
             return metadata;
         }
@@ -103,8 +104,19 @@ namespace TPS_Private
             return RegisteredComponents;
         }
 
+        static ComponentTypeInfo GetComponentTypeFromId(Tempus::ComponentId id)
+        {
+            if (ComponentMap.contains(id))
+            {
+                return ComponentMap.at(id);
+            }
+
+            TPS_CRITICAL("Component ID [{0}] not found in registry!", id);
+        }
+
         private:
         static inline std::vector<ComponentTypeInfo> RegisteredComponents;
+        static inline std::map<Tempus::ComponentId, ComponentTypeInfo> ComponentMap;
         static inline std::unordered_set<Tempus::ComponentId> ComponentIds;
     };
 }

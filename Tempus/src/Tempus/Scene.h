@@ -89,6 +89,7 @@ namespace Tempus
         std::vector<uint32_t> GetEntityIDs() { return std::vector(m_Entities.begin(), m_Entities.end()); }
         std::string GetEntityName(uint32_t id);
         uint32_t GetEntityCount() const { return m_EntityCount; }
+        bool HasEntity(uint32_t id) const;
         const std::string& GetName() const { return m_SceneName; }
         float GetSceneTime() const { return m_SceneTime; }
         

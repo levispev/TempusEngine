@@ -211,13 +211,17 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 	CameraComponent camComponent = CameraComponent();
 	TransformComponent camTransform = TransformComponent();
 	glm::vec3 camForward = glm::vec3(1.0f, 0.0f, 0.0f);
-	if (CameraComponent* camComp = activeScene->GetComponent<CameraComponent>(m_ActiveCamEntityId))
+
+	if (activeScene->HasEntity(m_ActiveCamEntityId))
 	{
-		camComponent = *camComp;
-	}
-	if (TransformComponent* transComp = activeScene->GetComponent<TransformComponent>(m_ActiveCamEntityId))
-	{
-		camTransform = *transComp;
+		if (CameraComponent* camComp = activeScene->GetComponent<CameraComponent>(m_ActiveCamEntityId))
+		{
+			camComponent = *camComp;
+		}
+		if (TransformComponent* transComp = activeScene->GetComponent<TransformComponent>(m_ActiveCamEntityId))
+		{
+			camTransform = *transComp;
+		}
 	}
 	
 	if (camTransform.Rotation.y > 360.0f || camTransform.Rotation.y < -360.0f)
@@ -384,6 +388,10 @@ void Tempus::Renderer::DrawImGui()
 		if (ImGui::Button("Debug Button"))
 		{
 			SCENE_MANAGER->CreateScene("Debug Scene");
+			// if (Scene* currentScene = SCENE_MANAGER->GetActiveScene())
+			// {
+			// 	currentScene->RemoveEntity(0);
+			// }
 		}
 		float timeScale = Time::GetTimeScale();
 		ImGui::SliderFloat("Time Scale", &timeScale, 0.0f, 100.0f);
@@ -395,59 +403,188 @@ void Tempus::Renderer::DrawImGui()
 
 void Tempus::Renderer::DrawSceneOutliner(class Scene* currentScene)
 {
-	// --- Scene outliner
+	// // --- Scene outliner
+	static uint32_t selectedEntityID = 0;	
+    
 	ImGui::Begin("Scene Outliner");
+	{
+		ImGui::BeginChild("EntityList", ImVec2(0, 300), true);
+    
+		std::vector<uint32_t> entIDs = currentScene->GetEntityIDs();
+		// Check if the scene is empty
+		if (entIDs.empty())
 		{
-			std::vector<uint32_t> entIDs = currentScene->GetEntityIDs();
-			for (const uint32_t entID : entIDs)
+			ImGui::EndChild();
+			ImGui::End();
+			return;
+		}
+			
+		for (const uint32_t entID : entIDs)
+		{
+			std::string label = std::format("[{}] {}", entID, currentScene->GetEntityName(entID));
+			if (ImGui::Selectable(label.c_str(), selectedEntityID == entID))
 			{
-				if (currentScene->GetComponentCount(entID))
-				{
-					TPS_CALL_ONCE(ImGui::SetNextItemOpen, true);
-					if (ImGui::TreeNode(std::format("[{}] {}", entID, currentScene->GetEntityName(entID)).c_str()))
-					{
-						// @TODO Components should probably store their own virtual ImGui rendering function which can be invoked from here
-						if (TransformComponent* transformComp = currentScene->GetComponent<TransformComponent>(entID))
-						{
-							TPS_CALL_ONCE(ImGui::SetNextItemOpen, true);
-							if (ImGui::TreeNode(TempusUtils::GetClassDebugName<TransformComponent>()))
-							{
-								ImGui::InputFloat3("Position", &transformComp->Position.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
-								ImGui::InputFloat3("Rotation", &transformComp->Rotation.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
-								ImGui::InputFloat3("Scale", &transformComp->Scale.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
-								ImGui::TreePop();
-							}
-						}
-						if (CameraComponent* cameraComp = currentScene->GetComponent<CameraComponent>(entID))
-						{
-							TPS_CALL_ONCE(ImGui::SetNextItemOpen, true);
-							if (ImGui::TreeNode(TempusUtils::GetClassDebugName<CameraComponent>()))
-							{
-								ImGui::Text("Projection Type: %s", cameraComp->ProjectionType == CamProjectionType::Perspective ? "Perspective" : "Orthographic");
-								ImGui::SliderFloat("FOV", &cameraComp->Fov, 1.0f, 179.0f, "%.3f");
-								ImGui::Text("Ortho Size: %.1f", cameraComp->OrthoSize);
-								ImGui::Text("Near Clip: %.1f", cameraComp->NearClip);
-								ImGui::Text("Far Clip: %.1f", cameraComp->FarClip);
-								ImGui::TreePop();
-							}
-						}
-						if (StaticMeshComponent* meshComp = currentScene->GetComponent<StaticMeshComponent>(entID))
-						{
-							if (ImGui::TreeNode(TempusUtils::GetClassDebugName<StaticMeshComponent>()))
-							{
-								ImGui::Text("WIP");
-								ImGui::TreePop();
-							}
-						}
-						ImGui::TreePop();
-					}
-				}
-				else
-				{
-					ImGui::Text("%s", std::format("[{}] {}", entID, currentScene->GetEntityName(entID)).c_str());
-				}
+				selectedEntityID = entID;
 			}
 		}
+    
+		ImGui::EndChild();
+
+		// Ensure the selected entity exists in scene (can be removed while selected)
+		if (!currentScene->HasEntity(selectedEntityID))
+		{
+			selectedEntityID = entIDs[0];
+			ImGui::End();
+			return;
+		}
+
+		// Add entity to scene
+		if(ImGui::Button("Add Entity"))
+		{
+			currentScene->AddEntity("Debug Entity");
+		}
+		ImGui::SameLine();
+		// Remove entity from scene
+		if(ImGui::Button("Remove Entity"))
+		{
+			// Disallow entity removal if marked NoDelete
+			bool bCanDeleteEntity = true;
+			if (EditorDataComponent* editorData = currentScene->GetComponent<EditorDataComponent>(selectedEntityID))
+			{
+				if (EnumCheckFlag(editorData->flags, EditorEntityDataFlags::NoDelete))
+				{
+					bCanDeleteEntity = false;
+					TPS_CORE_ERROR("Cannot remove entity [{}], it is marked as NoDelete!", selectedEntityID);
+				}
+			}
+
+			if (bCanDeleteEntity)
+			{
+				currentScene->RemoveEntity(selectedEntityID);
+				ImGui::End();
+				return;
+			}
+		}
+		
+		ImGui::Separator();
+		ImGui::Text("Details");
+		ImGui::Separator();
+
+		// Component list dropdown
+		static TPS_Private::ComponentRegistry::ComponentTypeInfo selectedComponent;
+		if (ImGui::BeginCombo(" ", selectedComponent.name.c_str()))
+		{
+			const auto& registeredComponents = TPS_Private::ComponentRegistry::GetRegisteredComponents();
+			for (const auto& component : registeredComponents)
+			{
+				// If the component has not been specifically marked as no editor add
+				if (!EnumCheckFlag(component.metadata, ComponentMetaData::NoEditorAdd))
+				{
+					if (ImGui::Selectable(component.name.c_str()))
+					{
+						selectedComponent = component;
+					}
+				}
+			}
+			ImGui::EndCombo();
+		}
+		ImGui::SameLine();
+		if(ImGui::Button("Add")) // Add component button
+		{
+			if (selectedComponent.addComponentFunc)
+			{
+				bool bCanAddComponent = true;
+				if (EditorDataComponent* editorData = currentScene->GetComponent<EditorDataComponent>(selectedEntityID))
+				{
+					if (EnumCheckFlag(editorData->flags, EditorEntityDataFlags::NoAddComponent))
+					{
+						TPS_CORE_ERROR("Cannot add component to entity [{}], it is marked as NoAddComponent!", selectedEntityID);
+						bCanAddComponent = false;
+					}
+				}
+				
+				if (bCanAddComponent)
+				{
+					selectedComponent.addComponentFunc(currentScene, selectedEntityID);
+				}
+			}
+			else
+			{
+				TPS_CORE_ERROR("Cannot add component, no valid component selected!");	
+			}
+		}
+
+		ImGui::Separator();
+
+		// Disallow component removal if entity has NoRemoveComponent flag
+		bool bCanRemoveComponent = true;
+		if (EditorDataComponent* editorData = currentScene->GetComponent<EditorDataComponent>(selectedEntityID))
+		{
+			if (EnumCheckFlag(editorData->flags, EditorEntityDataFlags::NoRemoveComponent))
+			{
+				bCanRemoveComponent = false;
+			}
+		}
+
+		// Component details
+		ImGui::BeginChild("Details");
+			// @TODO Components should probably store their own virtual ImGui rendering function which can be invoked from here
+			if (TransformComponent* transformComp = currentScene->GetComponent<TransformComponent>(selectedEntityID))
+			{
+				if (ImGui::TreeNodeEx(TempusUtils::GetClassDebugName<TransformComponent>(), ImGuiTreeNodeFlags_DefaultOpen))
+				{
+					if (bCanRemoveComponent)
+					{
+						ImGui::SameLine();
+						if (ImGui::Button("Remove"))
+						{
+							currentScene->RemoveComponent<TransformComponent>(selectedEntityID);
+						}
+					}
+					ImGui::InputFloat3("Position", &transformComp->Position.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+					ImGui::InputFloat3("Rotation", &transformComp->Rotation.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+					ImGui::InputFloat3("Scale", &transformComp->Scale.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+					ImGui::TreePop();
+				}
+			}
+			if (CameraComponent* cameraComp = currentScene->GetComponent<CameraComponent>(selectedEntityID))
+			{
+				if (ImGui::TreeNodeEx(TempusUtils::GetClassDebugName<CameraComponent>(), ImGuiTreeNodeFlags_DefaultOpen))
+				{
+					if (bCanRemoveComponent)
+					{
+						ImGui::SameLine();
+						if (ImGui::Button("Remove"))
+						{
+							currentScene->RemoveComponent<CameraComponent>(selectedEntityID);
+						}
+					}
+					ImGui::Text("Projection Type: %s", cameraComp->ProjectionType == CamProjectionType::Perspective ? "Perspective" : "Orthographic");
+					ImGui::SliderFloat("FOV", &cameraComp->Fov, 1.0f, 179.0f, "%.3f");
+					ImGui::Text("Ortho Size: %.1f", cameraComp->OrthoSize);
+					ImGui::Text("Near Clip: %.1f", cameraComp->NearClip);
+					ImGui::Text("Far Clip: %.1f", cameraComp->FarClip);
+					ImGui::TreePop();
+				}
+			}
+			if (StaticMeshComponent* meshComp = currentScene->GetComponent<StaticMeshComponent>(selectedEntityID))
+			{
+				if (ImGui::TreeNodeEx(TempusUtils::GetClassDebugName<StaticMeshComponent>(), ImGuiTreeNodeFlags_DefaultOpen))
+				{
+					if (bCanRemoveComponent)
+					{
+						ImGui::SameLine();
+						if (ImGui::Button("Remove"))
+						{
+							currentScene->RemoveComponent<StaticMeshComponent>(selectedEntityID);
+						}
+					}
+					ImGui::Text("WIP");
+					ImGui::TreePop();
+				}
+			}
+		ImGui::EndChild();
+	}
 	ImGui::End();
 }
 
@@ -458,97 +595,7 @@ void Tempus::Renderer::DrawSceneInfo(class Scene* currentScene)
 	ImGui::Text("Name: %s", currentScene->GetName().c_str());
 	ImGui::Text("Scene Time: %f", currentScene->GetSceneTime());
 	ImGui::Text("Entity count: %u", currentScene->GetEntityCount());
-	if(ImGui::Button("Add Entity"))
-	{
-		currentScene->AddEntity("Debug Entity");
-	}
-	ImGui::SameLine();
-	static int id = 0;
-	if(ImGui::Button("Remove Entity"))
-	{
-		bool bCanDeleteEntity = true;
-		if (EditorDataComponent* editorData = currentScene->GetComponent<EditorDataComponent>(id))
-		{
-			if (EnumCheckFlag(editorData->flags, EditorEntityDataFlags::NoDelete))
-			{
-				bCanDeleteEntity = false;
-				TPS_CORE_ERROR("Cannot remove entity [{}], it is marked as NoDelete!", id);
-			}
-		}
 
-		if (bCanDeleteEntity)
-		{
-			currentScene->RemoveEntity(id);
-		}
-	}
-	ImGui::InputInt("Selected Entity", &id);
-
-	static TPS_Private::ComponentRegistry::ComponentTypeInfo selectedComponent;
-	if (ImGui::BeginCombo("Components", selectedComponent.name.c_str()))
-	{
-		const auto& registeredComponents = TPS_Private::ComponentRegistry::GetRegisteredComponents();
-		for (const auto& component : registeredComponents)
-		{
-			// If the component has not been specifically marked as no editor add
-			if (!EnumCheckFlag(component.metadata, ComponentMetaData::NoEditorAdd))
-			{
-				if (ImGui::Selectable(component.name.c_str()))
-				{
-					selectedComponent = component;
-				}
-			}
-		}
-		ImGui::EndCombo();
-	}
-	if(ImGui::Button("Add Component"))
-	{
-		if (selectedComponent.addComponentFunc)
-		{
-			bool bCanAddComponent = true;
-			if (EditorDataComponent* editorData = currentScene->GetComponent<EditorDataComponent>(id))
-			{
-				if (EnumCheckFlag(editorData->flags, EditorEntityDataFlags::NoAddComponent))
-				{
-					TPS_CORE_ERROR("Cannot add component to entity [{}], it is marked as NoAddComponent!", id);
-					bCanAddComponent = false;
-				}
-			}
-				
-			if (bCanAddComponent)
-			{
-				selectedComponent.addComponentFunc(currentScene, id);
-			}
-		}
-		else
-		{
-			TPS_CORE_ERROR("Cannot add component, no valid component selected!");	
-		}
-	}
-	ImGui::SameLine();
-	if (ImGui::Button("Remove Component"))
-	{
-		if (selectedComponent.removeComponentFunc)
-		{
-			bool bCanRemoveComponent = true;
-			if (EditorDataComponent* editorData = currentScene->GetComponent<EditorDataComponent>(id))
-			{
-				if (EnumCheckFlag(editorData->flags, EditorEntityDataFlags::NoRemoveComponent))
-				{
-					TPS_CORE_ERROR("Cannot remove component from entity [{}], it is marked as NoRemoveComponent!", id);
-					bCanRemoveComponent = false;
-				}
-			}
-				
-			if (bCanRemoveComponent)
-			{
-				selectedComponent.removeComponentFunc(currentScene, id);
-			}
-		}
-		else
-		{
-			TPS_CORE_ERROR("Cannot remove component, no valid component selected!");	
-		}
-	}
 	ImGui::End();
 }
 
