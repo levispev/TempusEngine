@@ -222,7 +222,7 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 
 void Tempus::Application::UpdateEditorCamera()
 {
-	TPS_PROFILE("Update editor camera");
+	TPS_PROFILE(__func__);
 	
 	Scene* activeScene = SCENE_MANAGER->GetActiveScene();
 	if (!activeScene)

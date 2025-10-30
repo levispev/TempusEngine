@@ -4,13 +4,12 @@
 
 #include "Core.h"
 
-#define TPS_PROFILE(label) ::Tempus::Profiling::ScopedProfiler scopedProfiler##__LINE__ = { label }; scopedProfiler##__LINE__.Start()
+#define TPS_PROFILE(label) ::Tempus::Profiling::ScopedProfiler TPS_MACRO_JOIN(scopedProfiler,__LINE__) = { label }
 
 namespace Tempus
 {
     class TEMPUS_API Profiling
     {
-
     public:
 
         struct ProfilingData
@@ -26,6 +25,8 @@ namespace Tempus
         {
             ScopedProfiler(const char* inLabel) : label(inLabel)
             {
+                start = std::chrono::high_resolution_clock::now();
+                bStarted = true;
             }
 
             ~ScopedProfiler()
@@ -38,12 +39,6 @@ namespace Tempus
                 }
             }
 
-            void Start()
-            {
-                start = std::chrono::high_resolution_clock::now();
-                bStarted = true;
-            }
-
             ScopedProfiler(const ScopedProfiler&) = delete;
             ScopedProfiler& operator=(const ScopedProfiler&) = delete;
 
@@ -54,7 +49,7 @@ namespace Tempus
             bool bStarted = false;
         };
 
-        static void RegisterProfileData(const ProfilingData& data)
+        static void RegisterProfileData(ProfilingData data)
         {
             s_ProfilingData.emplace_back(data);
         }

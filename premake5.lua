@@ -262,8 +262,6 @@ newaction {
             print("Cleaning macOS-specific files...")
             os.remove("Makefile")
             os.remove("**.make")
-            os.remove("**.d")
-            os.remove("**.o")
             -- Clean xcode project files
             os.rmdir("**.xcodeproj")
             os.rmdir("**.xcworkspace")

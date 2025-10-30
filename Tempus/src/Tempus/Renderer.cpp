@@ -263,6 +263,8 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 
 void Tempus::Renderer::DrawImGui()
 {
+	TPS_PROFILE(__func__);
+	
 	static bool showAboutPopup = false;
 
 	ImGui_ImplVulkan_NewFrame();
@@ -406,14 +408,31 @@ void Tempus::Renderer::DrawImGui()
 
 void Tempus::Renderer::DrawProfilerData(Scene* currentScene)
 {
-	ImGui::Begin("Profiler Timings");
-		const auto& data = Profiling::GetProfilingData();
-		for (const auto& entry : data)
-		{
-			ImGui::Text("%s: %.3f ms", entry.label, entry.duration);
-		}
-		Profiling::Flush();
-	ImGui::End();
+    ImGui::Begin("Profiler Timings");
+        const auto& data = Profiling::GetProfilingData();
+        
+        if (ImGui::BeginTable("ProfilerTable", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable))
+        {
+            // Setup columns
+            ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn("Time (ms)", ImGuiTableColumnFlags_WidthFixed, 100.0f);
+            ImGui::TableHeadersRow();
+            
+            // Rows
+            for (const auto& entry : data)
+            {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("%s", entry.label);
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text("%.3f", entry.duration);
+            }
+            
+            ImGui::EndTable();
+        }
+        
+        Profiling::Flush();
+    ImGui::End();
 }
 
 void Tempus::Renderer::DrawSceneOutliner(class Scene* currentScene)
