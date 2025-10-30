@@ -169,6 +169,7 @@ void Tempus::Application::CoreUpdate()
 
 void Tempus::Application::ManagerUpdate()
 {
+	TPS_PROFILE();
 	for (auto& manager : m_Managers)
 	{
 		if (manager.second->IsUpdating())

@@ -409,8 +409,14 @@ void Tempus::Renderer::DrawImGui()
 void Tempus::Renderer::DrawProfilerData(Scene* currentScene)
 {
     ImGui::Begin("Profiler Timings");
-        const auto& data = Profiling::GetProfilingData();
-        
+
+        auto data = Profiling::GetProfilingData();
+
+		std::sort(data.begin(), data.end(), [](const auto& a, const auto& b)
+		{
+			return a.duration > b.duration;
+		});
+
         if (ImGui::BeginTable("ProfilerTable", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable))
         {
             // Setup columns
@@ -425,7 +431,9 @@ void Tempus::Renderer::DrawProfilerData(Scene* currentScene)
                 ImGui::TableSetColumnIndex(0);
                 ImGui::Text("%s", entry.label);
                 ImGui::TableSetColumnIndex(1);
-                ImGui::Text("%.3f", entry.duration);
+				float t = std::clamp(entry.duration / 8.0f, 0.0f, 1.0f);
+				ImVec4 col = ImVec4(t, 1.0f - t, 0.0f, 1.0f);
+                ImGui::TextColored(col, "%.3f", entry.duration);
             }
             
             ImGui::EndTable();

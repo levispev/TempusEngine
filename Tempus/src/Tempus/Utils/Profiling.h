@@ -4,7 +4,15 @@
 
 #include "Core.h"
 
-#define TPS_PROFILE(label) ::Tempus::Profiling::ScopedProfiler TPS_MACRO_JOIN(scopedProfiler,__LINE__) = { label }
+// Internal helper macros for selecting proper scoped profiler label
+#define TPS_PROFILE_SELECT(_1, _2, NAME, ...) NAME
+#define TPS_PROFILE_0() ::Tempus::Profiling::ScopedProfiler TPS_MACRO_JOIN(scopedProfiler, __LINE__)(__func__)
+#define TPS_PROFILE_1(label) ::Tempus::Profiling::ScopedProfiler TPS_MACRO_JOIN(scopedProfiler, __LINE__)(label)
+
+// Macro for executing a scoped profiler trace.
+// Can optionally be given a label, if no label is entered it will use the function name.
+// If using multiple times within the same function, a label should be provided to distinguish instances.
+#define TPS_PROFILE(...) TPS_PROFILE_SELECT(dummy, ##__VA_ARGS__, TPS_PROFILE_1, TPS_PROFILE_0)(__VA_ARGS__)
 
 namespace Tempus
 {
@@ -26,17 +34,13 @@ namespace Tempus
             ScopedProfiler(const char* inLabel) : label(inLabel)
             {
                 start = std::chrono::high_resolution_clock::now();
-                bStarted = true;
             }
 
             ~ScopedProfiler()
             {
-                if (bStarted)
-                {
-                    auto end =  std::chrono::high_resolution_clock::now();
-                    float duration = std::chrono::duration<float, std::milli>(end - start).count();
-                    RegisterProfileData({ label, duration });
-                }
+                auto end =  std::chrono::high_resolution_clock::now();
+                float duration = std::chrono::duration<float, std::milli>(end - start).count();
+                RegisterProfileData({ label, duration });
             }
 
             ScopedProfiler(const ScopedProfiler&) = delete;
@@ -46,7 +50,6 @@ namespace Tempus
 
         private:
             std::chrono::time_point<std::chrono::steady_clock> start;
-            bool bStarted = false;
         };
 
         static void RegisterProfileData(ProfilingData data)
