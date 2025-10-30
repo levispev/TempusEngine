@@ -300,6 +300,7 @@ namespace Tempus {
 		void DrawImGui();
 		void DrawSceneInfo(class Scene* currentScene);
 		void DrawSceneOutliner(class Scene* currentScene);
+		void DrawProfilerData(Scene* currentScene);
 
 	private:
 

@@ -20,6 +20,7 @@
 #include "Managers/SceneManager.h"
 #include "Entity/Entity.h"
 #include "Components/TransformComponent.h"
+#include "Utils/Profiling.h"
 #include "Utils/Time.h"
 
 namespace Tempus
@@ -30,8 +31,8 @@ namespace Tempus
 Tempus::Application::Application() : CurrentEvent(SDL_Event()), AppName("Application Name")
 {
 	GApp = this;
-	m_Window = new Window();
-	m_Renderer = new Renderer();
+	m_Window = std::make_unique<Window>();
+	m_Renderer = std::make_unique<Renderer>();
 }
 
 Tempus::Application::~Application()
@@ -112,7 +113,7 @@ void Tempus::Application::InitWindow()
 void Tempus::Application::InitRenderer()
 {
 	// Renderer creation
-	if (!m_Renderer || !m_Renderer->Init(m_Window))
+	if (!m_Renderer || !m_Renderer->Init(m_Window.get()))
 	{
 		TPS_CORE_CRITICAL("Failed to initialize renderer!");
 	}
@@ -152,6 +153,7 @@ void Tempus::Application::InitSDL()
 
 void Tempus::Application::InitManagers()
 {
+	// All managers initialized here
 	CreateManager<SceneManager>();
 }
 
@@ -220,6 +222,8 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 
 void Tempus::Application::UpdateEditorCamera()
 {
+	TPS_PROFILE("Update editor camera");
+	
 	Scene* activeScene = SCENE_MANAGER->GetActiveScene();
 	if (!activeScene)
 	{
@@ -269,9 +273,6 @@ void Tempus::Application::Update()
 
 void Tempus::Application::Cleanup()
 {
-	delete m_Renderer;
-	delete m_Window;
-	
 	SDL_Vulkan_UnloadLibrary();
 	SDL_Quit();
 

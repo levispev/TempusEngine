@@ -54,7 +54,7 @@ namespace Tempus {
 
 		SDL_Event GetCurrentEvent() const { return CurrentEvent; }
 		void SetRenderClearColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
-		Window* GetWindow() const { return m_Window; }
+		Window* GetWindow() const { return m_Window.get(); }
 
 	private:
 
@@ -94,8 +94,8 @@ namespace Tempus {
 	private:
 
 		VkInstance m_Instance = nullptr;
-		Window* m_Window = nullptr;
-		Renderer* m_Renderer = nullptr;
+		std::unique_ptr<Window> m_Window;
+		std::unique_ptr<Renderer> m_Renderer;
 
 		bool bShouldQuit = false;
 		SDL_Event CurrentEvent;

@@ -34,6 +34,7 @@
 #include "stb_image/stb_image.h"
 
 #include "Entity/Entity.h"
+#include "Utils/Profiling.h"
 #include "Utils/Time.h"
 
 #define NVIDIA_VENDOR_ID 0X10DE
@@ -382,6 +383,7 @@ void Tempus::Renderer::DrawImGui()
 	{
 		DrawSceneInfo(currentScene);
 		DrawSceneOutliner(currentScene);
+		DrawProfilerData(currentScene);
 	}
 
 	ImGui::Begin("Debug");
@@ -397,8 +399,21 @@ void Tempus::Renderer::DrawImGui()
 		ImGui::SliderFloat("Time Scale", &timeScale, 0.0f, 100.0f);
 		Time::SetTimeScale(timeScale);
 	ImGui::End();
+
 	
 	ImGui::Render();
+}
+
+void Tempus::Renderer::DrawProfilerData(Scene* currentScene)
+{
+	ImGui::Begin("Profiler Timings");
+		const auto& data = Profiling::GetProfilingData();
+		for (const auto& entry : data)
+		{
+			ImGui::Text("%s: %.3f ms", entry.label, entry.duration);
+		}
+		Profiling::Flush();
+	ImGui::End();
 }
 
 void Tempus::Renderer::DrawSceneOutliner(class Scene* currentScene)
@@ -1615,6 +1630,8 @@ void Tempus::Renderer::InitImGui()
 
 void Tempus::Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
 {
+	TPS_PROFILE("Record Command Buffer");
+	
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = 0; // Optional
