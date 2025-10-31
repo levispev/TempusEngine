@@ -169,7 +169,7 @@ void Tempus::Application::CoreUpdate()
 
 void Tempus::Application::ManagerUpdate()
 {
-	TPS_PROFILE();
+	TPS_SCOPED_TIMER();
 	for (auto& manager : m_Managers)
 	{
 		if (manager.second->IsUpdating())
@@ -223,7 +223,7 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 
 void Tempus::Application::UpdateEditorCamera()
 {
-	TPS_PROFILE(__func__);
+	TPS_SCOPED_TIMER();
 	
 	Scene* activeScene = SCENE_MANAGER->GetActiveScene();
 	if (!activeScene)

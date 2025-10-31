@@ -60,6 +60,12 @@
     #define TPS_DEBUG_NAME(name)
 #endif
 
+#ifdef TPS_PLATFORM_WINDOWS
+#define FUNC_NAME __FUNCTION__
+#elifdef TPS_PLATFORM_MAC
+#define FUNC_NAME __func__
+#endif
+
 #define TPS_MACRO_JOIN(a, b) TPS_MACRO_JOIN_PRIVATE(a,b)
 #define TPS_MACRO_JOIN_PRIVATE(a, b) a##b
 

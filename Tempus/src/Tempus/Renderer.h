@@ -298,9 +298,10 @@ namespace Tempus {
 
 		// ImGui Draw Functions
 		void DrawImGui();
-		void DrawSceneInfo(class Scene* currentScene);
-		void DrawSceneOutliner(class Scene* currentScene);
-		void DrawProfilerData(Scene* currentScene);
+		void DrawSceneWindow(class Scene* currentScene);
+		void DrawSceneInfoTab(class Scene* currentScene);
+		void DrawSceneOutlinerTab(class Scene* currentScene);
+		void DrawProfilerDataWindow(Scene* currentScene);
 
 	private:
 

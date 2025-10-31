@@ -19,6 +19,7 @@ namespace Tempus
         static std::string GetExecutablePath();
         static void SetWorkingDirectory(const std::string& directory);
         static std::string GetWorkingDirectory();
+        static void OpenDirectory(const std::string& directory);
 
         // @TODO May want to move all of these paths to a separate TempusPaths class
         static std::filesystem::path ProjectRoot()

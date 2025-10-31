@@ -6,9 +6,9 @@
 #include "Log.h"
 #include <filesystem>
 
-
 #ifdef TPS_PLATFORM_WINDOWS
 #include <direct.h>
+#include <shellapi.h>
 #define ChangeDir _chdir
 #elif TPS_PLATFORM_MAC
 #include <unistd.h>
@@ -84,4 +84,14 @@ void Tempus::FileUtils::SetWorkingDirectory(const std::string& directory)
 std::string Tempus::FileUtils::GetWorkingDirectory()
 {
     return std::filesystem::current_path().string();
+}
+
+void Tempus::FileUtils::OpenDirectory(const std::string& directory)
+{
+#ifdef TPS_PLATFORM_WINDOWS
+    ShellExecuteA(NULL, "open", directory.c_str(), NULL, NULL, SW_SHOWDEFAULT);
+#elif defined(TPS_PLATFORM_MAC)
+    std::string command = "open \"" + path + "\"";
+    std::system(command.c_str());
+#endif
 }

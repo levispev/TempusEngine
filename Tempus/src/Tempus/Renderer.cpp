@@ -203,6 +203,7 @@ void Tempus::Renderer::DrawFrame()
 
 void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 {
+	TPS_SCOPED_TIMER();
 	Scene* activeScene = SCENE_MANAGER->GetActiveScene();
 	if (!activeScene)
 	{
@@ -263,9 +264,13 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 
 void Tempus::Renderer::DrawImGui()
 {
-	TPS_PROFILE(__func__);
+	TPS_SCOPED_TIMER();
 	
-	static bool showAboutPopup = false;
+	static bool bShowAboutPopup = false;
+	static bool bShowScene = true;
+	static bool bShowProfiler = true;
+	static bool bShowDemoWindow = false;
+	static bool bShowDebugWindow = false;
 
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplSDL2_NewFrame();
@@ -279,6 +284,10 @@ void Tempus::Renderer::DrawImGui()
 			if (ImGui::MenuItem("New"))  {  }
 			if (ImGui::MenuItem("Open")) {  }
 			if (ImGui::MenuItem("Save")) {  }
+			if (ImGui::MenuItem("Open Logs"))
+			{
+				FileUtils::OpenDirectory(FileUtils::LogsDir().string());
+			}
 			if (ImGui::MenuItem("Exit")) { Application::RequestExit(); }
 			ImGui::EndMenu();
 		}
@@ -290,6 +299,17 @@ void Tempus::Renderer::DrawImGui()
 			ImGui::EndMenu();
 		}
 
+		if (ImGui::BeginMenu("Window"))
+		{
+			ImGui::SeparatorText("Editor");
+			ImGui::MenuItem("Scene", nullptr, &bShowScene);
+			ImGui::MenuItem("Profiler", nullptr, &bShowProfiler);
+			ImGui::SeparatorText("Testing");
+			ImGui::MenuItem("Demo", nullptr, &bShowDemoWindow);
+			ImGui::MenuItem("Debug", nullptr, &bShowDebugWindow);
+			ImGui::EndMenu();
+		}
+
 		if (ImGui::BeginMenu("View")) 
 		{
 			if (ImGui::MenuItem("Fullscreen")) {  }
@@ -298,7 +318,7 @@ void Tempus::Renderer::DrawImGui()
 
 		if (ImGui::BeginMenu("Help")) 
 		{
-			if (ImGui::MenuItem("About")) { showAboutPopup = true;}
+			if (ImGui::MenuItem("About")) { bShowAboutPopup = true;}
 			if (ImGui::MenuItem("Force Crash")) { TPS_CORE_CRITICAL("Force engine crash!"); }
 			ImGui::EndMenu();
 		}
@@ -307,7 +327,7 @@ void Tempus::Renderer::DrawImGui()
 	}
 
 	// -- Menu bar "About" popup
-	if (showAboutPopup) 
+	if (bShowAboutPopup) 
 	{
 		ImVec2 centerPos = ImGui::GetMainViewport()->GetCenter();
 		centerPos.y *= 0.85f;
@@ -331,7 +351,7 @@ void Tempus::Renderer::DrawImGui()
 			
 			if (ImGui::Button("Close")) 
 			{
-				showAboutPopup = false; 
+				bShowAboutPopup = false; 
 				ImGui::CloseCurrentPopup(); 
 			}
 			ImGui::EndPopup();
@@ -364,155 +384,179 @@ void Tempus::Renderer::DrawImGui()
 		ImGui::Text("Vendor ID: %u", m_DeviceDetails.vendorId);
 	ImGui::End();
 
-	// -- Clear color
-	ImGui::Begin("Clear Color");
-	ImGui::ColorPicker3("Color", &m_ClearColor[0]);
-	ImGui::End();
-
-	// -- Input visualization
-	// ImGui::Begin("Input");
-	// ImGui::Text("Input: %s", m_InputBits.to_string().c_str());
-	// ImGui::End();
-
-	// -- Demo window for testing
-	ImGui::ShowDemoWindow();
-
-	// ImGui::Begin("Event Dispatcher");
-	// 	ImGui::Text("Subscriber count: %u", EVENT_DISPATCHER->GetSubscriberCount());
-	// ImGui::End();
-
+	// -- Scene window
 	if (Scene* currentScene = SCENE_MANAGER->GetActiveScene())
 	{
-		DrawSceneInfo(currentScene);
-		DrawSceneOutliner(currentScene);
-		DrawProfilerData(currentScene);
+		if (bShowScene)
+		{
+			DrawSceneWindow(currentScene);
+		}
+		if (bShowProfiler)
+		{
+			DrawProfilerDataWindow(currentScene);
+		}
 	}
 
-	ImGui::Begin("Debug");
-		if (ImGui::Button("Debug Button"))
-		{
-			SCENE_MANAGER->CreateScene("Debug Scene");
-			// if (Scene* currentScene = SCENE_MANAGER->GetActiveScene())
-			// {
-			// 	currentScene->RemoveEntity(0);
-			// }
-		}
-		float timeScale = Time::GetTimeScale();
-		ImGui::SliderFloat("Time Scale", &timeScale, 0.0f, 100.0f);
-		Time::SetTimeScale(timeScale);
-	ImGui::End();
-
+	// -- Demo Window
+	if (bShowDemoWindow)
+	{
+		ImGui::ShowDemoWindow();
+	}
+	// -- Debug window
+	if (bShowDebugWindow)
+	{
+		ImGui::Begin("Debug");
+			if (ImGui::Button("Debug Button"))
+			{
+				//SCENE_MANAGER->CreateScene("Debug Scene");
+				if (Scene* currentScene = SCENE_MANAGER->GetActiveScene())
+				{
+					currentScene->RemoveEntity(0);
+				}
+			}
+			float timeScale = Time::GetTimeScale();
+			ImGui::SliderFloat("Time Scale", &timeScale, 0.0f, 100.0f);
+			Time::SetTimeScale(timeScale);
+		ImGui::End();
+	}
 	
 	ImGui::Render();
 }
 
-void Tempus::Renderer::DrawProfilerData(Scene* currentScene)
+void Tempus::Renderer::DrawSceneWindow(class Scene* currentScene)
 {
-    ImGui::Begin("Profiler Timings");
+	ImGui::Begin("Scene");
+		if (ImGui::BeginTabBar("SceneTabs"))
+		{
+			if (ImGui::BeginTabItem("Outliner"))
+			{
+				DrawSceneOutlinerTab(currentScene);
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Info"))
+			{
+				DrawSceneInfoTab(currentScene);
+				ImGui::EndTabItem();
+			}
+			ImGui::EndTabBar();
+		}
+	ImGui::End();
+}
 
-        auto data = Profiling::GetProfilingData();
+void Tempus::Renderer::DrawProfilerDataWindow(Scene* currentScene)
+{
+	ImGui::Begin("Profiler Timings");
+		auto data = Profiling::GetProfilingData();
 
 		std::sort(data.begin(), data.end(), [](const auto& a, const auto& b)
 		{
 			return a.duration > b.duration;
 		});
 
-        if (ImGui::BeginTable("ProfilerTable", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable))
-        {
-            // Setup columns
-            ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthStretch);
-            ImGui::TableSetupColumn("Time (ms)", ImGuiTableColumnFlags_WidthFixed, 100.0f);
-            ImGui::TableHeadersRow();
-            
-            // Rows
-            for (const auto& entry : data)
-            {
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-                ImGui::Text("%s", entry.label);
-                ImGui::TableSetColumnIndex(1);
+		if (ImGui::BeginTable("ProfilerTable", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable))
+		{
+			// Setup columns
+			ImGui::TableSetupColumn("Function", ImGuiTableColumnFlags_WidthStretch);
+			ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthStretch);
+			ImGui::TableSetupColumn("Time (ms)", ImGuiTableColumnFlags_WidthFixed, 100.0f);
+			ImGui::TableHeadersRow();
+	            
+			// Rows
+			for (const auto& entry : data)
+			{
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("%s", entry.functionName);
+				ImGui::TableSetColumnIndex(1);
+				ImGui::Text("%s", entry.label ? entry.label : "None");
+				ImGui::TableSetColumnIndex(2);
 				float t = std::clamp(entry.duration / 8.0f, 0.0f, 1.0f);
 				ImVec4 col = ImVec4(t, 1.0f - t, 0.0f, 1.0f);
-                ImGui::TextColored(col, "%.3f", entry.duration);
-            }
-            
-            ImGui::EndTable();
-        }
-        
-        Profiling::Flush();
-    ImGui::End();
+				ImGui::TextColored(col, "%.3f", entry.duration);
+			}
+	            
+			ImGui::EndTable();
+		}
+	        
+		Profiling::Flush();
+	ImGui::End();
 }
-
-void Tempus::Renderer::DrawSceneOutliner(class Scene* currentScene)
+void Tempus::Renderer::DrawSceneOutlinerTab(class Scene* currentScene)
 {
 	// // --- Scene outliner
 	static uint32_t selectedEntityID = 0;	
     
-	ImGui::Begin("Scene Outliner");
+	ImGui::BeginChild("EntityList", ImVec2(0, 300), true);
+
+	std::vector<uint32_t> entIDs = currentScene->GetEntityIDs();
+	// Check if the scene is empty
+	if (entIDs.empty())
 	{
-		ImGui::BeginChild("EntityList", ImVec2(0, 300), true);
-    
-		std::vector<uint32_t> entIDs = currentScene->GetEntityIDs();
-		// Check if the scene is empty
-		if (entIDs.empty())
-		{
-			ImGui::EndChild();
-			ImGui::End();
-			return;
-		}
-			
-		for (const uint32_t entID : entIDs)
-		{
-			std::string label = std::format("[{}] {}", entID, currentScene->GetEntityName(entID));
-			if (ImGui::Selectable(label.c_str(), selectedEntityID == entID))
-			{
-				selectedEntityID = entID;
-			}
-		}
-    
 		ImGui::EndChild();
-
-		// Ensure the selected entity exists in scene (can be removed while selected)
-		if (!currentScene->HasEntity(selectedEntityID))
+		return;
+	}
+		
+	for (const uint32_t entID : entIDs)
+	{
+		std::string label = std::format("[{}] {}", entID, currentScene->GetEntityName(entID));
+		if (ImGui::Selectable(label.c_str(), selectedEntityID == entID))
 		{
-			selectedEntityID = entIDs[0];
-			ImGui::End();
+			selectedEntityID = entID;
+		}
+	}
+
+	ImGui::EndChild();
+
+	// Ensure the selected entity exists in scene (can be removed while selected)
+	if (!currentScene->HasEntity(selectedEntityID))
+	{
+		selectedEntityID = entIDs[0];
+		return;
+	}
+
+	// Add entity to scene
+	if(ImGui::Button("Add Entity"))
+	{
+		currentScene->AddEntity("Debug Entity");
+	}
+	ImGui::SameLine();
+	// Remove entity from scene
+	if(ImGui::Button("Remove Entity"))
+	{
+		// Disallow entity removal if marked NoDelete
+		bool bCanDeleteEntity = true;
+		if (EditorDataComponent* editorData = currentScene->GetComponent<EditorDataComponent>(selectedEntityID))
+		{
+			if (EnumCheckFlag(editorData->flags, EditorEntityDataFlags::NoDelete))
+			{
+				bCanDeleteEntity = false;
+				TPS_CORE_ERROR("Cannot remove entity [{}], it is marked as NoDelete!", selectedEntityID);
+			}
+		}
+
+		if (bCanDeleteEntity)
+		{
+			currentScene->RemoveEntity(selectedEntityID);
 			return;
 		}
+	}
 
-		// Add entity to scene
-		if(ImGui::Button("Add Entity"))
-		{
-			currentScene->AddEntity("Debug Entity");
-		}
-		ImGui::SameLine();
-		// Remove entity from scene
-		if(ImGui::Button("Remove Entity"))
-		{
-			// Disallow entity removal if marked NoDelete
-			bool bCanDeleteEntity = true;
-			if (EditorDataComponent* editorData = currentScene->GetComponent<EditorDataComponent>(selectedEntityID))
-			{
-				if (EnumCheckFlag(editorData->flags, EditorEntityDataFlags::NoDelete))
-				{
-					bCanDeleteEntity = false;
-					TPS_CORE_ERROR("Cannot remove entity [{}], it is marked as NoDelete!", selectedEntityID);
-				}
-			}
+	ImGui::SameLine();
+	ImGui::Text("Entities: %u", currentScene->GetEntityCount());
 
-			if (bCanDeleteEntity)
-			{
-				currentScene->RemoveEntity(selectedEntityID);
-				ImGui::End();
-				return;
-			}
-		}
-		
-		ImGui::Separator();
-		ImGui::Text("Details");
-		ImGui::Separator();
+	bool bCanAddComponents = true;
+	if (EditorDataComponent* editorData = currentScene->GetComponent<EditorDataComponent>(selectedEntityID))
+	{
+		bCanAddComponents = !EnumCheckFlag(editorData->flags, EditorEntityDataFlags::NoAddComponent);
+	}
+	
+	ImGui::Separator();
+	ImGui::Text("Details");
+	ImGui::Separator();
 
-		// Component list dropdown
+	// Component list dropdown
+	if (bCanAddComponents)
+	{
 		static TPS_Private::ComponentRegistry::ComponentTypeInfo selectedComponent;
 		if (ImGui::BeginCombo(" ", selectedComponent.name.c_str()))
 		{
@@ -535,20 +579,7 @@ void Tempus::Renderer::DrawSceneOutliner(class Scene* currentScene)
 		{
 			if (selectedComponent.addComponentFunc)
 			{
-				bool bCanAddComponent = true;
-				if (EditorDataComponent* editorData = currentScene->GetComponent<EditorDataComponent>(selectedEntityID))
-				{
-					if (EnumCheckFlag(editorData->flags, EditorEntityDataFlags::NoAddComponent))
-					{
-						TPS_CORE_ERROR("Cannot add component to entity [{}], it is marked as NoAddComponent!", selectedEntityID);
-						bCanAddComponent = false;
-					}
-				}
-				
-				if (bCanAddComponent)
-				{
-					selectedComponent.addComponentFunc(currentScene, selectedEntityID);
-				}
+				selectedComponent.addComponentFunc(currentScene, selectedEntityID);
 			}
 			else
 			{
@@ -557,88 +588,82 @@ void Tempus::Renderer::DrawSceneOutliner(class Scene* currentScene)
 		}
 
 		ImGui::Separator();
+	}
 
-		// Disallow component removal if entity has NoRemoveComponent flag
-		bool bCanRemoveComponent = true;
-		if (EditorDataComponent* editorData = currentScene->GetComponent<EditorDataComponent>(selectedEntityID))
+	// Disallow component removal if entity has NoRemoveComponent flag
+	bool bCanRemoveComponent = true;
+	if (EditorDataComponent* editorData = currentScene->GetComponent<EditorDataComponent>(selectedEntityID))
+	{
+		bCanRemoveComponent = !EnumCheckFlag(editorData->flags, EditorEntityDataFlags::NoRemoveComponent);
+	}
+
+	// Component details
+	ImGui::BeginChild("Details");
+		// @TODO Components should probably store their own virtual ImGui rendering function which can be invoked from here
+		if (TransformComponent* transformComp = currentScene->GetComponent<TransformComponent>(selectedEntityID))
 		{
-			if (EnumCheckFlag(editorData->flags, EditorEntityDataFlags::NoRemoveComponent))
+			if (ImGui::TreeNodeEx(TempusUtils::GetClassDebugName<TransformComponent>(), ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				bCanRemoveComponent = false;
+				if (bCanRemoveComponent)
+				{
+					ImGui::SameLine();
+					if (ImGui::Button("Remove"))
+					{
+						currentScene->RemoveComponent<TransformComponent>(selectedEntityID);
+					}
+				}
+				ImGui::InputFloat3("Position", &transformComp->Position.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+				ImGui::InputFloat3("Rotation", &transformComp->Rotation.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+				ImGui::InputFloat3("Scale", &transformComp->Scale.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+				ImGui::TreePop();
 			}
 		}
-
-		// Component details
-		ImGui::BeginChild("Details");
-			// @TODO Components should probably store their own virtual ImGui rendering function which can be invoked from here
-			if (TransformComponent* transformComp = currentScene->GetComponent<TransformComponent>(selectedEntityID))
+		if (CameraComponent* cameraComp = currentScene->GetComponent<CameraComponent>(selectedEntityID))
+		{
+			if (ImGui::TreeNodeEx(TempusUtils::GetClassDebugName<CameraComponent>(), ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				if (ImGui::TreeNodeEx(TempusUtils::GetClassDebugName<TransformComponent>(), ImGuiTreeNodeFlags_DefaultOpen))
+				if (bCanRemoveComponent)
 				{
-					if (bCanRemoveComponent)
+					ImGui::SameLine();
+					if (ImGui::Button("Remove"))
 					{
-						ImGui::SameLine();
-						if (ImGui::Button("Remove"))
-						{
-							currentScene->RemoveComponent<TransformComponent>(selectedEntityID);
-						}
+						currentScene->RemoveComponent<CameraComponent>(selectedEntityID);
 					}
-					ImGui::InputFloat3("Position", &transformComp->Position.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
-					ImGui::InputFloat3("Rotation", &transformComp->Rotation.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
-					ImGui::InputFloat3("Scale", &transformComp->Scale.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
-					ImGui::TreePop();
 				}
+				ImGui::Text("Projection Type: %s", cameraComp->ProjectionType == CamProjectionType::Perspective ? "Perspective" : "Orthographic");
+				ImGui::SliderFloat("FOV", &cameraComp->Fov, 1.0f, 179.0f, "%.3f");
+				ImGui::Text("Ortho Size: %.1f", cameraComp->OrthoSize);
+				ImGui::SliderFloat("Near Clip", &cameraComp->NearClip, 0.1f, 10.0f, "%.1f");
+				ImGui::SliderFloat("Far Clip", &cameraComp->FarClip, 10.0f, 10000.0f, "%.1f");
+				ImGui::TreePop();
 			}
-			if (CameraComponent* cameraComp = currentScene->GetComponent<CameraComponent>(selectedEntityID))
+		}
+		if (StaticMeshComponent* meshComp = currentScene->GetComponent<StaticMeshComponent>(selectedEntityID))
+		{
+			if (ImGui::TreeNodeEx(TempusUtils::GetClassDebugName<StaticMeshComponent>(), ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				if (ImGui::TreeNodeEx(TempusUtils::GetClassDebugName<CameraComponent>(), ImGuiTreeNodeFlags_DefaultOpen))
+				if (bCanRemoveComponent)
 				{
-					if (bCanRemoveComponent)
+					ImGui::SameLine();
+					if (ImGui::Button("Remove"))
 					{
-						ImGui::SameLine();
-						if (ImGui::Button("Remove"))
-						{
-							currentScene->RemoveComponent<CameraComponent>(selectedEntityID);
-						}
+						currentScene->RemoveComponent<StaticMeshComponent>(selectedEntityID);
 					}
-					ImGui::Text("Projection Type: %s", cameraComp->ProjectionType == CamProjectionType::Perspective ? "Perspective" : "Orthographic");
-					ImGui::SliderFloat("FOV", &cameraComp->Fov, 1.0f, 179.0f, "%.3f");
-					ImGui::Text("Ortho Size: %.1f", cameraComp->OrthoSize);
-					ImGui::Text("Near Clip: %.1f", cameraComp->NearClip);
-					ImGui::Text("Far Clip: %.1f", cameraComp->FarClip);
-					ImGui::TreePop();
 				}
+				ImGui::Text("WIP");
+				ImGui::TreePop();
 			}
-			if (StaticMeshComponent* meshComp = currentScene->GetComponent<StaticMeshComponent>(selectedEntityID))
-			{
-				if (ImGui::TreeNodeEx(TempusUtils::GetClassDebugName<StaticMeshComponent>(), ImGuiTreeNodeFlags_DefaultOpen))
-				{
-					if (bCanRemoveComponent)
-					{
-						ImGui::SameLine();
-						if (ImGui::Button("Remove"))
-						{
-							currentScene->RemoveComponent<StaticMeshComponent>(selectedEntityID);
-						}
-					}
-					ImGui::Text("WIP");
-					ImGui::TreePop();
-				}
-			}
-		ImGui::EndChild();
-	}
-	ImGui::End();
+		}
+	ImGui::EndChild();
 }
 
-void Tempus::Renderer::DrawSceneInfo(class Scene* currentScene)
+void Tempus::Renderer::DrawSceneInfoTab(class Scene* currentScene)
 {
 	// --- Scene info
-	ImGui::Begin("Scene Info");
 	ImGui::Text("Name: %s", currentScene->GetName().c_str());
 	ImGui::Text("Scene Time: %f", currentScene->GetSceneTime());
-	ImGui::Text("Entity count: %u", currentScene->GetEntityCount());
-
-	ImGui::End();
+	ImGui::Separator();
+	ImGui::ColorPicker3("Clear Color", &m_ClearColor[0]);
 }
 
 void Tempus::Renderer::CreateVulkanInstance()
@@ -1657,7 +1682,7 @@ void Tempus::Renderer::InitImGui()
 
 void Tempus::Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
 {
-	TPS_PROFILE("Record Command Buffer");
+	TPS_SCOPED_TIMER();
 	
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
