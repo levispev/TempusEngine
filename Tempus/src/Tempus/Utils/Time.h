@@ -14,9 +14,9 @@ namespace Tempus
         static Time* GetInstance();
         static float GetDeltaTime();
         static float GetUnscaledDeltaTime();
-        static float GetAppTime();
+        static double GetAppTime();
         static float GetTimeScale();
-        static float GetSceneTime();
+        static double GetSceneTime();
         static void SetTimeScale(float scale);
         static void CalculateDeltaTime();
 
@@ -28,7 +28,7 @@ namespace Tempus
         
         static float m_DeltaTime;
         static float m_UnscaledDeltaTime;
-        static float m_AppTime;
+        static double m_AppTime;
         static float m_TimeScale;
     };
 }

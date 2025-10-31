@@ -7,8 +7,8 @@
 
 void Tempus::Scene::OnUpdate(float DeltaTime)
 {
-    m_SceneTime += DeltaTime;
-
+    m_SceneTime += static_cast<double>(DeltaTime);
+    
     // Update all systems in scene with update enabled
      for (const auto& system : m_Systems)
      {

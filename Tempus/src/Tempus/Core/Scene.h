@@ -94,7 +94,7 @@ namespace Tempus
         uint32_t GetEntityCount() const { return m_EntityCount; }
         bool HasEntity(uint32_t id) const;
         const std::string& GetName() const { return m_SceneName; }
-        float GetSceneTime() const { return m_SceneTime; }
+        double GetSceneTime() const { return m_SceneTime; }
         
         template<ValidComponent T, typename ...Args>
         void AddComponent(uint32_t id, Args&&... arguments)
@@ -208,7 +208,7 @@ namespace Tempus
 
         friend class SceneManager;
 
-        void ResetSceneTime() { m_SceneTime = 0.0f; }
+        void ResetSceneTime() { m_SceneTime = 0.0; }
 
         bool IsUpdating() const override { return true; }
         void OnUpdate(float DeltaTime) override;
@@ -226,7 +226,7 @@ namespace Tempus
         
         std::string m_SceneName;
 
-        float m_SceneTime = 0.0f;
+        double m_SceneTime = 0.0;
         
     };
     

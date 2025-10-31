@@ -233,8 +233,8 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 	camForward = camTransform.GetForwardVector();
 	
 	UniformBufferObject ubo{};
-	ubo.model = glm::rotate(glm::mat4(1.0f), Time::GetAppTime() * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.model = glm::translate(ubo.model, glm::vec3(0.0f, 0.0f, glm::sin(Time::GetAppTime())));
+	ubo.model = glm::rotate(glm::mat4(1.0f), static_cast<float>(Time::GetSceneTime()) * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.model = glm::translate(ubo.model, glm::vec3(0.0f, 0.0f, glm::sin(Time::GetSceneTime())));
 	ubo.view = glm::lookAtLH(camTransform.Position, camTransform.Position + camForward, glm::vec3(0.0f, 0.0f, 1.0f));
 	
 	switch (camComponent.ProjectionType)
@@ -471,7 +471,7 @@ void Tempus::Renderer::DrawProfilerDataWindow(Scene* currentScene)
 				ImGui::Text("%s", entry.label ? entry.label : "None");
 				ImGui::TableSetColumnIndex(2);
 				double t = std::clamp(entry.duration / 8.0, 0.0, 1.0);
-				ImVec4 col = ImVec4(t, 1.0f - t, 0.0f, 1.0f);
+				ImVec4 col = ImVec4(static_cast<float>(t), 1.0f - static_cast<float>(t), 0.0f, 1.0f);
 				ImGui::TextColored(col, "%.4f", entry.duration);
 			}
 	            

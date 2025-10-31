@@ -10,7 +10,7 @@ std::unique_ptr<Tempus::Time> Tempus::Time::s_Instance = nullptr;
 
 float Tempus::Time::m_DeltaTime = 0.0f;
 float Tempus::Time::m_UnscaledDeltaTime = 0.0f;
-float Tempus::Time::m_AppTime = 0.0f;
+double Tempus::Time::m_AppTime = 0.0;
 float Tempus::Time::m_TimeScale = 1.0f;
 
 Tempus::Time* Tempus::Time::GetInstance()
@@ -32,7 +32,7 @@ float Tempus::Time::GetUnscaledDeltaTime()
     return m_UnscaledDeltaTime;
 }
 
-float Tempus::Time::GetAppTime()
+double Tempus::Time::GetAppTime()
 {
     return m_AppTime;
 }
@@ -42,7 +42,7 @@ float Tempus::Time::GetTimeScale()
     return m_TimeScale;   
 }
 
-float Tempus::Time::GetSceneTime()
+double Tempus::Time::GetSceneTime()
 {
     if (Scene* activeScene = SCENE_MANAGER->GetActiveScene())
     {
@@ -50,7 +50,7 @@ float Tempus::Time::GetSceneTime()
     }
 
     TPS_CORE_WARN("No active scene found when getting scene time!");
-    return 0.0f;
+    return 0.0;
 }
 
 void Tempus::Time::SetTimeScale(float scale)
@@ -72,7 +72,7 @@ void Tempus::Time::CalculateDeltaTime()
     m_UnscaledDeltaTime = std::chrono::duration_cast<std::chrono::duration<float>>(currentTime - lastFrameTime).count();
     m_DeltaTime = m_UnscaledDeltaTime * m_TimeScale;
     // Update current time since application start
-    m_AppTime += m_DeltaTime;
+    m_AppTime += static_cast<double>(m_UnscaledDeltaTime);
     
     lastFrameTime = currentTime;
 }
