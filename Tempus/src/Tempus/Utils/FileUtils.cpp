@@ -3,7 +3,7 @@
 #include "FileUtils.h"
 #include <fstream>
 #include <iostream>
-#include "Log.h"
+#include "Core/Log.h"
 #include <filesystem>
 
 #ifdef TPS_PLATFORM_WINDOWS

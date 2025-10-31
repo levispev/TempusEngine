@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Core.h"
+#include "Core/Core.h"
 
 #ifndef TPS_DIST
 // Macro for executing a scoped timer trace.
