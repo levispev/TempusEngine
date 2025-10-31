@@ -62,7 +62,7 @@
 
 #ifdef TPS_PLATFORM_WINDOWS
 #define FUNC_NAME __FUNCTION__
-#elifdef TPS_PLATFORM_MAC
+#elif TPS_PLATFORM_MAC
 #define FUNC_NAME __func__
 #endif
 

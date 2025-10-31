@@ -91,7 +91,7 @@ void Tempus::FileUtils::OpenDirectory(const std::string& directory)
 #ifdef TPS_PLATFORM_WINDOWS
     ShellExecuteA(NULL, "open", directory.c_str(), NULL, NULL, SW_SHOWDEFAULT);
 #elif defined(TPS_PLATFORM_MAC)
-    std::string command = "open \"" + path + "\"";
+    std::string command = "open \"" + directory + "\"";
     std::system(command.c_str());
 #endif
 }
