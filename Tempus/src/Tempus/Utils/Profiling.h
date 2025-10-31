@@ -4,9 +4,13 @@
 
 #include "Core.h"
 
+#ifndef TPS_DIST
 // Macro for executing a scoped timer trace.
 // Can optionally be given a label.
 #define TPS_SCOPED_TIMER(...) ::Tempus::Profiling::ScopedProfiler TPS_MACRO_JOIN(scopedProfiler, __LINE__)(FUNC_NAME, __VA_ARGS__)
+#else
+#define TPS_SCOPED_TIMER(...)
+#endif
 
 namespace Tempus
 {

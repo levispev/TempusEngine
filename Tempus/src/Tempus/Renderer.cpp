@@ -21,7 +21,6 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include <chrono>
-#include <imgui_internal.h>
 
 #include "Application.h"
 #include "Scene.h"
@@ -125,6 +124,7 @@ void Tempus::Renderer::OnEvent(const SDL_Event& event)
 
 void Tempus::Renderer::DrawFrame()
 {
+	TPS_SCOPED_TIMER();
 	// Wait for previous frame to finish drawing
 	vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
 
@@ -771,11 +771,11 @@ void Tempus::Renderer::PickPhysicalDevice()
 
 void Tempus::Renderer::CreateLogicalDevice()
 {
-	QueueFamilyIndices indices = FindQueueFamilies(m_PhysicalDevice);
+	QueueFamilyIndices familyIndices = FindQueueFamilies(m_PhysicalDevice);
 
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 	// Set of all unique queue families
-	std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+	std::set<uint32_t> uniqueQueueFamilies = { familyIndices.graphicsFamily.value(), familyIndices.presentFamily.value() };
 
 	float queuePriority = 1.0f;
 
@@ -820,8 +820,8 @@ void Tempus::Renderer::CreateLogicalDevice()
 	}
 
 	// Retrieve reference to devices graphics queue, index 0 because we only have 1 queue
-	vkGetDeviceQueue(m_Device, indices.graphicsFamily.value(), 0, &m_GraphicsQueue);
-	vkGetDeviceQueue(m_Device, indices.presentFamily.value(), 0, &m_PresentQueue);
+	vkGetDeviceQueue(m_Device, familyIndices.graphicsFamily.value(), 0, &m_GraphicsQueue);
+	vkGetDeviceQueue(m_Device, familyIndices.presentFamily.value(), 0, &m_PresentQueue);
 }
 
 void Tempus::Renderer::CreateSwapChain()
@@ -1869,7 +1869,7 @@ void Tempus::Renderer::CreateSurface(Tempus::Window* window)
 
 Tempus::Renderer::QueueFamilyIndices Tempus::Renderer::FindQueueFamilies(VkPhysicalDevice device)
 {
-	QueueFamilyIndices indices;
+	QueueFamilyIndices familyIndices;
 
 	// Retrieve queue family count
 	uint32_t queueFamilyCount = 0;
@@ -1885,7 +1885,7 @@ Tempus::Renderer::QueueFamilyIndices Tempus::Renderer::FindQueueFamilies(VkPhysi
 		// Checking if queue family supports graphics queue
 		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
 		{
-			indices.graphicsFamily = i;
+			familyIndices.graphicsFamily = i;
 		}
 
 		// Check if queue family supports present queue
@@ -1895,10 +1895,10 @@ Tempus::Renderer::QueueFamilyIndices Tempus::Renderer::FindQueueFamilies(VkPhysi
 
 		if (presentSupport) 
 		{
-			indices.presentFamily = i;
+			familyIndices.presentFamily = i;
 		}
 
-		if (indices.IsComplete()) 
+		if (familyIndices.IsComplete()) 
 		{
 			break;
 		}
@@ -1906,7 +1906,7 @@ Tempus::Renderer::QueueFamilyIndices Tempus::Renderer::FindQueueFamilies(VkPhysi
 		i++;
 	}
 
-	return indices;
+	return familyIndices;
 }
 
 Tempus::Renderer::SwapChainSupportDetails Tempus::Renderer::QuerySwapChainSupport(VkPhysicalDevice device)
