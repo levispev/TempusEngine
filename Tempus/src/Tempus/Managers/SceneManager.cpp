@@ -2,7 +2,7 @@
 
 #include "SceneManager.h"
 
-#include "Application.h"
+#include "Core/Application.h"
 #include "Components/Component.h"
 #include "Entity/Entity.h"
 #include "Components/TransformComponent.h"
@@ -11,21 +11,11 @@
 
 Tempus::Scene* Tempus::SceneManager::CreateScene(const std::string& sceneName)
 {
-    m_ActiveScene = new Scene(sceneName);
+    m_ActiveScene = std::make_unique<Scene>(sceneName);
     
     CreateEditorCamera();
     
-    return m_ActiveScene;
-}
-
-void Tempus::SceneManager::SetActiveScene(Scene* scene)
-{
-    m_ActiveScene = scene;
-
-    if (m_ActiveScene)
-    {
-        m_ActiveScene->ResetSceneTime();
-    }
+    return m_ActiveScene.get();
 }
 
 bool Tempus::SceneManager::SetActiveScene(const std::string& sceneName)
@@ -65,7 +55,7 @@ void Tempus::SceneManager::CreateEditorCamera()
 {
     if (m_ActiveScene)
     {
-        Entity editorCam = m_ActiveScene->AddEntity("Editor Cam");
+        Entity editorCam = m_ActiveScene->AddEntity("Editor Camera");
         editorCam.AddComponent<TransformComponent>(glm::vec3(-5.0f, 0.0f, 0.0f));
         editorCam.AddComponent<CameraComponent>();
         editorCam.GetComponent<TransformComponent>()->Position = glm::vec3(-5.0f, 0.0f, 0.0f);

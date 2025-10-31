@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "Tempus/Core.h"
+#include "Tempus/Core/Core.h"
 #include "Components/Component.h"
-#include "Scene.h"
+#include "Core/Scene.h"
 
 namespace Tempus
 {

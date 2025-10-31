@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Core.h"
+#include "Core/Core.h"
 #include <glm/vec3.hpp>
 #include "Component.h"
 

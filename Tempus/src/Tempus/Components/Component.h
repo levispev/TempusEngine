@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Tempus/Core.h"
+#include "Tempus/Core/Core.h"
 #include "ComponentRegistry.h"
 
 namespace Tempus

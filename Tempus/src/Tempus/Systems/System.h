@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "Core.h"
-#include "IUpdateable.h"
+#include "Core/Core.h"
+#include "Core/IUpdateable.h"
 #include <bitset>
 #include <set>
 

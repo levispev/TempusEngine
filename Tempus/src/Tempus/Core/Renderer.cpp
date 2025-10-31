@@ -124,7 +124,7 @@ void Tempus::Renderer::OnEvent(const SDL_Event& event)
 
 void Tempus::Renderer::DrawFrame()
 {
-	TPS_SCOPED_TIMER();
+	TPS_SCOPED_TIMER("Hello");
 	// Wait for previous frame to finish drawing
 	vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
 
@@ -446,9 +446,9 @@ void Tempus::Renderer::DrawSceneWindow(class Scene* currentScene)
 void Tempus::Renderer::DrawProfilerDataWindow(Scene* currentScene)
 {
 	ImGui::Begin("Profiler Timings");
-		auto data = Profiling::GetProfilingData();
+		std::vector<Profiling::ProfilingData> data = Profiling::GetProfilingData();
 
-		std::sort(data.begin(), data.end(), [](const auto& a, const auto& b)
+		std::ranges::sort(data.begin(), data.end(), [](const auto& a, const auto& b)
 		{
 			return a.duration > b.duration;
 		});
@@ -470,14 +470,15 @@ void Tempus::Renderer::DrawProfilerDataWindow(Scene* currentScene)
 				ImGui::TableSetColumnIndex(1);
 				ImGui::Text("%s", entry.label ? entry.label : "None");
 				ImGui::TableSetColumnIndex(2);
-				float t = std::clamp(entry.duration / 8.0f, 0.0f, 1.0f);
+				double t = std::clamp(entry.duration / 8.0, 0.0, 1.0);
 				ImVec4 col = ImVec4(t, 1.0f - t, 0.0f, 1.0f);
-				ImGui::TextColored(col, "%.3f", entry.duration);
+				ImGui::TextColored(col, "%.4f", entry.duration);
 			}
 	            
 			ImGui::EndTable();
 		}
-	        
+
+		// Flush all profiling data after displaying
 		Profiling::Flush();
 	ImGui::End();
 }

@@ -1,7 +1,7 @@
 // Copyright Levi Spevakow (C) 2025
 
 #include "Tempus.h"
-#include "Tempus/Scene.h"
+#include "Tempus/Core/Scene.h"
 #include "Tempus/Managers/SceneManager.h"
 #include "Tempus/Entity/Entity.h"
 #include <random>

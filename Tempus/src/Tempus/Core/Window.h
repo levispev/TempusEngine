@@ -4,7 +4,7 @@
 
 #include <memory>
 
-#include "Tempus/Core.h"
+#include "Tempus/Core/Core.h"
 #include "sdl/SDL.h"
 
 namespace Tempus {

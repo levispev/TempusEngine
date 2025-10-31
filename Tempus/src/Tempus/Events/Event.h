@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Tempus/Core.h"
+#include "Tempus/Core/Core.h"
 
 #include <string>
 #include <functional>

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Tempus/Application.h"
-#include "Tempus/Log.h"
+#include "Tempus/Core/Application.h"
+#include "Tempus/Core/Log.h"
 
 // Entry Point
-#include "Tempus/EntryPoint.h"
+#include "Tempus/Core/EntryPoint.h"

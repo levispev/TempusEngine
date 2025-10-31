@@ -2,12 +2,12 @@
 
 #pragma once
 
-#include "Core.h"
+#include "Core/Core.h"
 #include <unordered_set>
 #include <functional>
 #include <iostream>
 #include <vector>
-#include "Scene.h"
+#include "Core/Scene.h"
 #include "Utils/EnumClassFlagUtils.h"
 
 // Used for declaring a unique component type

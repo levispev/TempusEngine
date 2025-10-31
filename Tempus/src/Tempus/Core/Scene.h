@@ -83,6 +83,9 @@ namespace Tempus
     {
     public:
 
+        Scene(std::string sceneName);
+        ~Scene() = default;
+        
         class Entity AddEntity(std::string name);
         void RemoveEntity(uint32_t id);
 
@@ -200,14 +203,10 @@ namespace Tempus
         Scene& operator=(const Scene&) = delete;
         Scene(Scene&&) = delete;
         Scene& operator=(Scene&&) = delete;
-
-        
+    
     private:
 
         friend class SceneManager;
-        
-        Scene(std::string sceneName);
-        ~Scene() = default;
 
         void ResetSceneTime() { m_SceneTime = 0.0f; }
 
