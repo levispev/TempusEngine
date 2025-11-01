@@ -453,12 +453,13 @@ void Tempus::Renderer::DrawProfilerDataWindow(Scene* currentScene)
 			return a.duration > b.duration;
 		});
 
-		if (ImGui::BeginTable("ProfilerTable", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable))
+		if (ImGui::BeginTable("ProfilerTable", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable))
 		{
 			// Setup columns
 			ImGui::TableSetupColumn("Function", ImGuiTableColumnFlags_WidthStretch);
 			ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthStretch);
 			ImGui::TableSetupColumn("Time (ms)", ImGuiTableColumnFlags_WidthFixed, 100.0f);
+			ImGui::TableSetupColumn("Slowest (ms)", ImGuiTableColumnFlags_WidthFixed, 100.0f);
 			ImGui::TableHeadersRow();
 	            
 			// Rows
@@ -473,13 +474,15 @@ void Tempus::Renderer::DrawProfilerDataWindow(Scene* currentScene)
 				double t = std::clamp(entry.duration / 8.0, 0.0, 1.0);
 				ImVec4 col = ImVec4(static_cast<float>(t), 1.0f - static_cast<float>(t), 0.0f, 1.0f);
 				ImGui::TextColored(col, "%.4f", entry.duration);
+				ImGui::TableSetColumnIndex(3);
+				ImGui::Text("%f", entry.highestDuration);
 			}
 	            
 			ImGui::EndTable();
 		}
 
 		// Flush all profiling data after displaying
-		Profiling::Flush();
+		Profiling::FlushProfilingData();
 	ImGui::End();
 }
 void Tempus::Renderer::DrawSceneOutlinerTab(class Scene* currentScene)

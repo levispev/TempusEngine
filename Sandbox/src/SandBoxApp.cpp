@@ -6,6 +6,7 @@
 #include "Tempus/Entity/Entity.h"
 #include <random>
 #include "Components/TransformComponent.h"
+#include "Utils/Profiling.h"
 
 class SandBox : public Tempus::Application
 {

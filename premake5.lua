@@ -69,7 +69,8 @@ project "Tempus"
         buildoptions
         {
             "/utf-8",
-            "/wd4251"
+            "/wd4251",
+            "/Zc:preprocessor"
         }
 
         postbuildcommands
@@ -197,7 +198,8 @@ project "Sandbox"
         buildoptions
         {
             "/utf-8",
-            "/wd4251"
+            "/wd4251",
+            "/Zc:preprocessor"
         }
 
         postbuildcommands

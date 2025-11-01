@@ -7,7 +7,7 @@
 #ifndef TPS_DIST
 // Macro for executing a scoped timer trace.
 // Can optionally be given a label.
-#define TPS_SCOPED_TIMER(...) ::Tempus::Profiling::ScopedProfiler TPS_MACRO_JOIN(scopedProfiler, __LINE__)(FUNC_NAME, ##__VA_ARGS__)
+#define TPS_SCOPED_TIMER(...) static double TPS_MACRO_JOIN(scopedProfilerHighestTime, __LINE__) = 0.0; ::Tempus::Profiling::ScopedProfiler TPS_MACRO_JOIN(scopedProfiler, __LINE__)(FUNC_NAME, TPS_MACRO_JOIN(scopedProfilerHighestTime, __LINE__) __VA_OPT__(,) __VA_ARGS__)
 #else
 #define TPS_SCOPED_TIMER(...)
 #endif
@@ -20,17 +20,18 @@ namespace Tempus
 
         struct ProfilingData
         {
-            ProfilingData(const char* inFuncName, double inDuration, const char* inLabel) : functionName(inFuncName), duration(inDuration), label(inLabel)
+            ProfilingData(const char* inFuncName, double inDuration, double inHighestDuration, const char* inLabel) : functionName(inFuncName), duration(inDuration), highestDuration(inHighestDuration), label(inLabel)
             {
             }
             const char* functionName = nullptr;
-            double duration = 0.0f;
+            double duration = 0.0;
+            double highestDuration = 0.0;
             const char* label = nullptr;
         };
         
         struct ScopedProfiler
         {
-            ScopedProfiler(const char* inFuncName, const char* inLabel = nullptr) : functionName(inFuncName) , label(inLabel)
+            ScopedProfiler(const char* inFuncName, double& highestTime, const char* inLabel = nullptr) : functionName(inFuncName), highestSavedTime(highestTime), label(inLabel)
             {
                 start = std::chrono::high_resolution_clock::now();
             }
@@ -39,13 +40,16 @@ namespace Tempus
             {
                 auto end =  std::chrono::high_resolution_clock::now();
                 double duration = std::chrono::duration<double, std::milli>(end - start).count();
-                RegisterProfileData({ functionName, duration, label });
+                // Update the highest saved time
+                highestSavedTime = std::max(highestSavedTime, duration);
+                RegisterProfileData({ functionName, duration, highestSavedTime, label });
             }
 
             ScopedProfiler(const ScopedProfiler&) = delete;
             ScopedProfiler& operator=(const ScopedProfiler&) = delete;
 
             const char* functionName = nullptr;
+            double& highestSavedTime;
             const char* label = nullptr;
 
         private:
@@ -62,15 +66,13 @@ namespace Tempus
             return s_ProfilingData;
         }
 
-        static void Flush()
+        static void FlushProfilingData()
         {
             s_ProfilingData.erase(s_ProfilingData.begin(), s_ProfilingData.end());
         }
 
     private:
-
         static inline std::vector<ProfilingData> s_ProfilingData;
-        
     };
     
 }
