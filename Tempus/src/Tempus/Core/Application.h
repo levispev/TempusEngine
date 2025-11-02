@@ -54,7 +54,7 @@ namespace Tempus {
 	protected:
 
 		virtual void AppStart();
-		virtual void Update();
+		virtual void AppUpdate();
 		virtual void Cleanup();
 
 		SDL_Event GetCurrentEvent() const { return CurrentEvent; }
@@ -88,12 +88,13 @@ namespace Tempus {
 
 		// Temporary input 
 		void ProcessInput(SDL_Event event);
-		void ProcessMouseInput(SDL_Event event);
+		void ProcessMouseMovement(SDL_Event event);
 		void UpdateEditorCamera();
 		static inline std::bitset<10> m_InputBits;
 		int32_t m_LastMouseX = 0, m_LastMouseY = 0;
 		int32_t m_MouseDeltaX = 0, m_MouseDeltaY = 0;
-		float m_MouseSensitivity = 2000.0f;
+		float m_MouseSensitivity;
+		uint8_t m_CatchMouseButton;
 		static inline std::map<int, int> m_InputMap = 
 		{ {SDL_SCANCODE_W, 0}, {SDL_SCANCODE_A, 1}, {SDL_SCANCODE_S, 2}, {SDL_SCANCODE_D, 3},
 		  {SDL_SCANCODE_Q, 4}, {SDL_SCANCODE_E, 5}, {SDL_SCANCODE_UP, 6}, {SDL_SCANCODE_DOWN, 7},

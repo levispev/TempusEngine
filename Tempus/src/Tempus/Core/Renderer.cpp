@@ -267,6 +267,8 @@ void Tempus::Renderer::DrawImGui()
 	TPS_SCOPED_TIMER();
 	
 	static bool bShowAboutPopup = false;
+	static bool bShowAppStats = true;
+	static bool bShowDeviceInfo = false;
 	static bool bShowScene = true;
 	static bool bShowProfiler = true;
 	static bool bShowDemoWindow = false;
@@ -275,6 +277,8 @@ void Tempus::Renderer::DrawImGui()
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplSDL2_NewFrame();
 	ImGui::NewFrame();
+
+	//ImGui::ShowStyleEditor();
 
 	// -- Main menu bar
 	if (ImGui::BeginMainMenuBar()) 
@@ -304,6 +308,9 @@ void Tempus::Renderer::DrawImGui()
 			ImGui::SeparatorText("Editor");
 			ImGui::MenuItem("Scene", nullptr, &bShowScene);
 			ImGui::MenuItem("Profiler", nullptr, &bShowProfiler);
+			ImGui::SeparatorText("Misc");
+			ImGui::MenuItem("App Stats", nullptr, &bShowAppStats);
+			ImGui::MenuItem("Device Info", nullptr, &bShowDeviceInfo);
 			ImGui::SeparatorText("Testing");
 			ImGui::MenuItem("Demo", nullptr, &bShowDemoWindow);
 			ImGui::MenuItem("Debug", nullptr, &bShowDebugWindow);
@@ -359,15 +366,20 @@ void Tempus::Renderer::DrawImGui()
 	}
 
 	// -- Application stats
-	ImGui::Begin("Application Stats");
-		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-		ImGui::Text("Swapchain extent: %ux%u", m_SwapChainExtent.width, m_SwapChainExtent.height);
-		ImGui::Text("Delta Time: %f", Time::GetUnscaledDeltaTime());
-		ImGui::Text("Time: %f", Time::GetAppTime());
-	ImGui::End();
+	if(bShowAppStats)
+	{
+		ImGui::Begin("Application Stats");
+			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+			ImGui::Text("Swapchain extent: %ux%u", m_SwapChainExtent.width, m_SwapChainExtent.height);
+			ImGui::Text("Delta Time: %f", Time::GetUnscaledDeltaTime());
+			ImGui::Text("Time: %f", Time::GetAppTime());
+		ImGui::End();
+	}
 
 	// -- Device info
-	ImGui::Begin("Device Info");
+	if(bShowDeviceInfo)
+	{
+		ImGui::Begin("Device Info");
 		ImGui::Text("Name: %s", m_DeviceDetails.name.c_str());
 		ImGui::Text("Type: %s", m_DeviceDetails.type.c_str());
 		ImGui::Text("ID: %u", m_DeviceDetails.id);
@@ -382,7 +394,8 @@ void Tempus::Renderer::DrawImGui()
 		}
 		ImGui::Text("API Version: %u.%u.%u", VK_VERSION_MAJOR(m_DeviceDetails.apiVersion), VK_VERSION_MINOR(m_DeviceDetails.apiVersion), VK_VERSION_PATCH(m_DeviceDetails.apiVersion));
 		ImGui::Text("Vendor ID: %u", m_DeviceDetails.vendorId);
-	ImGui::End();
+		ImGui::End();
+	}
 
 	// -- Scene window
 	if (Scene* currentScene = SCENE_MANAGER->GetActiveScene())
@@ -396,13 +409,6 @@ void Tempus::Renderer::DrawImGui()
 			DrawProfilerDataWindow(currentScene);
 		}
 	}
-
-	ImGui::Begin("Mouse");
-		ImGui::Text("X: %u", GApp->GetMouseX());
-		ImGui::Text("Y: %u", GApp->GetMouseY());
-		ImGui::Text("Delta X: %i", GApp->GetMouseDeltaX());
-		ImGui::Text("Delta Y: %i", GApp->GetMouseDeltaY());
-	ImGui::End();
 
 	// -- Demo Window
 	if (bShowDemoWindow)
@@ -424,6 +430,9 @@ void Tempus::Renderer::DrawImGui()
 			float timeScale = Time::GetTimeScale();
 			ImGui::SliderFloat("Time Scale", &timeScale, 0.0f, 100.0f);
 			Time::SetTimeScale(timeScale);
+			ImGui::Separator();
+			ImGui::Text("X: %.4u Y: %.4u", GApp->GetMouseX(), GApp->GetMouseY());
+			ImGui::Text("Delta X: %.2i Delta Y: %.2i", GApp->GetMouseDeltaX(),GApp->GetMouseDeltaY());
 		ImGui::End();
 	}
 	

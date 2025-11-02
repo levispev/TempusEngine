@@ -36,7 +36,7 @@ public:
 		}
 	}
 
-	virtual void Update() override
+	virtual void AppUpdate() override
 	{
 		SDL_Event event = GetCurrentEvent();
 

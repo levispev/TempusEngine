@@ -33,6 +33,17 @@ Tempus::Application::Application() : CurrentEvent(SDL_Event()), AppName("Applica
 	GApp = this;
 	m_Window = std::make_unique<Window>();
 	m_Renderer = std::make_unique<Renderer>();
+
+	// Temporarily hard coding these values.
+	// Will be read from a config system once set up
+#if TPS_PLATFORM_WINDOWS
+	m_MouseSensitivity = 2000.0f;
+	m_CatchMouseButton = SDL_BUTTON_RIGHT;
+#elif TPS_PLATFORM_MAC
+	m_MouseSensitivity = 50.0f;
+	m_CatchMouseButton = SDL_BUTTON_LEFT;
+#endif
+
 }
 
 Tempus::Application::~Application()
@@ -162,7 +173,7 @@ void Tempus::Application::CoreUpdate()
 	Time::CalculateDeltaTime();
 	EventUpdate();
 	ManagerUpdate();
-	Update();
+	AppUpdate();
 	m_Renderer->Update();
 	//std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
@@ -199,6 +210,8 @@ void Tempus::Application::EventUpdate()
 
 void Tempus::Application::ProcessInput(SDL_Event event)
 {
+	ImGuiIO& io = ImGui::GetIO();
+
 	if (event.type == SDL_KEYDOWN) // Temporary input handling 
 	{
 		char key = (char)event.key.keysym.sym;
@@ -219,14 +232,24 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 	}
 	else if (event.type == SDL_MOUSEBUTTONDOWN)
 	{
-		if (event.button.button == SDL_BUTTON_RIGHT)
+		// Ignore if hovering over ImGui element
+		if(io.WantCaptureMouse)
+		{
+			return;
+		}
+		if (event.button.button == m_CatchMouseButton)
 		{
 			SDL_SetRelativeMouseMode(SDL_TRUE);
 		}
 	}
 	else if (event.type == SDL_MOUSEBUTTONUP)
 	{
-		if (event.button.button == SDL_BUTTON_RIGHT)
+		// Ignore if hovering over ImGui element
+		if(io.WantCaptureMouse)
+		{
+			return;
+		}
+		if (event.button.button == m_CatchMouseButton)
 		{
 			if (SDL_GetRelativeMouseMode() == SDL_TRUE)
 			{
@@ -239,7 +262,7 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 
 	if (event.type == SDL_MOUSEMOTION)
 	{
-		ProcessMouseInput(event);
+		ProcessMouseMovement(event);
 	}
 	else
 	{
@@ -255,7 +278,7 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 	}
 }
 
-void Tempus::Application::ProcessMouseInput(SDL_Event event)
+void Tempus::Application::ProcessMouseMovement(SDL_Event event)
 {
 	m_MouseDeltaX = event.motion.xrel;
 	m_MouseDeltaY = -event.motion.yrel;
@@ -310,7 +333,7 @@ void Tempus::Application::AppStart()
 {
 }
 
-void Tempus::Application::Update()
+void Tempus::Application::AppUpdate()
 {
 }
 
