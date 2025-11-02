@@ -36,11 +36,10 @@ Tempus::Application::Application() : CurrentEvent(SDL_Event()), AppName("Applica
 
 	// Temporarily hard coding these values.
 	// Will be read from a config system once set up
+	m_MouseSensitivity = 0.25f;
 #if TPS_PLATFORM_WINDOWS
-	m_MouseSensitivity = 2000.0f;
 	m_CatchMouseButton = SDL_BUTTON_RIGHT;
 #elif TPS_PLATFORM_MAC
-	m_MouseSensitivity = 50.0f;
 	m_CatchMouseButton = SDL_BUTTON_LEFT;
 #endif
 
@@ -317,15 +316,14 @@ void Tempus::Application::UpdateEditorCamera()
 		transComp->Position.z -= m_InputBits.test(4) * (Time::GetUnscaledDeltaTime() * 10.0f);
 		transComp->Position.z += m_InputBits.test(5) * (Time::GetUnscaledDeltaTime() * 10.0f);
 		// Pitch rotation
-		transComp->Rotation.x += m_MouseDeltaY * (Time::GetUnscaledDeltaTime() * m_MouseSensitivity);
+		transComp->Rotation.x += m_MouseDeltaY * m_MouseSensitivity;
 		transComp->Rotation.x = glm::clamp(transComp->Rotation.x, -89.0f, 89.0f);
 		// Yaw Rotation
-		transComp->Rotation.y += m_MouseDeltaX * (Time::GetUnscaledDeltaTime() * m_MouseSensitivity);
+		transComp->Rotation.y += m_MouseDeltaX * m_MouseSensitivity;
 		if (transComp->Rotation.y > 360.0f || transComp->Rotation.y < -360.0f)
 		{
 			transComp->Rotation.y = 0.0f;
 		}
-		
 	}
 }
 
