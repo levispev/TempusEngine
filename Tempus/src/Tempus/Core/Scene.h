@@ -93,6 +93,7 @@ namespace Tempus
         std::string GetEntityName(uint32_t id);
         uint32_t GetEntityCount() const { return m_EntityCount; }
         bool HasEntity(uint32_t id) const;
+        bool HasEntity(Entity e) const;
         const std::string& GetName() const { return m_SceneName; }
         double GetSceneTime() const { return m_SceneTime; }
         

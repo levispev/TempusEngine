@@ -64,10 +64,15 @@ namespace Tempus {
 		}
 	};
 
-	struct UniformBufferObject {
-		glm::mat4 model;
+	struct GlobalUBO
+	{
 		glm::mat4 view;
 		glm::mat4 proj;
+	};
+
+	struct ObjectUBO
+	{
+		glm::mat4 model;
 	};
 
 	class TEMPUS_API Renderer : public IEventListener {
@@ -124,45 +129,7 @@ namespace Tempus {
 			{{ 0.5f,-0.5f, -0.5f}, {1.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}, // 20 bottom-left
 			{{ 0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 1.0f}, {0.0f, 0.0f}}, // 21 top-left
 		    {{-0.5f,-0.5f, -0.5f}, {1.0f, 0.0f, 1.0f}, {1.0f, 1.0f}}, // 22 bottom-right
-		    {{-0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 1.0f}, {1.0f, 0.0f}}, // 23 top-right
-
-			// 2nd cube
-			// Front face 
-			{{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}}, // 24 bottom-left
-			{{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, // 25 top-left
-			{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}}, // 26 bottom-right
-			{{-0.5f, -0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}}, // 27 top-right
-
-			// Back face 
-			{{ 0.5f, -1.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}}, // 28 bottom-left
-			{{ 0.5f, -1.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}}, // 29 top-left
-			{{-0.5f, -1.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, // 30 bottom-right
-			{{-0.5f, -1.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}}, // 31 top-right
-
-			// Left face 
-			{{0.5f, -1.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}, // 32 bottom-left
-			{{0.5f, -1.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}}, // 33 top-left
-			{{0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}}, // 34 bottom-right
-			{{0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}}, // 35 top-right
-
-			// Right face 
-			{{-0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}, // 36 bottom-left
-			{{-0.5f, -0.5f,  0.5f}, {0.0f, 1.0f, 1.0f}, {0.0f, 0.0f}}, // 37 top-left
-			{{-0.5f, -1.5f, -0.5f}, {0.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}, // 38 bottom-right
-			{{-0.5f, -1.5f,  0.5f}, {0.0f, 1.0f, 1.0f}, {1.0f, 0.0f}}, // 39 top-right
-
-			// Top face 
-			{{ 0.5f, -0.5f,  0.5f}, {1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, // 40 bottom-left
-			{{ 0.5f, -1.5f,  0.5f}, {1.0f, 1.0f, 0.0f}, {0.0f, 0.0f}}, // 41 top-left
-			{{-0.5f, -0.5f,  0.5f}, {1.0f, 1.0f, 0.0f}, {1.0f, 1.0f}}, // 42 bottom-right
-			{{-0.5f, -1.5f,  0.5f}, {1.0f, 1.0f, 0.0f}, {1.0f, 0.0f}}, // 43 top-right
-
-			// Bottom face 
-			{{ 0.5f, -1.5f, -0.5f}, {1.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}, // 44 bottom-left
-			{{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 1.0f}, {0.0f, 0.0f}}, // 45 top-left
-			{{-0.5f, -1.5f, -0.5f}, {1.0f, 0.0f, 1.0f}, {1.0f, 1.0f}}, // 46 bottom-right
-			{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 1.0f}, {1.0f, 0.0f}}, // 47 top-right
-			
+		    {{-0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 1.0f}, {1.0f, 0.0f}} // 23 top-right
 		};
 
 		const std::vector<uint16_t> indices = {
@@ -178,21 +145,7 @@ namespace Tempus {
 		    // Top face
 		    16, 17, 18, 18, 17, 19,
 		    // Bottom face
-		    20, 21, 22, 22, 21, 23,
-
-			// 2nd Cube
-			// Front face
-			24, 25, 26,    26, 25, 27,
-			// Back face
-			30, 31, 28,    28, 31, 29,
-			// Left face
-			32, 33, 34,    34, 33, 35,
-			// Right face
-			36, 37, 38,    38, 37, 39,
-			// Top face
-			40, 41, 42,    42, 41, 43,
-			// Bottom face
-			44, 45, 46,    46, 45, 47,
+		    20, 21, 22, 22, 21, 23
 		};
 
 		virtual void OnEvent(const SDL_Event& event) override;
@@ -340,9 +293,16 @@ namespace Tempus {
 		VkBuffer m_IndexBuffer = VK_NULL_HANDLE;
 		VkDeviceMemory m_IndexBufferMemory = VK_NULL_HANDLE;
 
-		std::vector<VkBuffer> m_UniformBuffers;
-		std::vector<VkDeviceMemory> m_UniformBuffersMemory;
-		std::vector<void*> m_UniformBuffersMapped;
+		std::vector<VkBuffer> m_GlobalUniformBuffers;
+		std::vector<VkDeviceMemory> m_GlobalUniformBuffersMemory;
+		std::vector<void*> m_GlobalUniformBuffersMapped;
+
+		VkBuffer m_DynamicUniformBuffer = VK_NULL_HANDLE;
+		VkDeviceMemory m_DynamicUniformBufferMemory = VK_NULL_HANDLE;
+		void* m_DynamicUniformBufferMapped = nullptr;
+
+		size_t m_DynamicAlignment = 0;
+		uint32_t m_MaxObjects = MAX_ENTITIES;
 
 		VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
 		std::vector<VkDescriptorSet> m_DescriptorSets;

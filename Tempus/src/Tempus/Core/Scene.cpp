@@ -97,3 +97,8 @@ bool Tempus::Scene::HasEntity(uint32_t id) const
 {
     return m_Entities.contains(id);
 }
+
+bool Tempus::Scene::HasEntity(Entity e) const
+{
+    return m_Entities.contains(e.GetId());
+}

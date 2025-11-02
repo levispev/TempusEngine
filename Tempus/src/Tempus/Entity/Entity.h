@@ -20,6 +20,8 @@ namespace Tempus
     
     public:
         
+        Entity(const Entity& other);
+        
         uint32_t GetId() const { return m_Id; }
 
         template<ValidComponent T, typename ...Args>

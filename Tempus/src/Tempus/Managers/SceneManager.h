@@ -6,7 +6,7 @@
 #include "Core/IUpdateable.h"
 #include "Core/Scene.h"
 
-#define SCENE_MANAGER Tempus::GApp->GetManager<Tempus::SceneManager>()
+#define SCENE_MANAGER ::Tempus::GApp->GetManager<Tempus::SceneManager>()
 
 namespace Tempus
 {

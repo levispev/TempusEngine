@@ -232,15 +232,13 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 	}
 	camForward = camTransform.GetForwardVector();
 	
-	UniformBufferObject ubo{};
-	ubo.model = glm::rotate(glm::mat4(1.0f), static_cast<float>(Time::GetSceneTime()) * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.model = glm::translate(ubo.model, glm::vec3(0.0f, 0.0f, glm::sin(Time::GetSceneTime())));
-	ubo.view = glm::lookAtLH(camTransform.Position, camTransform.Position + camForward, glm::vec3(0.0f, 0.0f, 1.0f));
+	GlobalUBO globalUbo{};
+	globalUbo.view = glm::lookAtLH(camTransform.Position, camTransform.Position + camForward, glm::vec3(0.0f, 0.0f, 1.0f));
 	
 	switch (camComponent.ProjectionType)
 	{
 	case CamProjectionType::Perspective:
-			ubo.proj = glm::perspectiveLH_ZO(glm::radians(camComponent.Fov), camComponent.AspectRatio, camComponent.NearClip, camComponent.FarClip);
+			globalUbo.proj = glm::perspectiveLH_ZO(glm::radians(camComponent.Fov), camComponent.AspectRatio, camComponent.NearClip, camComponent.FarClip);
 		break;
 		case CamProjectionType::Orthographic:
 			// Ortho size is the total height
@@ -252,14 +250,43 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 			float bottom = -halfHeight;
 			float top = halfHeight;
 		
-			ubo.proj = glm::orthoLH_ZO(left, right, bottom, top, camComponent.NearClip, camComponent.FarClip);
+			globalUbo.proj = glm::orthoLH_ZO(left, right, bottom, top, camComponent.NearClip, camComponent.FarClip);
 		break;
 	}
 
 	// Accounting for inverted Y coordinate between OpenGL and Vulkan
-	ubo.proj[1][1] *= -1;
+	globalUbo.proj[1][1] *= -1;
 
-	memcpy(m_UniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+	memcpy(m_GlobalUniformBuffersMapped[currentImage], &globalUbo, sizeof(globalUbo));
+
+	// Update per instance model UBOs
+	// @TODO In the future I will implement a way to iterate over only the entities that have specific component signatures
+	std::vector<uint32_t> entityIds = activeScene->GetEntityIDs();
+	uint32_t objectIndex = 0;
+
+	for (uint32_t entityId : entityIds)
+	{
+		StaticMeshComponent* meshComp = activeScene->GetComponent<StaticMeshComponent>(entityId);
+		TransformComponent* transComp = activeScene->GetComponent<TransformComponent>(entityId);
+
+		if (!meshComp || !transComp || objectIndex >= m_MaxObjects)
+		{
+			continue;
+		}
+
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, transComp->Position);
+		model = glm::rotate(model, glm::radians(transComp->Rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(transComp->Rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(transComp->Rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+		model = glm::scale(model, transComp->Scale);
+
+		ObjectUBO* objectUbo = (ObjectUBO*)((uint64_t)m_DynamicUniformBufferMapped + (objectIndex * m_DynamicAlignment));
+		objectUbo->model = model;
+
+		objectIndex++;
+	}
+	
 }
 
 void Tempus::Renderer::DrawImGui()
@@ -1007,23 +1034,30 @@ void Tempus::Renderer::CreateRenderPass()
 
 void Tempus::Renderer::CreateDescriptorSetLayout()
 {
-	VkDescriptorSetLayoutBinding uboLayoutBinding{};
-	uboLayoutBinding.binding = 0;
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	VkDescriptorSetLayoutBinding globalUboLayoutBinding{};
+	globalUboLayoutBinding.binding = 0;
+	globalUboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	// Can refer to an array of uniforms. We only have 1
-	uboLayoutBinding.descriptorCount = 1;
+	globalUboLayoutBinding.descriptorCount = 1;
 	// Only accessing this uniform from the vertex shader
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+	globalUboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	globalUboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+
+	// Dynamic per instance UBO
+	VkDescriptorSetLayoutBinding dynamicUboLayoutBinding{};
+	dynamicUboLayoutBinding.binding = 1;
+	dynamicUboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+	dynamicUboLayoutBinding.descriptorCount = 1;
+	dynamicUboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
 	VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-	samplerLayoutBinding.binding = 1;
+	samplerLayoutBinding.binding = 2;
 	samplerLayoutBinding.descriptorCount = 1;
 	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	samplerLayoutBinding.pImmutableSamplers = nullptr; // Optional
 
-	std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
+	std::array<VkDescriptorSetLayoutBinding, 3> bindings = { globalUboLayoutBinding, dynamicUboLayoutBinding, samplerLayoutBinding };
 	VkDescriptorSetLayoutCreateInfo layoutInfo{};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -1372,30 +1406,48 @@ void Tempus::Renderer::CreateIndexBuffer()
 
 void Tempus::Renderer::CreateUniformBuffers()
 {
-	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-
-	m_UniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-	m_UniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
-	m_UniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
+	// Calculate UBO aligment
+	VkPhysicalDeviceProperties deviceProperties;
+	vkGetPhysicalDeviceProperties(m_PhysicalDevice, &deviceProperties);
+	size_t minUboAlignment = deviceProperties.limits.minUniformBufferOffsetAlignment;
+	m_DynamicAlignment = sizeof(ObjectUBO);
+	if (minUboAlignment > 0) 
+	{
+		m_DynamicAlignment = (m_DynamicAlignment + minUboAlignment - 1) & ~(minUboAlignment - 1);
+	}
+	
+	VkDeviceSize globalBufferSize = sizeof(GlobalUBO);
+	m_GlobalUniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+	m_GlobalUniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+	m_GlobalUniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) 
 	{
-		CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			m_UniformBuffers[i], m_UniformBuffersMemory[i]);
+		CreateBuffer(globalBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			m_GlobalUniformBuffers[i], m_GlobalUniformBuffersMemory[i]);
 
-		vkMapMemory(m_Device, m_UniformBuffersMemory[i], 0, bufferSize, 0, &m_UniformBuffersMapped[i]);
+		vkMapMemory(m_Device, m_GlobalUniformBuffersMemory[i], 0, globalBufferSize, 0, &m_GlobalUniformBuffersMapped[i]);
 	}
+
+	// Dynamic UBO (per object model data)
+	VkDeviceSize dynamicBufferSize = m_DynamicAlignment * m_MaxObjects;
+	CreateBuffer(dynamicBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		m_DynamicUniformBuffer, m_DynamicUniformBufferMemory);
+	vkMapMemory(m_Device, m_DynamicUniformBufferMemory, 0, dynamicBufferSize, 0, &m_DynamicUniformBufferMapped);
 }
 
 void Tempus::Renderer::CreateDescriptorPool()
 {
-	std::array<VkDescriptorPoolSize, 2> poolSizes{};
-	// For vertex uniform buffer
+	std::array<VkDescriptorPoolSize, 3> poolSizes{};
+	// For global view / proj uniform buffer
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-	// For texture image sampler
-	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	// For dynamic per object uniform buffer (model matrices)
+	poolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 	poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+	// For texture image sampler
+	poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	poolSizes[2].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 	
 	VkDescriptorPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -1427,24 +1479,30 @@ void Tempus::Renderer::CreateDescriptorSets()
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) 
 	{
-		VkDescriptorBufferInfo bufferInfo{};
-		bufferInfo.buffer = m_UniformBuffers[i];
-		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(UniformBufferObject);
+		VkDescriptorBufferInfo globalBufferInfo{};
+		globalBufferInfo.buffer = m_GlobalUniformBuffers[i];
+		globalBufferInfo.offset = 0;
+		globalBufferInfo.range = sizeof(GlobalUBO);
+
+		VkDescriptorBufferInfo dynamicBufferInfo{};
+		dynamicBufferInfo.buffer = m_DynamicUniformBuffer;
+		dynamicBufferInfo.offset = 0;
+		dynamicBufferInfo.range = sizeof(ObjectUBO);
 
 		VkDescriptorImageInfo imageInfo{};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo.imageView = m_TextureImageView;
 		imageInfo.sampler = m_TextureSampler;
 
-		std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+		std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
+		
 		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrites[0].dstSet = m_DescriptorSets[i];
 		descriptorWrites[0].dstBinding = 0;
 		descriptorWrites[0].dstArrayElement = 0;
 		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		descriptorWrites[0].descriptorCount = 1;
-		descriptorWrites[0].pBufferInfo = &bufferInfo;
+		descriptorWrites[0].pBufferInfo = &globalBufferInfo;
 		descriptorWrites[0].pImageInfo = nullptr; // Optional
 		descriptorWrites[0].pTexelBufferView = nullptr; // Optional
 
@@ -1452,9 +1510,17 @@ void Tempus::Renderer::CreateDescriptorSets()
 		descriptorWrites[1].dstSet = m_DescriptorSets[i];
 		descriptorWrites[1].dstBinding = 1;
 		descriptorWrites[1].dstArrayElement = 0;
-		descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 		descriptorWrites[1].descriptorCount = 1;
-		descriptorWrites[1].pImageInfo = &imageInfo;
+		descriptorWrites[1].pBufferInfo = &dynamicBufferInfo;
+
+		descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[2].dstSet = m_DescriptorSets[i];
+		descriptorWrites[2].dstBinding = 2;
+		descriptorWrites[2].dstArrayElement = 0;
+		descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrites[2].descriptorCount = 1;
+		descriptorWrites[2].pImageInfo = &imageInfo;
 
 		vkUpdateDescriptorSets(m_Device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 	}
@@ -1748,14 +1814,39 @@ void Tempus::Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32
 	scissor.extent = m_SwapChainExtent;
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	VkBuffer vertexBuffers[] = { m_VertexBuffer };
-	VkDeviceSize offsets[] = { 0 };
-	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+	if (Scene* activeScene = SCENE_MANAGER->GetActiveScene())
+	{
+		// @TODO In the future I will implement a way to iterate over only the entities that have a mesh component
+		std::vector<uint32_t> entities = activeScene->GetEntityIDs();
+		uint32_t objectIndex = 0;
 
-	vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+		for (uint32_t entityId : entities)
+		{
+			StaticMeshComponent* meshComp = activeScene->GetComponent<StaticMeshComponent>(entityId);
 
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[m_CurrentFrame], 0, nullptr);
-	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+			if (!meshComp || objectIndex >= m_MaxObjects)
+			{
+				continue;
+			}
+
+			// Calculate dynamic offset for this object
+			uint32_t dynamicOffset = static_cast<uint32_t>(objectIndex * m_DynamicAlignment);
+
+			// Bind descriptor sets with dynamic offset
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+				m_PipelineLayout, 0, 1, &m_DescriptorSets[m_CurrentFrame], 1, &dynamicOffset);
+
+			// Bind vertex/index buffers and draw
+			VkBuffer vertexBuffers[] = { m_VertexBuffer };
+			VkDeviceSize offsets[] = { 0 };
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+			vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+
+			vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+			objectIndex++;
+		}
+	}
+	
 
 	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 
@@ -2436,9 +2527,12 @@ void Tempus::Renderer::Cleanup()
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) 
 	{
-		vkDestroyBuffer(m_Device, m_UniformBuffers[i], nullptr);
-		vkFreeMemory(m_Device, m_UniformBuffersMemory[i], nullptr);
+		vkDestroyBuffer(m_Device, m_GlobalUniformBuffers[i], nullptr);
+		vkFreeMemory(m_Device, m_GlobalUniformBuffersMemory[i], nullptr);
 	}
+
+	vkDestroyBuffer(m_Device, m_DynamicUniformBuffer, nullptr);
+	vkFreeMemory(m_Device, m_DynamicUniformBufferMemory, nullptr);
 
 	vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
 	vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);

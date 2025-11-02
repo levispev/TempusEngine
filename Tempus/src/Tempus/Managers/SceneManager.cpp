@@ -8,6 +8,7 @@
 #include "Components/TransformComponent.h"
 #include "Components/CameraComponent.h"
 #include "Components/EditorDataComponent.h"
+#include "Components/StaticMeshComponent.h"
 
 Tempus::Scene* Tempus::SceneManager::CreateScene(const std::string& sceneName)
 {
@@ -42,10 +43,11 @@ void Tempus::SceneManager::DoTestScene()
     {
         Entity e = m_ActiveScene->AddEntity("Test Entity" + std::to_string(i));
         e.AddComponent<TransformComponent>();
+        e.AddComponent<StaticMeshComponent>();
 
         if(TransformComponent* tc = e.GetComponent<TransformComponent>())
         {
-            
+            tc->Position = glm::vec3(i * 2.0f, 0.0f, 0.0f);
         }
     }
 

@@ -254,7 +254,7 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 			if (SDL_GetRelativeMouseMode() == SDL_TRUE)
 			{
 				// Center mouse position on right click release (may want to save last position instead and warp to there)
-				SDL_WarpMouseInWindow(m_Window->GetNativeWindow(), m_Window->GetWidth() * 0.5f, m_Window->GetHeight() * 0.5f);
+				SDL_WarpMouseInWindow(m_Window->GetNativeWindow(), static_cast<int>(m_Window->GetWidth()) / 2, static_cast<int>(m_Window->GetHeight()) / 2);
 			}
 			SDL_SetRelativeMouseMode(SDL_FALSE);
 		}
