@@ -217,8 +217,51 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 			m_InputBits.reset(m_InputMap[event.key.keysym.scancode]);	
 		}
 	}
-	
-	UpdateEditorCamera();
+	else if (event.type == SDL_MOUSEBUTTONDOWN)
+	{
+		if (event.button.button == SDL_BUTTON_RIGHT)
+		{
+			SDL_SetRelativeMouseMode(SDL_TRUE);
+		}
+	}
+	else if (event.type == SDL_MOUSEBUTTONUP)
+	{
+		if (event.button.button == SDL_BUTTON_RIGHT)
+		{
+			if (SDL_GetRelativeMouseMode() == SDL_TRUE)
+			{
+				// Center mouse position on right click release (may want to save last position instead and warp to there)
+				SDL_WarpMouseInWindow(m_Window->GetNativeWindow(), m_Window->GetWidth() * 0.5f, m_Window->GetHeight() * 0.5f);
+			}
+			SDL_SetRelativeMouseMode(SDL_FALSE);
+		}
+	}
+
+	if (event.type == SDL_MOUSEMOTION)
+	{
+		ProcessMouseInput(event);
+	}
+	else
+	{
+		// 0 out delta if no mouse motion received
+		m_MouseDeltaX = 0;
+		m_MouseDeltaY = 0;
+	}
+
+	// If the mouse is captured, then update the editor camera
+	if (SDL_GetRelativeMouseMode() == SDL_TRUE)
+	{
+		UpdateEditorCamera();
+	}
+}
+
+void Tempus::Application::ProcessMouseInput(SDL_Event event)
+{
+	m_MouseDeltaX = event.motion.xrel;
+	m_MouseDeltaY = -event.motion.yrel;
+
+	m_LastMouseX = event.motion.x;
+	m_LastMouseY = event.motion.y;
 }
 
 void Tempus::Application::UpdateEditorCamera()
@@ -242,25 +285,24 @@ void Tempus::Application::UpdateEditorCamera()
 	if (camComp && transComp)
 	{
 		// Forward / Back Movement
-		transComp->Position += transComp->GetForwardVector() * (m_InputBits.test(0) * (Time::GetDeltaTime() * 10.0f));
-		transComp->Position -= transComp->GetForwardVector() * (m_InputBits.test(2) * (Time::GetDeltaTime() * 10.0f));
+		transComp->Position += transComp->GetForwardVector() * (m_InputBits.test(0) * (Time::GetUnscaledDeltaTime() * 10.0f));
+		transComp->Position -= transComp->GetForwardVector() * (m_InputBits.test(2) * (Time::GetUnscaledDeltaTime() * 10.0f));
 		// Right / Left Movement
-		transComp->Position -= transComp->GetRightVector() * (m_InputBits.test(1) * (Time::GetDeltaTime() * 10.0f));
-		transComp->Position += transComp->GetRightVector() * (m_InputBits.test(3) * (Time::GetDeltaTime() * 10.0f));
+		transComp->Position -= transComp->GetRightVector() * (m_InputBits.test(1) * (Time::GetUnscaledDeltaTime() * 10.0f));
+		transComp->Position += transComp->GetRightVector() * (m_InputBits.test(3) * (Time::GetUnscaledDeltaTime() * 10.0f));
 		// Up / Down Movement
-		transComp->Position.z -= m_InputBits.test(4) * (Time::GetDeltaTime() * 10.0f);
-		transComp->Position.z += m_InputBits.test(5) * (Time::GetDeltaTime() * 10.0f);
+		transComp->Position.z -= m_InputBits.test(4) * (Time::GetUnscaledDeltaTime() * 10.0f);
+		transComp->Position.z += m_InputBits.test(5) * (Time::GetUnscaledDeltaTime() * 10.0f);
 		// Pitch rotation
-		transComp->Rotation.x += m_InputBits.test(6) * (Time::GetDeltaTime() * 100.0f);
-		transComp->Rotation.x -= m_InputBits.test(7) * (Time::GetDeltaTime() * 100.0f);
+		transComp->Rotation.x += m_MouseDeltaY * (Time::GetUnscaledDeltaTime() * m_MouseSensitivity);
 		transComp->Rotation.x = glm::clamp(transComp->Rotation.x, -89.0f, 89.0f);
 		// Yaw Rotation
-		transComp->Rotation.y += m_InputBits.test(8) * (Time::GetDeltaTime() * 100.0f);
-		transComp->Rotation.y -= m_InputBits.test(9) * (Time::GetDeltaTime() * 100.0f);
+		transComp->Rotation.y += m_MouseDeltaX * (Time::GetUnscaledDeltaTime() * m_MouseSensitivity);
 		if (transComp->Rotation.y > 360.0f || transComp->Rotation.y < -360.0f)
 		{
 			transComp->Rotation.y = 0.0f;
 		}
+		
 	}
 }
 

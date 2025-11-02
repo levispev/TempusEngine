@@ -397,6 +397,13 @@ void Tempus::Renderer::DrawImGui()
 		}
 	}
 
+	ImGui::Begin("Mouse");
+		ImGui::Text("X: %u", GApp->GetMouseX());
+		ImGui::Text("Y: %u", GApp->GetMouseY());
+		ImGui::Text("Delta X: %i", GApp->GetMouseDeltaX());
+		ImGui::Text("Delta Y: %i", GApp->GetMouseDeltaY());
+	ImGui::End();
+
 	// -- Demo Window
 	if (bShowDemoWindow)
 	{

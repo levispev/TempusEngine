@@ -24,6 +24,8 @@ namespace Tempus {
 	{
 		std::string windowTitle = std::format("{} ({})", title, TPS_CONFIG_NAME);
 
+		m_Width = static_cast<uint32_t>(w);
+		m_Height = static_cast<uint32_t>(h);
 		m_Window = SDL_CreateWindow(windowTitle.c_str(), x, y, w, h, flags);
 
 		return m_Window;

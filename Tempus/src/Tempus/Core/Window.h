@@ -22,11 +22,17 @@ namespace Tempus {
 
 		SDL_Window* GetNativeWindow() const;
 
+		uint32_t GetWidth() const { return m_Width; }
+		uint32_t GetHeight() const { return m_Height; }
+
 		void SetIcon(const char* path);
 
 	private:
 
 		SDL_Window* m_Window = nullptr;
+
+		uint32_t m_Width = 0;
+		uint32_t m_Height = 0;
 
 		void Cleanup();
 
