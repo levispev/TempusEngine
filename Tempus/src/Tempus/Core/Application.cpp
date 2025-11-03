@@ -174,7 +174,7 @@ void Tempus::Application::CoreUpdate()
 	ManagerUpdate();
 	AppUpdate();
 	m_Renderer->Update();
-	//std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	std::this_thread::sleep_for(std::chrono::milliseconds(5));
 }
 
 void Tempus::Application::ManagerUpdate()
@@ -191,19 +191,29 @@ void Tempus::Application::ManagerUpdate()
 
 void Tempus::Application::EventUpdate()
 {
-	SDL_PollEvent(&CurrentEvent);
-
-	ImGui_ImplSDL2_ProcessEvent(&CurrentEvent);
-
-	if (CurrentEvent.type == SDL_QUIT)
+	m_MouseDeltaX = 0;
+	m_MouseDeltaY = 0;
+	
+	while (SDL_PollEvent(&CurrentEvent))
 	{
-		bShouldQuit = true;
+		ImGui_ImplSDL2_ProcessEvent(&CurrentEvent);
+
+		if (CurrentEvent.type == SDL_QUIT)
+		{
+			bShouldQuit = true;
+		}
+		else 
+		{
+			// @TODO Temporarily manually managing input here
+			ProcessInput(CurrentEvent);
+			EVENT_DISPATCHER->Propagate(CurrentEvent);
+		}
 	}
-	else 
+
+	// If the mouse is captured, then update the editor camera
+	if (SDL_GetRelativeMouseMode() == SDL_TRUE)
 	{
-		// @TODO Temporarily manually managing input here
-		ProcessInput(CurrentEvent);
-		EVENT_DISPATCHER->Propagate(CurrentEvent);
+		UpdateEditorCamera();
 	}
 }
 
@@ -239,6 +249,7 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 		if (event.button.button == m_CatchMouseButton)
 		{
 			SDL_SetRelativeMouseMode(SDL_TRUE);
+			SDL_SetWindowMouseGrab(m_Window->GetNativeWindow(), SDL_TRUE);
 		}
 	}
 	else if (event.type == SDL_MOUSEBUTTONUP)
@@ -256,31 +267,20 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 				SDL_WarpMouseInWindow(m_Window->GetNativeWindow(), static_cast<int>(m_Window->GetWidth()) / 2, static_cast<int>(m_Window->GetHeight()) / 2);
 			}
 			SDL_SetRelativeMouseMode(SDL_FALSE);
+			SDL_SetWindowMouseGrab(m_Window->GetNativeWindow(), SDL_FALSE);
 		}
 	}
-
-	if (event.type == SDL_MOUSEMOTION)
+	else if (event.type == SDL_MOUSEMOTION)
 	{
 		ProcessMouseMovement(event);
 	}
-	else
-	{
-		// 0 out delta if no mouse motion received
-		m_MouseDeltaX = 0;
-		m_MouseDeltaY = 0;
-	}
 
-	// If the mouse is captured, then update the editor camera
-	if (SDL_GetRelativeMouseMode() == SDL_TRUE)
-	{
-		UpdateEditorCamera();
-	}
 }
 
 void Tempus::Application::ProcessMouseMovement(SDL_Event event)
 {
-	m_MouseDeltaX = event.motion.xrel;
-	m_MouseDeltaY = -event.motion.yrel;
+	m_MouseDeltaX += event.motion.xrel;
+	m_MouseDeltaY -= event.motion.yrel;
 
 	m_LastMouseX = event.motion.x;
 	m_LastMouseY = event.motion.y;

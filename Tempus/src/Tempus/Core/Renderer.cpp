@@ -124,7 +124,7 @@ void Tempus::Renderer::OnEvent(const SDL_Event& event)
 
 void Tempus::Renderer::DrawFrame()
 {
-	TPS_SCOPED_TIMER("Hello");
+	TPS_SCOPED_TIMER("Test");
 	// Wait for previous frame to finish drawing
 	vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
 
