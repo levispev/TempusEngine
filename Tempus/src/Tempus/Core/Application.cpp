@@ -174,7 +174,7 @@ void Tempus::Application::CoreUpdate()
 	ManagerUpdate();
 	AppUpdate();
 	m_Renderer->Update();
-	std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	//std::this_thread::sleep_for(std::chrono::milliseconds(5));
 }
 
 void Tempus::Application::ManagerUpdate()
