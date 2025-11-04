@@ -173,8 +173,7 @@ void Tempus::Application::CoreUpdate()
 	EventUpdate();
 	ManagerUpdate();
 	AppUpdate();
-	m_Renderer->Update();
-	//std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	m_Renderer->Update(Time::GetUnscaledDeltaTime());
 }
 
 void Tempus::Application::ManagerUpdate()

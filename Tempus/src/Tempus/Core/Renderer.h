@@ -92,14 +92,14 @@ namespace Tempus {
 		Renderer();
 		virtual ~Renderer();
 
-		void Update();
+		void Update(float DeltaTime);
 
 		bool Init(class Window* window);
 
 		void SetClearColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 		void SetActiveCamera(uint32_t cameraEntityId);
 		bool WorldToScreen(const glm::vec3& worldPos, ImVec2& outScreen) const;
-		void FocusSelectedEntity();
+		void FocusSelectedEntity() { FocusEntity(m_SelectedEntityId); }
 		void FocusEntity(uint32_t entityId);
 
 		const int MAX_FRAMES_IN_FLIGHT = 3;

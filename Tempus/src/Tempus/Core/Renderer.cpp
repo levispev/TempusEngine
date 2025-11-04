@@ -50,7 +50,7 @@ Tempus::Renderer::~Renderer()
 	Cleanup();
 }
 
-void Tempus::Renderer::Update()
+void Tempus::Renderer::Update(float DeltaTime)
 {
 	DrawImGui();
 	DrawFrame();
@@ -139,31 +139,6 @@ bool Tempus::Renderer::WorldToScreen(const glm::vec3 &worldPos, ImVec2 &outScree
     outScreen.y = (ndc.y * 0.5f + 0.5f) * displayHeight;
 
     return true;
-}
-
-void Tempus::Renderer::FocusSelectedEntity()
-{
-	if(Scene* currentScene = SCENE_MANAGER->GetActiveScene())
-	{
-		if(m_SelectedEntityId <= 0 || !currentScene->HasEntity(m_SelectedEntityId))
-		{
-			return;
-		}
-
-		if(TransformComponent* transComp = currentScene->GetComponent<TransformComponent>(m_SelectedEntityId))
-		{
-			// Ensure editor cam exists
-			if(TransformComponent* editorCamTrans = currentScene->GetComponent<TransformComponent>(0))
-			{
-				float maxScale = glm::max(glm::max(transComp->Scale.x, transComp->Scale.y), transComp->Scale.z);
-				editorCamTrans->Position = transComp->Position - (editorCamTrans->GetForwardVector() * (m_EntityFocusDistance * maxScale));
-			}
-		}
-		else
-		{
-			TPS_CORE_WARN("Cannot focus entity without a TransformComponent!");
-		}
-	}
 }
 
 void Tempus::Renderer::FocusEntity(uint32_t entityId)
@@ -540,15 +515,11 @@ void Tempus::Renderer::DrawImGui()
 			if (ImGui::Button("Debug Button"))
 			{
 				SCENE_MANAGER->CreateScene("Debug Scene");
-				// if (Scene* currentScene = SCENE_MANAGER->GetActiveScene())
-				// {
-				// 	currentScene->RemoveEntity(0);
-				// }
 			}
 			ImGui::SameLine();
 			if(ImGui::Button("Focus Selected Entity"))
 			{
-				FocusSelectedEntity();
+				FocusEntity(m_SelectedEntityId);
 			}
 			float timeScale = Time::GetTimeScale();
 			ImGui::SliderFloat("Time Scale", &timeScale, 0.0f, 100.0f);
@@ -559,6 +530,20 @@ void Tempus::Renderer::DrawImGui()
 				ImDrawList* dl = ImGui::GetForegroundDrawList();
 				dl->AddCircleFilled(ImVec2(static_cast<float>(GApp->GetMouseX()), static_cast<float>(GApp->GetMouseY())), 10.0f, IM_COL32(255, 0, 0, 255));
 			}
+
+			static bool bSimulateLag = false;
+			static float lagMs = 0.0f;
+		
+			ImGui::Checkbox("Simulate Lag?", &bSimulateLag);
+			ImGui::SameLine();
+			ImGui::PushItemWidth(150.0f);
+			ImGui::SliderFloat("ms", &lagMs, 0.0f, 200.0f);
+
+			if (bSimulateLag)
+			{
+				std::this_thread::sleep_for(std::chrono::duration<float, std::milli>(lagMs));
+			}
+		
 			ImGui::Separator();
 			ImGui::Text("X: %.4u Y: %.4u", GApp->GetMouseX(), GApp->GetMouseY());
 			ImGui::Text("Delta X: %.2i Delta Y: %.2i", GApp->GetMouseDeltaX(),GApp->GetMouseDeltaY());
@@ -2092,7 +2077,7 @@ void Tempus::Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32
 				m_PipelineLayout, 0, 1, &m_DescriptorSets[m_CurrentFrame], 1, &dynamicOffset);
 
 			// Ensure model is loaded
-			// @TODO Slow. Currenty lazily loading here, will initialize beforehand once assets are setup.
+			// @TODO Slow. Currently lazily loading here, will initialize beforehand once assets are setup.
 			if (!IsModelLoaded(meshComp->modelName))
 			{
 				LoadModel(meshComp->modelName);
