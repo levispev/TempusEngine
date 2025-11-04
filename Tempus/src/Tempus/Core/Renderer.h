@@ -14,6 +14,8 @@
 #include <array>
 #include <bitset>
 #include "imgui/imgui.h"
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
 
 #ifdef TPS_PLATFORM_MAC
 #include "vulkan/vulkan_macos.h"
@@ -26,7 +28,6 @@ namespace Tempus {
 	struct TEMPUS_API Vertex {
 
 		glm::vec3 pos;
-		glm::vec3 color;
 		glm::vec2 texCoord;
 
 		static VkVertexInputBindingDescription GetBindingDescription() 
@@ -40,28 +41,27 @@ namespace Tempus {
 			return bindingDescription;
 		}
 
-		static std::array<VkVertexInputAttributeDescription, 3> GetAttributeDescriptions() 
+		static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions() 
 		{
-			std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
+			std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
 
 			// Vertex position attribute
 			attributeDescriptions[0].binding = 0;
 			attributeDescriptions[0].location = 0;
 			attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 			attributeDescriptions[0].offset = offsetof(Vertex, pos);
-
-			// Vertex color attribute
+			// Vertex tex coord attribute
 			attributeDescriptions[1].binding = 0;
 			attributeDescriptions[1].location = 1;
-			attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-			attributeDescriptions[1].offset = offsetof(Vertex, color);
-
-			attributeDescriptions[2].binding = 0;
-			attributeDescriptions[2].location = 2;
-			attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-			attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
+			attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
+			attributeDescriptions[1].offset = offsetof(Vertex, texCoord);
 
 			return attributeDescriptions;
+		}
+
+		bool operator==(const Vertex& other) const
+		{
+			return pos == other.pos && texCoord == other.texCoord;
 		}
 	};
 
@@ -74,6 +74,15 @@ namespace Tempus {
 	struct ObjectUBO
 	{
 		glm::mat4 model;
+	};
+
+	struct ModelBuffer
+	{
+		VkBuffer vertexBuffer;
+		VkDeviceMemory vertexBufferMemory;
+		VkBuffer indexBuffer;
+		VkDeviceMemory indexBufferMemory;
+		uint32_t indexCount;
 	};
 
 	class TEMPUS_API Renderer : public IEventListener {
@@ -96,61 +105,6 @@ namespace Tempus {
 		const int MAX_FRAMES_IN_FLIGHT = 3;
 
 	private:
-
-		const std::vector<Vertex> vertices = {
-			// 1st cube
-			// Front face 
-			{{ 0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}}, // 0 bottom-left
-			{{ 0.5f, 0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, // 1 top-left
-			{{-0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}}, // 2 bottom-right
-			{{-0.5f, 0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}}, // 3 top-right
-			
-			// Back face 
-			{{ 0.5f,-0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}}, // 4 bottom-left
-			{{ 0.5f,-0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}}, // 5 top-left
-			{{-0.5f,-0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, // 6 bottom-right
-			{{-0.5f,-0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}}, // 7 top-right
-			
-			// Left face 
-			{{0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}, // 8 bottom-left
-			{{0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}}, // 9 top-left
-			{{0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}}, // 10 bottom-right
-			{{0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}}, // 11 top-right
-			
-			// Right face 
-			{{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}, // 12 bottom-left
-			{{-0.5f, 0.5f,  0.5f}, {0.0f, 1.0f, 1.0f}, {0.0f, 0.0f}}, // 13 top-left
-			{{-0.5f,-0.5f, -0.5f}, {0.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}, // 14 bottom-right
-			{{-0.5f,-0.5f,  0.5f}, {0.0f, 1.0f, 1.0f}, {1.0f, 0.0f}}, // 15 top-right
-			
-			// Top face 
-			{{ 0.5f, 0.5f,  0.5f}, {1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, // 16 bottom-left
-			{{ 0.5f,-0.5f,  0.5f}, {1.0f, 1.0f, 0.0f}, {0.0f, 0.0f}}, // 17 top-left
-			{{-0.5f, 0.5f,  0.5f}, {1.0f, 1.0f, 0.0f}, {1.0f, 1.0f}}, // 18 bottom-right
-			{{-0.5f,-0.5f,  0.5f}, {1.0f, 1.0f, 0.0f}, {1.0f, 0.0f}}, // 19 top-right
-			
-			// Bottom face 
-			{{ 0.5f,-0.5f, -0.5f}, {1.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}, // 20 bottom-left
-			{{ 0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 1.0f}, {0.0f, 0.0f}}, // 21 top-left
-		    {{-0.5f,-0.5f, -0.5f}, {1.0f, 0.0f, 1.0f}, {1.0f, 1.0f}}, // 22 bottom-right
-		    {{-0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 1.0f}, {1.0f, 0.0f}} // 23 top-right
-		};
-
-		const std::vector<uint16_t> indices = {
-		    // 1st Cube
-		    // Front face
-		    0, 1, 2,    2, 1, 3,
-		    // Back face
-		    6, 7, 4,    4, 7, 5,
-		    // Left face
-		    8, 9, 10,   10, 9, 11,
-		    // Right face
-		    12, 13, 14, 14, 13, 15,
-		    // Top face
-		    16, 17, 18, 18, 17, 19,
-		    // Bottom face
-		    20, 21, 22, 22, 21, 23
-		};
 
 		virtual void OnEvent(const SDL_Event& event) override;
 
@@ -204,13 +158,17 @@ namespace Tempus {
 		void CreateTextureImage();
 		void CreateTextureImageView();
 		void CreateTextureSampler();
-		void CreateVertexBuffer();
-		void CreateIndexBuffer();
+		void CreateVertexBuffer(VkBuffer& buffer, VkDeviceMemory& bufferMemory, std::vector<Vertex>& vertices);
+		void CreateIndexBuffer(VkBuffer& buffer, VkDeviceMemory& bufferMemory, std::vector<uint32_t>& indices);
 		void CreateUniformBuffers();
 		void CreateDescriptorPool();
 		void CreateDescriptorSets();
 		void CreateCommandBuffer();
 		void CreateSyncObjects();
+
+		// @TODO Right now models are backed by unique file names, this will change once I have assets setup
+		void LoadModel(const std::string& modelName);
+		inline bool IsModelLoaded(const std::string& modelName) const;
 
 		void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
@@ -302,10 +260,7 @@ namespace Tempus {
 		std::vector<VkFence> m_InFlightFences;
 		uint32_t m_CurrentFrame = 0;
 
-		VkBuffer m_VertexBuffer = VK_NULL_HANDLE;
-		VkDeviceMemory m_VertexBufferMemory = VK_NULL_HANDLE;
-		VkBuffer m_IndexBuffer = VK_NULL_HANDLE;
-		VkDeviceMemory m_IndexBufferMemory = VK_NULL_HANDLE;
+		std::unordered_map<std::string, ModelBuffer> m_ModelBufferRegistry;
 
 		std::vector<VkBuffer> m_GlobalUniformBuffers;
 		std::vector<VkDeviceMemory> m_GlobalUniformBuffersMemory;
@@ -422,4 +377,13 @@ namespace Tempus {
 
 	};
 
+}
+
+namespace std {
+	template<> struct hash<Tempus::Vertex> {
+		size_t operator()(Tempus::Vertex const& vertex) const {
+			return ((hash<glm::vec3>()(vertex.pos) ^
+				   (hash<glm::vec2>()(vertex.texCoord) << 1)));
+		}
+	};
 }

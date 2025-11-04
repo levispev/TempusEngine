@@ -41,6 +41,11 @@ namespace Tempus
         {
             return std::filesystem::path(TPS_TEXTURE_DIR);
         }
+
+        static std::filesystem::path ModelDir()
+        {
+            return std::filesystem::path(TPS_MODEL_DIR);
+        }
         
         static std::filesystem::path Shader(const std::string& shaderName)
         {

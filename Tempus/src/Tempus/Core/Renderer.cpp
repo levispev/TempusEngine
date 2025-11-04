@@ -21,6 +21,8 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include <chrono>
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tinyobjloader/tiny_obj_loader.h>
 
 #include "Application.h"
 #include "Scene.h"
@@ -69,7 +71,7 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 	{
 		SetupDebugMessenger();
 	}
-
+	
 	CreateSurface(m_Window);
 	PickPhysicalDevice();
 	CreateLogicalDevice();
@@ -85,8 +87,6 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 	CreateTextureImage();
 	CreateTextureImageView();
 	CreateTextureSampler();
-	CreateVertexBuffer();
-	CreateIndexBuffer();
 	CreateUniformBuffers();
 	CreateDescriptorPool();
 	CreateDescriptorSets();
@@ -94,7 +94,7 @@ bool Tempus::Renderer::Init(Tempus::Window* window)
 	CreateSyncObjects();
 
 	InitImGui();
-
+	
 	return true;
 }
 
@@ -204,7 +204,7 @@ void Tempus::Renderer::OnEvent(const SDL_Event& event)
 
 void Tempus::Renderer::DrawFrame()
 {
-	TPS_SCOPED_TIMER("Test");
+	TPS_SCOPED_TIMER();
 	// Wait for previous frame to finish drawing
 	vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
 
@@ -557,7 +557,7 @@ void Tempus::Renderer::DrawImGui()
 			if(bVisualizeMousePos)
 			{
 				ImDrawList* dl = ImGui::GetForegroundDrawList();
-				dl->AddCircleFilled(ImVec2(GApp->GetMouseX(), GApp->GetMouseY()), 10.0f, IM_COL32(255, 0, 0, 255));
+				dl->AddCircleFilled(ImVec2(static_cast<float>(GApp->GetMouseX()), static_cast<float>(GApp->GetMouseY())), 10.0f, IM_COL32(255, 0, 0, 255));
 			}
 			ImGui::Separator();
 			ImGui::Text("X: %.4u Y: %.4u", GApp->GetMouseX(), GApp->GetMouseY());
@@ -1307,8 +1307,7 @@ void Tempus::Renderer::CreateGraphicsPipeline()
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	viewportState.viewportCount = 1;
 	viewportState.scissorCount = 1;
-
-
+	
 	VkPipelineRasterizationStateCreateInfo rasterizer{};
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	// If this value is set to VK_TRUE, then fragments outside of near and far plane are clamped instead of discarded.
@@ -1318,7 +1317,7 @@ void Tempus::Renderer::CreateGraphicsPipeline()
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	rasterizer.depthBiasEnable = VK_FALSE;
 	rasterizer.depthBiasConstantFactor = 0.0f; // Optional
 	rasterizer.depthBiasClamp = 0.0f; // Optional
@@ -1465,7 +1464,7 @@ void Tempus::Renderer::CreateDepthResources()
 void Tempus::Renderer::CreateTextureImage()
 {
 	int texWidth, texHeight, texChannels;
-	const char* path = "Tempus/res/textures/LogoTex.png";
+	const char* path = "Tempus/res/textures/viking_room.png";
 	stbi_uc* pixels = stbi_load(path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
@@ -1541,7 +1540,7 @@ void Tempus::Renderer::CreateTextureSampler()
 	}
 }
 
-void Tempus::Renderer::CreateVertexBuffer()
+void Tempus::Renderer::CreateVertexBuffer(VkBuffer& buffer, VkDeviceMemory& bufferMemory, std::vector<Vertex>& vertices)
 {
 	VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
@@ -1557,16 +1556,16 @@ void Tempus::Renderer::CreateVertexBuffer()
 	vkUnmapMemory(m_Device, stagingBufferMemory);
 
 	// Vertex buffer for direct drawing that is inaccessible from host
-	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_VertexBuffer, m_VertexBufferMemory);
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, buffer, bufferMemory);
 
 	// Copying data from staging buffer to vertex buffer
-	CopyBuffer(stagingBuffer, m_VertexBuffer, bufferSize);
+	CopyBuffer(stagingBuffer, buffer, bufferSize);
 
 	vkDestroyBuffer(m_Device, stagingBuffer, nullptr);
 	vkFreeMemory(m_Device, stagingBufferMemory, nullptr);
 }
 
-void Tempus::Renderer::CreateIndexBuffer()
+void Tempus::Renderer::CreateIndexBuffer(VkBuffer& buffer, VkDeviceMemory& bufferMemory, std::vector<uint32_t>& indices)
 {
 	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
@@ -1579,9 +1578,9 @@ void Tempus::Renderer::CreateIndexBuffer()
 	memcpy(data, indices.data(), (size_t)bufferSize);
 	vkUnmapMemory(m_Device, stagingBufferMemory);
 
-	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_IndexBuffer, m_IndexBufferMemory);
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, buffer, bufferMemory);
 
-	CopyBuffer(stagingBuffer, m_IndexBuffer, bufferSize);
+	CopyBuffer(stagingBuffer, buffer, bufferSize);
 
 	vkDestroyBuffer(m_Device, stagingBuffer, nullptr);
 	vkFreeMemory(m_Device, stagingBufferMemory, nullptr);
@@ -1747,6 +1746,71 @@ void Tempus::Renderer::CreateSyncObjects()
 			TPS_CORE_CRITICAL("Failed to create semaphores!");
 		}
 	}
+}
+
+void Tempus::Renderer::LoadModel(const std::string& modelName)
+{
+	tinyobj::attrib_t attrib;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+	std::string err;
+
+	std::string modelPath = FileUtils::ModelDir().string() + '/' + modelName;
+	
+	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &err, modelPath.c_str()))
+	{
+		TPS_CORE_CRITICAL("Failed to load model! {0}", err);
+	}
+
+	TPS_CORE_INFO("Model loaded! {0}", modelName);
+
+	std::vector<Vertex> modelVertices;
+	std::vector<uint32_t> modelIndices;
+
+	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+	
+	for (const auto& shape : shapes)
+	{
+		for (const auto& index : shape.mesh.indices)
+		{
+			Vertex vertex{};
+
+			vertex.pos =
+			{
+				attrib.vertices[3 * index.vertex_index + 0],
+				attrib.vertices[3 * index.vertex_index + 1],
+				attrib.vertices[3 * index.vertex_index + 2]
+			};
+
+			vertex.texCoord =
+			{
+				attrib.texcoords[2 * index.texcoord_index + 0],
+				attrib.texcoords[2 * index.texcoord_index + 1]
+			};
+
+			if (!uniqueVertices.contains(vertex))
+			{
+				uniqueVertices[vertex] = static_cast<uint32_t>(modelVertices.size());
+				modelVertices.push_back(vertex);
+			}
+			
+			modelIndices.push_back(uniqueVertices[vertex]);
+		}
+	}
+
+	VkBuffer vertexBuffer = VK_NULL_HANDLE;
+	VkDeviceMemory vertexBufferMemory = VK_NULL_HANDLE;
+	CreateVertexBuffer(vertexBuffer, vertexBufferMemory, modelVertices);
+	VkBuffer indexBuffer = VK_NULL_HANDLE;
+	VkDeviceMemory indexBufferMemory = VK_NULL_HANDLE;
+	CreateIndexBuffer(indexBuffer, indexBufferMemory, modelIndices);
+	
+	m_ModelBufferRegistry[modelName] = ModelBuffer{ vertexBuffer, vertexBufferMemory, indexBuffer, indexBufferMemory, static_cast<uint32_t>(modelIndices.size()) };
+}
+
+bool Tempus::Renderer::IsModelLoaded(const std::string& modelName) const
+{
+	return m_ModelBufferRegistry.contains(modelName);
 }
 
 void Tempus::Renderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
@@ -2027,17 +2091,24 @@ void Tempus::Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
 				m_PipelineLayout, 0, 1, &m_DescriptorSets[m_CurrentFrame], 1, &dynamicOffset);
 
+			// Ensure model is loaded
+			// @TODO Slow. Currenty lazily loading here, will initialize beforehand once assets are setup.
+			if (!IsModelLoaded(meshComp->modelName))
+			{
+				LoadModel(meshComp->modelName);
+			}
+			
+			ModelBuffer modelBuffer = m_ModelBufferRegistry[meshComp->modelName];
 			// Bind vertex/index buffers and draw
-			VkBuffer vertexBuffers[] = { m_VertexBuffer };
+			VkBuffer vertexBuffers[] = { modelBuffer.vertexBuffer };
 			VkDeviceSize offsets[] = { 0 };
 			vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-			vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+			vkCmdBindIndexBuffer(commandBuffer, modelBuffer.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-			vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+			vkCmdDrawIndexed(commandBuffer, modelBuffer.indexCount, 1, 0, 0, 0);
 			objectIndex++;
 		}
 	}
-	
 
 	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 
@@ -2728,10 +2799,14 @@ void Tempus::Renderer::Cleanup()
 	vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
 	vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
 
-	vkDestroyBuffer(m_Device, m_VertexBuffer, nullptr);
-	vkFreeMemory(m_Device, m_VertexBufferMemory, nullptr);
-	vkDestroyBuffer(m_Device, m_IndexBuffer, nullptr);
-	vkFreeMemory(m_Device, m_IndexBufferMemory, nullptr);
+	// Free memory from vertex / index buffers
+	for (auto& [key, modelBuffer] : m_ModelBufferRegistry)
+	{
+		vkDestroyBuffer(m_Device, modelBuffer.vertexBuffer, nullptr);
+		vkFreeMemory(m_Device, modelBuffer.vertexBufferMemory, nullptr);
+		vkDestroyBuffer(m_Device, modelBuffer.indexBuffer, nullptr);
+		vkFreeMemory(m_Device, modelBuffer.indexBufferMemory, nullptr);
+	}
 
 	vkDestroyPipeline(m_Device, m_GraphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);

@@ -11,8 +11,9 @@ namespace Tempus
     {
         DECLARE_COMPONENT(StaticMeshComponent, 2)
         TPS_DEBUG_NAME("Static Mesh Component")
-
-        std::string modelPath = "res/models/bunny.obj";
+    public:
+        
+        std::string modelName = "viking_room.obj";
     };
 }
 

@@ -63,7 +63,8 @@ project "Tempus"
             "TPS_PROJECT_ROOT=\"" .. projectRoot .. "\"",
             "TPS_CONTENT_DIR=\"" .. path.join(projectRoot, "Tempus/res") .. "\"",
             "TPS_SHADER_DIR=\"" .. path.join(projectRoot, "Tempus/res/shaders") .. "\"",
-            "TPS_TEXTURE_DIR=\"" .. path.join(projectRoot, "Tempus/res/textures") .. "\""
+            "TPS_TEXTURE_DIR=\"" .. path.join(projectRoot, "Tempus/res/textures") .. "\"",
+            "TPS_MODEL_DIR=\"" .. path.join(projectRoot, "Tempus/res/models") .. "\""
         }
 
         buildoptions
@@ -116,7 +117,8 @@ project "Tempus"
             "TPS_PROJECT_ROOT=\"" .. projectRoot .. "\"",
             "TPS_CONTENT_DIR=\"" .. path.join(projectRoot, "Tempus/res") .. "\"",
             "TPS_SHADER_DIR=\"" .. path.join(projectRoot, "Tempus/res/shaders") .. "\"",
-            "TPS_TEXTURE_DIR=\"" .. path.join(projectRoot, "Tempus/res/textures") .. "\""
+            "TPS_TEXTURE_DIR=\"" .. path.join(projectRoot, "Tempus/res/textures") .. "\"",
+            "TPS_MODEL_DIR=\"" .. path.join(projectRoot, "Tempus/res/models") .. "\""
         }
 
         postbuildcommands
