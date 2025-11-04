@@ -229,15 +229,6 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 		{
 			m_InputBits.set(m_InputMap[event.key.keysym.scancode]);	
 		}
-	}
-	else if (event.type == SDL_KEYUP)
-	{
-		char key = (char)event.key.keysym.sym;
-		//TPS_CORE_TRACE("UP: {0}", (int)event.key.keysym.scancode);
-		if(m_InputMap.contains(event.key.keysym.scancode))
-		{
-			m_InputBits.reset(m_InputMap[event.key.keysym.scancode]);	
-		}
 
 		// Entity focus bound on F
 		if(event.key.keysym.scancode == SDL_SCANCODE_F)
@@ -246,6 +237,15 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 			{
 				m_Renderer->FocusSelectedEntity();
 			}
+		}
+	}
+	else if (event.type == SDL_KEYUP)
+	{
+		char key = (char)event.key.keysym.sym;
+		//TPS_CORE_TRACE("UP: {0}", (int)event.key.keysym.scancode);
+		if(m_InputMap.contains(event.key.keysym.scancode))
+		{
+			m_InputBits.reset(m_InputMap[event.key.keysym.scancode]);	
 		}
 	}
 	else if (event.type == SDL_MOUSEBUTTONDOWN)

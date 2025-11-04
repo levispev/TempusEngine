@@ -166,6 +166,31 @@ void Tempus::Renderer::FocusSelectedEntity()
 	}
 }
 
+void Tempus::Renderer::FocusEntity(uint32_t entityId)
+{
+	if(Scene* currentScene = SCENE_MANAGER->GetActiveScene())
+	{
+		if(entityId <= 0 || !currentScene->HasEntity(entityId))
+		{
+			return;
+		}
+
+		if(TransformComponent* transComp = currentScene->GetComponent<TransformComponent>(entityId))
+		{
+			// Ensure editor cam exists
+			if(TransformComponent* editorCamTrans = currentScene->GetComponent<TransformComponent>(0))
+			{
+				float maxScale = glm::max(glm::max(transComp->Scale.x, transComp->Scale.y), transComp->Scale.z);
+				editorCamTrans->Position = transComp->Position - (editorCamTrans->GetForwardVector() * (m_EntityFocusDistance * maxScale));
+			}
+		}
+		else
+		{
+			TPS_CORE_WARN("Cannot focus entity without a TransformComponent!");
+		}
+	}
+}
+
 void Tempus::Renderer::OnEvent(const SDL_Event& event)
 {
 	if (event.type == SDL_WINDOWEVENT) 
@@ -496,7 +521,7 @@ void Tempus::Renderer::DrawImGui()
 		{
 			DrawAllEntityNames(currentScene);
 		}
-		if (m_SelectedEntityId >= 1)
+		if (m_bShowSelectedEntity && m_SelectedEntityId >= 1)
 		{
 			DrawEntityName(currentScene, m_SelectedEntityId, IM_COL32(252, 186, 3, 255));
 		}
@@ -623,7 +648,7 @@ void Tempus::Renderer::DrawAllEntityNames(Scene* currentScene)
 	TPS_SCOPED_TIMER();
 	for (uint32_t entityId : currentScene->GetEntityIDs())
 	{
-		if (entityId == m_SelectedEntityId || entityId == 0)
+		if ((entityId == m_SelectedEntityId && m_bShowSelectedEntity) || entityId == 0)
 		{
 			// Avoid double drawing selected entity ID name & skip editor camera
 			continue;
@@ -687,13 +712,18 @@ void Tempus::Renderer::DrawSceneOutlinerTab(class Scene *currentScene)
 		ImGui::EndChild();
 		return;
 	}
-		
+
 	for (const uint32_t entID : entIDs)
 	{
 		std::string label = std::format("[{}] {}", entID, currentScene->GetEntityName(entID));
 		if (ImGui::Selectable(label.c_str(), selectedEntityID == entID))
 		{
 			selectedEntityID = entID;
+			// If we are re-selecting the same entity, focus it
+			if (std::cmp_equal(selectedEntityID, m_SelectedEntityId))
+			{
+				FocusEntity(selectedEntityID);
+			}
 		}
 	}
 
@@ -740,6 +770,9 @@ void Tempus::Renderer::DrawSceneOutlinerTab(class Scene *currentScene)
 	ImGui::Text("Entities: %u", currentScene->GetEntityCount());
 
 	ImGui::Checkbox("Draw Entity Names?", &m_bDrawEntityNames);
+
+	ImGui::SameLine();
+	ImGui::Checkbox("Show Selected Entity?", &m_bShowSelectedEntity);
 
 	bool bCanAddComponents = true;
 	if (EditorDataComponent* editorData = currentScene->GetComponent<EditorDataComponent>(selectedEntityID))

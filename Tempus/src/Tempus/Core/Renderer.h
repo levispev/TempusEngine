@@ -91,6 +91,7 @@ namespace Tempus {
 		void SetActiveCamera(uint32_t cameraEntityId);
 		bool WorldToScreen(const glm::vec3& worldPos, ImVec2& outScreen) const;
 		void FocusSelectedEntity();
+		void FocusEntity(uint32_t entityId);
 
 		const int MAX_FRAMES_IN_FLIGHT = 3;
 
@@ -159,6 +160,7 @@ namespace Tempus {
 		int m_SelectedEntityId = -1;
 		GlobalUBO m_LastGlobalUbo;
 		bool m_bDrawEntityNames = false;
+		bool m_bShowSelectedEntity = true;
 		float m_EntityFocusDistance = 5.0f;
 
 		// Struct for potential queue families
