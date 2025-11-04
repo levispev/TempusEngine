@@ -155,6 +155,7 @@ namespace Tempus {
 		float m_ClearColor[4] = {0.25f, 0.5f, 0.1f, 0.0f};
 
 		uint32_t m_ActiveCamEntityId = 0;
+		int m_SelectedEntityId = -1;
 		GlobalUBO m_LastGlobalUbo;
 		bool m_bDrawEntityNames = false;
 
@@ -259,8 +260,12 @@ namespace Tempus {
 		void DrawSceneInfoTab(class Scene* currentScene);
 		void DrawSceneOutlinerTab(class Scene* currentScene);
 		void DrawProfilerDataWindow(Scene* currentScene);
-		void DrawEntityNames(Scene* currentScene);
+		void DrawAllEntityNames(Scene* currentScene);
+		void DrawEntityName(Scene* currentScene, uint32_t entId, ImU32 color);
 
+		struct ImFont* m_DefaultFont = nullptr;
+		struct ImFont* m_LargeFont = nullptr;
+		
 	private:
 
 		Window* m_Window = nullptr;

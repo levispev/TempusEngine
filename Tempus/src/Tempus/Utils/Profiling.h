@@ -41,8 +41,15 @@ namespace Tempus
                 auto end =  std::chrono::high_resolution_clock::now();
                 double duration = std::chrono::duration<double, std::milli>(end - start).count();
                 // Update the highest saved time
-                highestSavedTime = std::max(highestSavedTime, duration);
-                RegisterProfileData({ functionName, duration, highestSavedTime, label });
+                if (!IsPendingSlowestTimeReset())
+                {
+                    highestSavedTime = std::max(highestSavedTime, duration);
+                }
+                else
+                {
+                    highestSavedTime = duration;
+                }
+                RegisterProfilingData({ functionName, duration, highestSavedTime, label });
             }
 
             ScopedProfiler(const ScopedProfiler&) = delete;
@@ -56,7 +63,7 @@ namespace Tempus
             std::chrono::time_point<std::chrono::steady_clock> start;
         };
 
-        static void RegisterProfileData(ProfilingData data)
+        static void RegisterProfilingData(ProfilingData data)
         {
             s_ProfilingData.emplace_back(data);
         }
@@ -69,10 +76,22 @@ namespace Tempus
         static void FlushProfilingData()
         {
             s_ProfilingData.erase(s_ProfilingData.begin(), s_ProfilingData.end());
+            m_bPendingResetSlowestTimes = false;
+        }
+
+        static void ResetSlowestTimes()
+        {
+            m_bPendingResetSlowestTimes = true;
+        }
+
+        static bool IsPendingSlowestTimeReset()
+        {
+            return m_bPendingResetSlowestTimes;
         }
 
     private:
         static inline std::vector<ProfilingData> s_ProfilingData;
+        static inline bool m_bPendingResetSlowestTimes = false;
     };
     
 }

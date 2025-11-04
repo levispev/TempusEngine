@@ -128,7 +128,7 @@ bool Tempus::Renderer::WorldToScreen(const glm::vec3 &worldPos, ImVec2 &outScree
 	{
 		return false;
 	}
-
+	
     // Get ImGui's display size (actual window size in pixels)
     ImGuiIO& io = ImGui::GetIO();
     float displayWidth = io.DisplaySize.x;
@@ -469,7 +469,11 @@ void Tempus::Renderer::DrawImGui()
 		}
 		if(m_bDrawEntityNames)
 		{
-			DrawEntityNames(currentScene);
+			DrawAllEntityNames(currentScene);
+		}
+		if (m_SelectedEntityId >= 0)
+		{
+			DrawEntityName(currentScene, m_SelectedEntityId, IM_COL32(252, 186, 3, 255));
 		}
 	}
 
@@ -484,11 +488,11 @@ void Tempus::Renderer::DrawImGui()
 		ImGui::Begin("Debug");
 			if (ImGui::Button("Debug Button"))
 			{
-				//SCENE_MANAGER->CreateScene("Debug Scene");
-				if (Scene* currentScene = SCENE_MANAGER->GetActiveScene())
-				{
-					currentScene->RemoveEntity(0);
-				}
+				SCENE_MANAGER->CreateScene("Debug Scene");
+				// if (Scene* currentScene = SCENE_MANAGER->GetActiveScene())
+				// {
+				// 	currentScene->RemoveEntity(0);
+				// }
 			}
 			float timeScale = Time::GetTimeScale();
 			ImGui::SliderFloat("Time Scale", &timeScale, 0.0f, 100.0f);
@@ -524,7 +528,12 @@ void Tempus::Renderer::DrawSceneWindow(class Scene* currentScene)
 
 void Tempus::Renderer::DrawProfilerDataWindow(Scene* currentScene)
 {
+	static bool bResetSlowestTimes = false;
+	
 	ImGui::Begin("Profiler Timings");
+
+		bResetSlowestTimes = ImGui::Button("Reset Slowest Times");
+	
 		std::vector<Profiling::ProfilingData> data = Profiling::GetProfilingData();
 
 		std::ranges::sort(data.begin(), data.end(), [](const auto& a, const auto& b)
@@ -562,50 +571,67 @@ void Tempus::Renderer::DrawProfilerDataWindow(Scene* currentScene)
 
 		// Flush all profiling data after displaying
 		Profiling::FlushProfilingData();
+
+		// This needs to be called after flushing as flushing resets the value
+		if (bResetSlowestTimes)
+		{
+			Profiling::ResetSlowestTimes();
+		}
+	
 	ImGui::End();
 }
 
-void Tempus::Renderer::DrawEntityNames(Scene *currentScene)
+void Tempus::Renderer::DrawAllEntityNames(Scene* currentScene)
 {
 	TPS_SCOPED_TIMER();
-	ImDrawList* dl = ImGui::GetBackgroundDrawList();
-
-	if (Scene* scene = SCENE_MANAGER->GetActiveScene())
+	for (uint32_t entityId : currentScene->GetEntityIDs())
 	{
-		for (uint32_t entityId : scene->GetEntityIDs())
+		if (entityId == m_SelectedEntityId || entityId == 0)
 		{
-			TransformComponent* transComp = scene->GetComponent<TransformComponent>(entityId);
-			if (!transComp) 
-			{
-				continue;
-			}
-
-			ImVec2 spos;
-			glm::vec3 worldPos = transComp->Position;
-			
-			if (WorldToScreen(worldPos, spos))
-			{
-				// Slightly offset so text is more centered
-				spos.x *= 0.95f;
-				const char* text = scene->GetEntityName(entityId).c_str();
-				
-				// Draw outline by rendering text multiple times at slight offsets
-				for (int x = -2; x <= 2; x++)
-				{
-					for (int y = -2; y <= 2; y++)
-					{
-						if (x == 0 && y == 0) 
-						{
-							continue; // Skip center
-						}
-						dl->AddText(ImVec2(spos.x + x, spos.y + y), IM_COL32(0, 0, 0, 255), text);
-					}
-				}
-				
-				// Draw main text on top
-				dl->AddText(spos, IM_COL32(255, 255, 255, 255), text);
-			}
+			// Avoid double drawing selected entity ID name & skip editor camera
+			continue;
 		}
+		
+		if (currentScene->HasComponent<TransformComponent>(entityId))
+		{
+			DrawEntityName(currentScene, entityId, IM_COL32(255, 255, 255, 255));
+		}
+	}
+}
+
+void Tempus::Renderer::DrawEntityName(Scene* currentScene, uint32_t entId, ImU32 color)
+{
+	ImDrawList* dl = ImGui::GetBackgroundDrawList();
+	if (TransformComponent* transComp = currentScene->GetComponent<TransformComponent>(entId)) 
+	{
+		ImGui::PushFont(m_LargeFont);
+		ImVec2 spos;
+		glm::vec3 worldPos = transComp->Position;
+        
+		if (WorldToScreen(worldPos, spos))
+		{
+			spos.x *= 0.95f;
+			std::string entityName = currentScene->GetEntityName(entId);
+			const char* text = entityName.c_str();
+
+			// @TODO Slow. Need to get a font with an outline built in
+			// Draw outline
+			for (int x = -2; x <= 2; x++)
+			{
+				for (int y = -2; y <= 2; y++)
+				{
+					if (x == 0 && y == 0) 
+					{
+						continue; // Skip center
+					}
+					dl->AddText(ImVec2(spos.x + x, spos.y + y), IM_COL32(0, 0, 0, 255), text);
+				}
+			}
+            
+			// Draw main text
+			dl->AddText(spos, color, text);
+		}
+		ImGui::PopFont();
 	}
 }
 
@@ -620,6 +646,7 @@ void Tempus::Renderer::DrawSceneOutlinerTab(class Scene *currentScene)
 	// Check if the scene is empty
 	if (entIDs.empty())
 	{
+		m_SelectedEntityId = -1;
 		ImGui::EndChild();
 		return;
 	}
@@ -641,6 +668,8 @@ void Tempus::Renderer::DrawSceneOutlinerTab(class Scene *currentScene)
 		selectedEntityID = entIDs[0];
 		return;
 	}
+
+	m_SelectedEntityId = static_cast<int>(selectedEntityID);
 
 	// Add entity to scene
 	if(ImGui::Button("Add Entity"))
@@ -665,6 +694,7 @@ void Tempus::Renderer::DrawSceneOutlinerTab(class Scene *currentScene)
 		if (bCanDeleteEntity)
 		{
 			currentScene->RemoveEntity(selectedEntityID);
+			m_SelectedEntityId = -1;
 			return;
 		}
 	}
@@ -1825,6 +1855,15 @@ void Tempus::Renderer::InitImGui()
 	}
 
 	ImGui::CreateContext();
+
+	ImGuiIO& io = ImGui::GetIO();
+	m_DefaultFont = io.Fonts->AddFontDefault();
+	ImFontConfig config;
+	config.SizePixels = 20.0f;
+	m_LargeFont = io.Fonts->AddFontDefault(&config);
+
+	io.Fonts->Build();
+	
 	ImGui::StyleColorsDark();
 
 	if (!m_Window || !m_Window->GetNativeWindow()) 
@@ -1846,7 +1885,6 @@ void Tempus::Renderer::InitImGui()
 	initInfo.RenderPass = m_RenderPass;
 
 	ImGui_ImplVulkan_Init(&initInfo);
-	//ImGui_ImplVulkan_CreateFontsTexture();
 }
 
 void Tempus::Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
