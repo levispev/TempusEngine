@@ -93,6 +93,7 @@ namespace Tempus {
 		static inline std::bitset<10> m_InputBits;
 		int32_t m_LastMouseX = 0, m_LastMouseY = 0;
 		int32_t m_MouseDeltaX = 0, m_MouseDeltaY = 0;
+		int32_t m_SavedMouseX = 0, m_SavedMouseY = 0;
 		float m_MouseSensitivity;
 		uint8_t m_CatchMouseButton;
 		static inline std::map<int, int> m_InputMap = 

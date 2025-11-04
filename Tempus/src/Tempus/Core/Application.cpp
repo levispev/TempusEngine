@@ -202,7 +202,7 @@ void Tempus::Application::EventUpdate()
 		{
 			bShouldQuit = true;
 		}
-		else 
+		else
 		{
 			// @TODO Temporarily manually managing input here
 			ProcessInput(CurrentEvent);
@@ -238,6 +238,15 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 		{
 			m_InputBits.reset(m_InputMap[event.key.keysym.scancode]);	
 		}
+
+		// Entity focus bound on F
+		if(event.key.keysym.scancode == SDL_SCANCODE_F)
+		{
+			if(m_Renderer)
+			{
+				m_Renderer->FocusSelectedEntity();
+			}
+		}
 	}
 	else if (event.type == SDL_MOUSEBUTTONDOWN)
 	{
@@ -250,6 +259,9 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 		{
 			SDL_SetRelativeMouseMode(SDL_TRUE);
 			SDL_SetWindowMouseGrab(m_Window->GetNativeWindow(), SDL_TRUE);
+			// Store current x & y for warp back on release
+			m_SavedMouseX = event.motion.x;
+			m_SavedMouseY = event.motion.y;
 		}
 	}
 	else if (event.type == SDL_MOUSEBUTTONUP)
@@ -263,8 +275,10 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 		{
 			if (SDL_GetRelativeMouseMode() == SDL_TRUE)
 			{
-				// Center mouse position on right click release (may want to save last position instead and warp to there)
-				SDL_WarpMouseInWindow(m_Window->GetNativeWindow(), static_cast<int>(m_Window->GetWidth()) / 2, static_cast<int>(m_Window->GetHeight()) / 2);
+				// Warp cursor back to location on mouse catch
+				SDL_WarpMouseInWindow(m_Window->GetNativeWindow(), m_SavedMouseX, m_SavedMouseY);
+				m_LastMouseX = m_SavedMouseX;
+				m_LastMouseY = m_SavedMouseY;
 			}
 			SDL_SetRelativeMouseMode(SDL_FALSE);
 			SDL_SetWindowMouseGrab(m_Window->GetNativeWindow(), SDL_FALSE);

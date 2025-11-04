@@ -90,6 +90,7 @@ namespace Tempus {
 		void SetClearColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 		void SetActiveCamera(uint32_t cameraEntityId);
 		bool WorldToScreen(const glm::vec3& worldPos, ImVec2& outScreen) const;
+		void FocusSelectedEntity();
 
 		const int MAX_FRAMES_IN_FLIGHT = 3;
 
@@ -158,6 +159,7 @@ namespace Tempus {
 		int m_SelectedEntityId = -1;
 		GlobalUBO m_LastGlobalUbo;
 		bool m_bDrawEntityNames = false;
+		float m_EntityFocusDistance = 5.0f;
 
 		// Struct for potential queue families
 		// Currently only searching for graphics queue family but will add more later

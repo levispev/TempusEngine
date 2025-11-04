@@ -141,6 +141,31 @@ bool Tempus::Renderer::WorldToScreen(const glm::vec3 &worldPos, ImVec2 &outScree
     return true;
 }
 
+void Tempus::Renderer::FocusSelectedEntity()
+{
+	if(Scene* currentScene = SCENE_MANAGER->GetActiveScene())
+	{
+		if(m_SelectedEntityId <= 0 || !currentScene->HasEntity(m_SelectedEntityId))
+		{
+			return;
+		}
+
+		if(TransformComponent* transComp = currentScene->GetComponent<TransformComponent>(m_SelectedEntityId))
+		{
+			// Ensure editor cam exists
+			if(TransformComponent* editorCamTrans = currentScene->GetComponent<TransformComponent>(0))
+			{
+				float maxScale = glm::max(glm::max(transComp->Scale.x, transComp->Scale.y), transComp->Scale.z);
+				editorCamTrans->Position = transComp->Position - (editorCamTrans->GetForwardVector() * (m_EntityFocusDistance * maxScale));
+			}
+		}
+		else
+		{
+			TPS_CORE_WARN("Cannot focus entity without a TransformComponent!");
+		}
+	}
+}
+
 void Tempus::Renderer::OnEvent(const SDL_Event& event)
 {
 	if (event.type == SDL_WINDOWEVENT) 
@@ -471,7 +496,7 @@ void Tempus::Renderer::DrawImGui()
 		{
 			DrawAllEntityNames(currentScene);
 		}
-		if (m_SelectedEntityId >= 0)
+		if (m_SelectedEntityId >= 1)
 		{
 			DrawEntityName(currentScene, m_SelectedEntityId, IM_COL32(252, 186, 3, 255));
 		}
@@ -485,6 +510,7 @@ void Tempus::Renderer::DrawImGui()
 	// -- Debug window
 	if (bShowDebugWindow)
 	{
+		static bool bVisualizeMousePos = false;
 		ImGui::Begin("Debug");
 			if (ImGui::Button("Debug Button"))
 			{
@@ -494,9 +520,20 @@ void Tempus::Renderer::DrawImGui()
 				// 	currentScene->RemoveEntity(0);
 				// }
 			}
+			ImGui::SameLine();
+			if(ImGui::Button("Focus Selected Entity"))
+			{
+				FocusSelectedEntity();
+			}
 			float timeScale = Time::GetTimeScale();
 			ImGui::SliderFloat("Time Scale", &timeScale, 0.0f, 100.0f);
 			Time::SetTimeScale(timeScale);
+			ImGui::Checkbox("Visualize Mouse Pos", &bVisualizeMousePos);
+			if(bVisualizeMousePos)
+			{
+				ImDrawList* dl = ImGui::GetForegroundDrawList();
+				dl->AddCircleFilled(ImVec2(GApp->GetMouseX(), GApp->GetMouseY()), 10.0f, IM_COL32(255, 0, 0, 255));
+			}
 			ImGui::Separator();
 			ImGui::Text("X: %.4u Y: %.4u", GApp->GetMouseX(), GApp->GetMouseY());
 			ImGui::Text("Delta X: %.2i Delta Y: %.2i", GApp->GetMouseDeltaX(),GApp->GetMouseDeltaY());
@@ -637,7 +674,7 @@ void Tempus::Renderer::DrawEntityName(Scene* currentScene, uint32_t entId, ImU32
 
 void Tempus::Renderer::DrawSceneOutlinerTab(class Scene *currentScene)
 {
-	// // --- Scene outliner
+	// --- Scene outliner
 	static uint32_t selectedEntityID = 0;	
     
 	ImGui::BeginChild("EntityList", ImVec2(0, 300), true);
