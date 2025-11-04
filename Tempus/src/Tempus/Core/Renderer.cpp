@@ -111,6 +111,36 @@ void Tempus::Renderer::SetActiveCamera(uint32_t cameraEntityId)
 	m_ActiveCamEntityId = cameraEntityId;
 }
 
+bool Tempus::Renderer::WorldToScreen(const glm::vec3 &worldPos, ImVec2 &outScreen) const
+{
+	// @TODO Technically the m_LastGlobalUbo is 1 frame behind as we render imgui before drawing the scene. Will need to adjust order
+    const glm::mat4 viewProj = m_LastGlobalUbo.proj * m_LastGlobalUbo.view;
+
+    glm::vec4 clip = viewProj * glm::vec4(worldPos, 1.0f);
+    if (clip.w <= 0.0f)
+	{
+		return false;
+	} 
+
+    glm::vec3 ndc = glm::vec3(clip) / clip.w;
+    if (ndc.x < -1.0f || ndc.x > 1.0f || ndc.y < -1.0f || ndc.y > 1.0f || 
+        ndc.z < 0.0f || ndc.z > 1.0f)
+	{
+		return false;
+	}
+
+    // Get ImGui's display size (actual window size in pixels)
+    ImGuiIO& io = ImGui::GetIO();
+    float displayWidth = io.DisplaySize.x;
+    float displayHeight = io.DisplaySize.y;
+
+    // Map NDC to screen using actual display size, not swapchain extent to account for high DPI displays
+    outScreen.x = (ndc.x * 0.5f + 0.5f) * displayWidth;
+    outScreen.y = (ndc.y * 0.5f + 0.5f) * displayHeight;
+
+    return true;
+}
+
 void Tempus::Renderer::OnEvent(const SDL_Event& event)
 {
 	if (event.type == SDL_WINDOWEVENT) 
@@ -256,6 +286,8 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 
 	// Accounting for inverted Y coordinate between OpenGL and Vulkan
 	globalUbo.proj[1][1] *= -1;
+
+	m_LastGlobalUbo = globalUbo;
 
 	memcpy(m_GlobalUniformBuffersMapped[currentImage], &globalUbo, sizeof(globalUbo));
 
@@ -435,6 +467,10 @@ void Tempus::Renderer::DrawImGui()
 		{
 			DrawProfilerDataWindow(currentScene);
 		}
+		if(m_bDrawEntityNames)
+		{
+			DrawEntityNames(currentScene);
+		}
 	}
 
 	// -- Demo Window
@@ -528,7 +564,52 @@ void Tempus::Renderer::DrawProfilerDataWindow(Scene* currentScene)
 		Profiling::FlushProfilingData();
 	ImGui::End();
 }
-void Tempus::Renderer::DrawSceneOutlinerTab(class Scene* currentScene)
+
+void Tempus::Renderer::DrawEntityNames(Scene *currentScene)
+{
+	TPS_SCOPED_TIMER();
+	ImDrawList* dl = ImGui::GetBackgroundDrawList();
+
+	if (Scene* scene = SCENE_MANAGER->GetActiveScene())
+	{
+		for (uint32_t entityId : scene->GetEntityIDs())
+		{
+			TransformComponent* transComp = scene->GetComponent<TransformComponent>(entityId);
+			if (!transComp) 
+			{
+				continue;
+			}
+
+			ImVec2 spos;
+			glm::vec3 worldPos = transComp->Position;
+			
+			if (WorldToScreen(worldPos, spos))
+			{
+				// Slightly offset so text is more centered
+				spos.x *= 0.95f;
+				const char* text = scene->GetEntityName(entityId).c_str();
+				
+				// Draw outline by rendering text multiple times at slight offsets
+				for (int x = -2; x <= 2; x++)
+				{
+					for (int y = -2; y <= 2; y++)
+					{
+						if (x == 0 && y == 0) 
+						{
+							continue; // Skip center
+						}
+						dl->AddText(ImVec2(spos.x + x, spos.y + y), IM_COL32(0, 0, 0, 255), text);
+					}
+				}
+				
+				// Draw main text on top
+				dl->AddText(spos, IM_COL32(255, 255, 255, 255), text);
+			}
+		}
+	}
+}
+
+void Tempus::Renderer::DrawSceneOutlinerTab(class Scene *currentScene)
 {
 	// // --- Scene outliner
 	static uint32_t selectedEntityID = 0;	
@@ -590,6 +671,8 @@ void Tempus::Renderer::DrawSceneOutlinerTab(class Scene* currentScene)
 
 	ImGui::SameLine();
 	ImGui::Text("Entities: %u", currentScene->GetEntityCount());
+
+	ImGui::Checkbox("Draw Entity Names?", &m_bDrawEntityNames);
 
 	bool bCanAddComponents = true;
 	if (EditorDataComponent* editorData = currentScene->GetComponent<EditorDataComponent>(selectedEntityID))

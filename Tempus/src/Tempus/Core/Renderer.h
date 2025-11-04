@@ -13,6 +13,7 @@
 #include "glm/glm.hpp"
 #include <array>
 #include <bitset>
+#include "imgui/imgui.h"
 
 #ifdef TPS_PLATFORM_MAC
 #include "vulkan/vulkan_macos.h"
@@ -88,6 +89,7 @@ namespace Tempus {
 
 		void SetClearColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 		void SetActiveCamera(uint32_t cameraEntityId);
+		bool WorldToScreen(const glm::vec3& worldPos, ImVec2& outScreen) const;
 
 		const int MAX_FRAMES_IN_FLIGHT = 3;
 
@@ -153,6 +155,8 @@ namespace Tempus {
 		float m_ClearColor[4] = {0.25f, 0.5f, 0.1f, 0.0f};
 
 		uint32_t m_ActiveCamEntityId = 0;
+		GlobalUBO m_LastGlobalUbo;
+		bool m_bDrawEntityNames = false;
 
 		// Struct for potential queue families
 		// Currently only searching for graphics queue family but will add more later
@@ -255,6 +259,7 @@ namespace Tempus {
 		void DrawSceneInfoTab(class Scene* currentScene);
 		void DrawSceneOutlinerTab(class Scene* currentScene);
 		void DrawProfilerDataWindow(Scene* currentScene);
+		void DrawEntityNames(Scene* currentScene);
 
 	private:
 
