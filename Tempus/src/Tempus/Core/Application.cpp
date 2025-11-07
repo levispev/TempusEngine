@@ -237,6 +237,10 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 				m_Renderer->FocusSelectedEntity();
 			}
 		}
+		else if (event.key.keysym.scancode == SDL_SCANCODE_LSHIFT)
+		{
+			m_EditorCamSpeed = 50.0f;
+		}
 	}
 	else if (event.type == SDL_KEYUP)
 	{
@@ -245,6 +249,11 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 		if(m_InputMap.contains(event.key.keysym.scancode))
 		{
 			m_InputBits.reset(m_InputMap[event.key.keysym.scancode]);	
+		}
+
+		if (event.key.keysym.scancode == SDL_SCANCODE_LSHIFT)
+		{
+			m_EditorCamSpeed = 10.0f;
 		}
 	}
 	else if (event.type == SDL_MOUSEBUTTONDOWN)
@@ -320,14 +329,14 @@ void Tempus::Application::UpdateEditorCamera()
 	if (camComp && transComp)
 	{
 		// Forward / Back Movement
-		transComp->Position += transComp->GetForwardVector() * (m_InputBits.test(0) * (Time::GetUnscaledDeltaTime() * 10.0f));
-		transComp->Position -= transComp->GetForwardVector() * (m_InputBits.test(2) * (Time::GetUnscaledDeltaTime() * 10.0f));
+		transComp->Position += transComp->GetForwardVector() * (m_InputBits.test(0) * (Time::GetUnscaledDeltaTime() * m_EditorCamSpeed));
+		transComp->Position -= transComp->GetForwardVector() * (m_InputBits.test(2) * (Time::GetUnscaledDeltaTime() * m_EditorCamSpeed));
 		// Right / Left Movement
-		transComp->Position -= transComp->GetRightVector() * (m_InputBits.test(1) * (Time::GetUnscaledDeltaTime() * 10.0f));
-		transComp->Position += transComp->GetRightVector() * (m_InputBits.test(3) * (Time::GetUnscaledDeltaTime() * 10.0f));
+		transComp->Position -= transComp->GetRightVector() * (m_InputBits.test(1) * (Time::GetUnscaledDeltaTime() * m_EditorCamSpeed));
+		transComp->Position += transComp->GetRightVector() * (m_InputBits.test(3) * (Time::GetUnscaledDeltaTime() * m_EditorCamSpeed));
 		// Up / Down Movement
-		transComp->Position.z -= m_InputBits.test(4) * (Time::GetUnscaledDeltaTime() * 10.0f);
-		transComp->Position.z += m_InputBits.test(5) * (Time::GetUnscaledDeltaTime() * 10.0f);
+		transComp->Position.z -= m_InputBits.test(4) * (Time::GetUnscaledDeltaTime() * m_EditorCamSpeed);
+		transComp->Position.z += m_InputBits.test(5) * (Time::GetUnscaledDeltaTime() * m_EditorCamSpeed);
 		// Pitch rotation
 		transComp->Rotation.x += m_MouseDeltaY * m_MouseSensitivity;
 		transComp->Rotation.x = glm::clamp(transComp->Rotation.x, -89.0f, 89.0f);

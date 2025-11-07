@@ -219,14 +219,14 @@ namespace Tempus {
 		// ImGui Draw Functions
 		void DrawImGui();
 		void DrawSceneWindow(class Scene* currentScene);
-		void DrawSceneInfoTab(class Scene* currentScene);
-		void DrawSceneOutlinerTab(class Scene* currentScene);
+		void DrawSceneInfoTab(Scene* currentScene);
+		void DrawSceneOutlinerTab(Scene* currentScene);
 		void DrawProfilerDataWindow(Scene* currentScene);
 		void DrawAllEntityNames(Scene* currentScene);
 		void DrawEntityName(Scene* currentScene, uint32_t entId, ImU32 color);
 
-		struct ImFont* m_DefaultFont = nullptr;
-		struct ImFont* m_LargeFont = nullptr;
+		ImFont* m_DefaultFont = nullptr;
+		ImFont* m_LargeFont = nullptr;
 		
 	private:
 

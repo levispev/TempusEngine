@@ -26,7 +26,8 @@ project "Tempus"
     {
         "%{prj.name}/src/**.h",
         "%{prj.name}/src/**.cpp",
-        "%{prj.name}/vendor/src/**.cpp"
+        "%{prj.name}/vendor/src/**.cpp",
+        "%{prj.name}/vendor/src/**.c"
     }
 
     includedirs

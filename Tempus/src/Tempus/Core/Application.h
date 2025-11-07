@@ -96,6 +96,7 @@ namespace Tempus {
 		int32_t m_SavedMouseX = 0, m_SavedMouseY = 0;
 		float m_MouseSensitivity;
 		uint8_t m_CatchMouseButton;
+		float m_EditorCamSpeed = 10.0f;
 		static inline std::map<int, int> m_InputMap = 
 		{ {SDL_SCANCODE_W, 0}, {SDL_SCANCODE_A, 1}, {SDL_SCANCODE_S, 2}, {SDL_SCANCODE_D, 3},
 		  {SDL_SCANCODE_Q, 4}, {SDL_SCANCODE_E, 5}, {SDL_SCANCODE_UP, 6}, {SDL_SCANCODE_DOWN, 7},

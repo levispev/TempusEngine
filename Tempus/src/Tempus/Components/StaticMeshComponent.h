@@ -13,7 +13,7 @@ namespace Tempus
         TPS_DEBUG_NAME("Static Mesh Component")
     public:
         
-        std::string modelName = "viking_room.obj";
+        std::string modelName = "Sagatha.fbx";
     };
 }
 

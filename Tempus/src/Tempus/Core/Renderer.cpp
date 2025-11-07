@@ -24,6 +24,8 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobjloader/tiny_obj_loader.h>
 
+#include "ufbx/ufbx.h"
+
 #include "Application.h"
 #include "Scene.h"
 #include "Components/CameraComponent.h"
@@ -553,7 +555,7 @@ void Tempus::Renderer::DrawImGui()
 	ImGui::Render();
 }
 
-void Tempus::Renderer::DrawSceneWindow(class Scene* currentScene)
+void Tempus::Renderer::DrawSceneWindow(Scene* currentScene)
 {
 	ImGui::Begin("Scene");
 		if (ImGui::BeginTabBar("SceneTabs"))
@@ -682,7 +684,7 @@ void Tempus::Renderer::DrawEntityName(Scene* currentScene, uint32_t entId, ImU32
 	}
 }
 
-void Tempus::Renderer::DrawSceneOutlinerTab(class Scene *currentScene)
+void Tempus::Renderer::DrawSceneOutlinerTab(Scene *currentScene)
 {
 	// --- Scene outliner
 	static uint32_t selectedEntityID = 0;	
@@ -872,7 +874,7 @@ void Tempus::Renderer::DrawSceneOutlinerTab(class Scene *currentScene)
 	ImGui::EndChild();
 }
 
-void Tempus::Renderer::DrawSceneInfoTab(class Scene* currentScene)
+void Tempus::Renderer::DrawSceneInfoTab(Scene* currentScene)
 {
 	// --- Scene info
 	ImGui::Text("Name: %s", currentScene->GetName().c_str());
@@ -1449,7 +1451,7 @@ void Tempus::Renderer::CreateDepthResources()
 void Tempus::Renderer::CreateTextureImage()
 {
 	int texWidth, texHeight, texChannels;
-	const char* path = "Tempus/res/textures/viking_room.png";
+	const char* path = "Tempus/res/textures/sagatha.tga";
 	stbi_uc* pixels = stbi_load(path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
@@ -1735,62 +1737,75 @@ void Tempus::Renderer::CreateSyncObjects()
 
 void Tempus::Renderer::LoadModel(const std::string& modelName)
 {
-	tinyobj::attrib_t attrib;
-	std::vector<tinyobj::shape_t> shapes;
-	std::vector<tinyobj::material_t> materials;
-	std::string err;
-
 	std::string modelPath = FileUtils::ModelDir().string() + '/' + modelName;
 	
-	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &err, modelPath.c_str()))
-	{
-		TPS_CORE_CRITICAL("Failed to load model! {0}", err);
-	}
+    ufbx_load_opts opts = { };
+	opts.target_axes = ufbx_axes_left_handed_z_up;
+	opts.space_conversion = UFBX_SPACE_CONVERSION_TRANSFORM_ROOT;
+    ufbx_error error;
+    ufbx_scene* scene = ufbx_load_file(modelPath.c_str(), &opts, &error);
 
-	TPS_CORE_INFO("Model loaded! {0}", modelName);
+    if (!scene)
+    {
+        TPS_CORE_ERROR("Failed to load FBX: {}", error.description.data);
+        return;
+    }
 
-	std::vector<Vertex> modelVertices;
-	std::vector<uint32_t> modelIndices;
-
-	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
 	
-	for (const auto& shape : shapes)
+	for (size_t meshIdx = 0; meshIdx < scene->meshes.count; meshIdx++)
 	{
-		for (const auto& index : shape.mesh.indices)
+		ufbx_mesh* mesh = scene->meshes.data[meshIdx];
+		size_t vertexOffset = vertices.size();
+
+		// Iterate over each face and triangulate
+		for (size_t faceIdx = 0; faceIdx < mesh->num_faces; faceIdx++)
 		{
-			Vertex vertex{};
+			ufbx_face face = mesh->faces.data[faceIdx];
 
-			vertex.pos =
-			{
-				attrib.vertices[3 * index.vertex_index + 0],
-				attrib.vertices[3 * index.vertex_index + 1],
-				attrib.vertices[3 * index.vertex_index + 2]
-			};
+			// Buffer to hold triangle indices for this face
+			uint32_t triangleIndices[256 * 3]; // Max triangles per face
+			size_t numTriangles = ufbx_triangulate_face(triangleIndices, 256 * 3, mesh, face);
 
-			vertex.texCoord =
+			// Create vertices for each triangle corner
+			for (size_t i = 0; i < numTriangles * 3; i++)
 			{
-				attrib.texcoords[2 * index.texcoord_index + 0],
-				attrib.texcoords[2 * index.texcoord_index + 1]
-			};
+				uint32_t cornerIndex = triangleIndices[i];
 
-			if (!uniqueVertices.contains(vertex))
-			{
-				uniqueVertices[vertex] = static_cast<uint32_t>(modelVertices.size());
-				modelVertices.push_back(vertex);
+				Vertex vertex{};
+
+				ufbx_vec3 pos = ufbx_get_vertex_vec3(&mesh->vertex_position, cornerIndex);
+				vertex.pos = glm::vec3(pos.x, pos.y, pos.z);
+
+				if (mesh->vertex_uv.exists)
+				{
+					ufbx_vec2 uv = ufbx_get_vertex_vec2(&mesh->vertex_uv, cornerIndex);
+					vertex.texCoord = glm::vec2(uv.x, uv.y);
+				}
+				else
+				{
+					vertex.texCoord = glm::vec2(0.0f, 0.0f);
+				}
+
+				vertices.push_back(vertex);
+				indices.push_back(static_cast<uint32_t>(vertexOffset + vertices.size() - vertexOffset - 1));
 			}
-			
-			modelIndices.push_back(uniqueVertices[vertex]);
 		}
 	}
+	
+    TPS_CORE_INFO("Loaded FBX: {} ({} vertices, {} indices)", modelPath, vertices.size(), indices.size());
 
 	VkBuffer vertexBuffer = VK_NULL_HANDLE;
 	VkDeviceMemory vertexBufferMemory = VK_NULL_HANDLE;
-	CreateVertexBuffer(vertexBuffer, vertexBufferMemory, modelVertices);
+	CreateVertexBuffer(vertexBuffer, vertexBufferMemory, vertices);
 	VkBuffer indexBuffer = VK_NULL_HANDLE;
 	VkDeviceMemory indexBufferMemory = VK_NULL_HANDLE;
-	CreateIndexBuffer(indexBuffer, indexBufferMemory, modelIndices);
+	CreateIndexBuffer(indexBuffer, indexBufferMemory, indices);
 	
-	m_ModelBufferRegistry[modelName] = ModelBuffer{ vertexBuffer, vertexBufferMemory, indexBuffer, indexBufferMemory, static_cast<uint32_t>(modelIndices.size()) };
+	m_ModelBufferRegistry[modelName] = ModelBuffer{ vertexBuffer, vertexBufferMemory, indexBuffer, indexBufferMemory, static_cast<uint32_t>(indices.size()) };
+
+    ufbx_free_scene(scene);
 }
 
 bool Tempus::Renderer::IsModelLoaded(const std::string& modelName) const

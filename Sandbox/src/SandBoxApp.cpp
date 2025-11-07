@@ -27,30 +27,35 @@ public:
 	{
 		if (Tempus::Scene* scene = SCENE_MANAGER->GetActiveScene())
 		{
-			for (int i = 0; i < 3; i++)
-			{
-				for (int j = 0; j < 3; j++)
-				{
-					Tempus::Entity e = scene->AddEntity("Test Entity" + std::to_string(i * 3 + j));
-					e.AddComponent<Tempus::TransformComponent>(glm::vec3(1.0f));
-					e.AddComponent<Tempus::StaticMeshComponent>();
+			// for (int i = 0; i < 3; i++)
+			// {
+			// 	for (int j = 0; j < 3; j++)
+			// 	{
+			// 		Tempus::Entity e = scene->AddEntity("Test Entity" + std::to_string(i * 3 + j));
+			// 		e.AddComponent<Tempus::TransformComponent>(glm::vec3(1.0f));
+			// 		e.AddComponent<Tempus::StaticMeshComponent>();
+			//
+			// 		if(Tempus::TransformComponent* tc = e.GetComponent<Tempus::TransformComponent>())
+			// 		{
+			// 			tc->Position = glm::vec3((i * 2.0f) - 2, (j * 2.0f) - 2, 0.0f);
+			// 		}
+			// 	}	
+			// }
+			//
+			// Tempus::Entity bigCube = scene->AddEntity("Big Cube");
+			// bigCubeId = bigCube.GetId();
+			// bigCube.AddComponent<Tempus::TransformComponent>(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(5.0f));
+			// bigCube.AddComponent<Tempus::StaticMeshComponent>();
+			//
+			// if(Tempus::TransformComponent* tc = bigCube.GetComponent<Tempus::TransformComponent>())
+			// {
+			// 	tc->Position = glm::vec3(20.0f, 0.0f, 0.0f);
+			// }
 
-					if(Tempus::TransformComponent* tc = e.GetComponent<Tempus::TransformComponent>())
-					{
-						tc->Position = glm::vec3((i * 2.0f) - 2, (j * 2.0f) - 2, 0.0f);
-					}
-				}	
-			}
+			Tempus::Entity e = scene->AddEntity("Fbx Test");
+			e.AddComponent<Tempus::TransformComponent>();
+			e.AddComponent<Tempus::StaticMeshComponent>();
 
-			Tempus::Entity bigCube = scene->AddEntity("Big Cube");
-			bigCubeId = bigCube.GetId();
-			bigCube.AddComponent<Tempus::TransformComponent>(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(5.0f));
-			bigCube.AddComponent<Tempus::StaticMeshComponent>();
-
-			if(Tempus::TransformComponent* tc = bigCube.GetComponent<Tempus::TransformComponent>())
-			{
-				tc->Position = glm::vec3(20.0f, 0.0f, 0.0f);
-			}
 		}
 	}
 
