@@ -63,22 +63,22 @@ public:
 	{
 		SDL_Event event = GetCurrentEvent();
 
-		if (Tempus::Scene* scene = SCENE_MANAGER->GetActiveScene())
-		{
-			if (scene->HasEntity(bigCubeId))
-			{
-				if (Tempus::TransformComponent* transComp = scene->GetComponent<Tempus::TransformComponent>(bigCubeId))
-				{
-					transComp->Position.z = sinf((float)Tempus::Time::GetSceneTime()) * 5.0f;
+		// if (Tempus::Scene* scene = SCENE_MANAGER->GetActiveScene())
+		// {
+		// 	if (scene->HasEntity(bigCubeId))
+		// 	{
+		// 		if (Tempus::TransformComponent* transComp = scene->GetComponent<Tempus::TransformComponent>(bigCubeId))
+		// 		{
+		// 			transComp->Position.z = sinf((float)Tempus::Time::GetSceneTime()) * 5.0f;
 
-					transComp->Rotation.z += 20.0f * Tempus::Time::GetDeltaTime();
-					if (transComp->Rotation.z > 360.0f)
-					{
-						transComp->Rotation.z = 0.0f;
-					}
-				}
-			}
-		}
+		// 			transComp->Rotation.z += 20.0f * Tempus::Time::GetDeltaTime();
+		// 			if (transComp->Rotation.z > 360.0f)
+		// 			{
+		// 				transComp->Rotation.z = 0.0f;
+		// 			}
+		// 		}
+		// 	}
+		// }
 		
 		if (event.type == SDL_KEYDOWN)
 		{

@@ -237,10 +237,6 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 				m_Renderer->FocusSelectedEntity();
 			}
 		}
-		else if (event.key.keysym.scancode == SDL_SCANCODE_LSHIFT)
-		{
-			m_EditorCamSpeed = 50.0f;
-		}
 	}
 	else if (event.type == SDL_KEYUP)
 	{
@@ -249,11 +245,6 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 		if(m_InputMap.contains(event.key.keysym.scancode))
 		{
 			m_InputBits.reset(m_InputMap[event.key.keysym.scancode]);	
-		}
-
-		if (event.key.keysym.scancode == SDL_SCANCODE_LSHIFT)
-		{
-			m_EditorCamSpeed = 10.0f;
 		}
 	}
 	else if (event.type == SDL_MOUSEBUTTONDOWN)
@@ -325,6 +316,16 @@ void Tempus::Application::UpdateEditorCamera()
 
 	CameraComponent* camComp = activeScene->GetComponent<CameraComponent>(0);
 	TransformComponent* transComp = activeScene->GetComponent<TransformComponent>(0);
+
+	// Cam speed up
+	if(m_InputBits.test(6))
+	{
+		m_EditorCamSpeed = 500.0f;
+	}
+	else
+	{
+		m_EditorCamSpeed = 30.0f;
+	}
 	
 	if (camComp && transComp)
 	{

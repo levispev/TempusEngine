@@ -90,7 +90,7 @@ namespace Tempus {
 		void ProcessInput(SDL_Event event);
 		void ProcessMouseMovement(SDL_Event event);
 		void UpdateEditorCamera();
-		static inline std::bitset<10> m_InputBits;
+		static inline std::bitset<8> m_InputBits;
 		int32_t m_LastMouseX = 0, m_LastMouseY = 0;
 		int32_t m_MouseDeltaX = 0, m_MouseDeltaY = 0;
 		int32_t m_SavedMouseX = 0, m_SavedMouseY = 0;
@@ -99,8 +99,7 @@ namespace Tempus {
 		float m_EditorCamSpeed = 10.0f;
 		static inline std::map<int, int> m_InputMap = 
 		{ {SDL_SCANCODE_W, 0}, {SDL_SCANCODE_A, 1}, {SDL_SCANCODE_S, 2}, {SDL_SCANCODE_D, 3},
-		  {SDL_SCANCODE_Q, 4}, {SDL_SCANCODE_E, 5}, {SDL_SCANCODE_UP, 6}, {SDL_SCANCODE_DOWN, 7},
-		  {SDL_SCANCODE_RIGHT, 8}, {SDL_SCANCODE_LEFT, 9}
+		  {SDL_SCANCODE_Q, 4}, {SDL_SCANCODE_E, 5}, {SDL_SCANCODE_LSHIFT, 6}
 		};
 
 	private:
