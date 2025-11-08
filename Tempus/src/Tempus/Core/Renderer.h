@@ -29,6 +29,7 @@ namespace Tempus {
 
 		glm::vec3 pos;
 		glm::vec2 texCoord;
+		glm::vec3 normal;
 
 		static VkVertexInputBindingDescription GetBindingDescription() 
 		{
@@ -41,9 +42,9 @@ namespace Tempus {
 			return bindingDescription;
 		}
 
-		static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions() 
+		static std::array<VkVertexInputAttributeDescription, 3> GetAttributeDescriptions() 
 		{
-			std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+			std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
 
 			// Vertex position attribute
 			attributeDescriptions[0].binding = 0;
@@ -55,6 +56,11 @@ namespace Tempus {
 			attributeDescriptions[1].location = 1;
 			attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
 			attributeDescriptions[1].offset = offsetof(Vertex, texCoord);
+			// Normal attribute
+			attributeDescriptions[2].binding = 0;
+			attributeDescriptions[2].location = 2;
+			attributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
+			attributeDescriptions[2].offset = offsetof(Vertex, normal);
 
 			return attributeDescriptions;
 		}
@@ -69,6 +75,7 @@ namespace Tempus {
 	{
 		glm::mat4 view;
 		glm::mat4 proj;
+		glm::vec3 lightPos;
 	};
 
 	struct ObjectUBO
@@ -83,6 +90,14 @@ namespace Tempus {
 		VkBuffer indexBuffer;
 		VkDeviceMemory indexBufferMemory;
 		uint32_t indexCount;
+	};
+
+	struct LightData
+	{
+		glm::vec3 position;
+		float radius;
+		float intensity;
+		glm::vec3 color;
 	};
 
 	class TEMPUS_API Renderer : public IEventListener {
@@ -116,6 +131,8 @@ namespace Tempus {
 		bool m_bDrawEntityNames = false;
 		bool m_bShowSelectedEntity = true;
 		float m_EntityFocusDistance = 5.0f;
+
+		glm::vec3 m_LightDir;
 
 		// Struct for potential queue families
 		// Currently only searching for graphics queue family but will add more later

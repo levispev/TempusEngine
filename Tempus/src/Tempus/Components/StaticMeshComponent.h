@@ -13,7 +13,8 @@ namespace Tempus
         TPS_DEBUG_NAME("Static Mesh Component")
     public:
         
-        std::string modelName = "Sagatha.fbx";
+        std::string ModelName = "grunt.fbx";
+        std::string TextureName = "grunt_diffuse.fbx";
     };
 }
 

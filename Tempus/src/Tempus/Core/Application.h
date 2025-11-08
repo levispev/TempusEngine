@@ -99,7 +99,7 @@ namespace Tempus {
 		float m_EditorCamSpeed = 10.0f;
 		static inline std::map<int, int> m_InputMap = 
 		{ {SDL_SCANCODE_W, 0}, {SDL_SCANCODE_A, 1}, {SDL_SCANCODE_S, 2}, {SDL_SCANCODE_D, 3},
-		  {SDL_SCANCODE_Q, 4}, {SDL_SCANCODE_E, 5}, {SDL_SCANCODE_LSHIFT, 6}
+		  {SDL_SCANCODE_Q, 4}, {SDL_SCANCODE_E, 5}, {SDL_SCANCODE_LSHIFT, 6}, {SDL_SCANCODE_LCTRL, 7}
 		};
 
 	private:

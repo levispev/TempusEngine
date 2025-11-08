@@ -322,6 +322,10 @@ void Tempus::Application::UpdateEditorCamera()
 	{
 		m_EditorCamSpeed = 500.0f;
 	}
+	else if (m_InputBits.test(7))
+	{
+		m_EditorCamSpeed = 10.0f;
+	}
 	else
 	{
 		m_EditorCamSpeed = 30.0f;

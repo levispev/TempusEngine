@@ -30,6 +30,7 @@
 #include "Scene.h"
 #include "Components/CameraComponent.h"
 #include "Components/EditorDataComponent.h"
+#include "Components/LightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/TransformComponent.h"
 #include "Managers/SceneManager.h"
@@ -314,6 +315,20 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 	// Accounting for inverted Y coordinate between OpenGL and Vulkan
 	globalUbo.proj[1][1] *= -1;
 
+	// Temporary hard coded light for testing
+	
+	// Rotate light position around the scene
+	static float lightAngle = 0.0f;
+	float rotationSpeed = 1.0f;
+	lightAngle += Time::GetDeltaTime() * rotationSpeed;
+
+	float radius = 200.0f; // Distance from origin
+	globalUbo.lightPos = glm::vec3(
+		radius * cos(lightAngle),
+		radius * sin(lightAngle),
+		2.0f  // Height above scene
+	);
+	
 	m_LastGlobalUbo = globalUbo;
 
 	memcpy(m_GlobalUniformBuffersMapped[currentImage], &globalUbo, sizeof(globalUbo));
@@ -551,6 +566,12 @@ void Tempus::Renderer::DrawImGui()
 			ImGui::Text("Delta X: %.2i Delta Y: %.2i", GApp->GetMouseDeltaX(),GApp->GetMouseDeltaY());
 		ImGui::End();
 	}
+
+	// Temporary light position rendering
+	ImDrawList* dl = ImGui::GetBackgroundDrawList();
+	ImVec2 outScreen;
+	WorldToScreen(m_LastGlobalUbo.lightPos, outScreen);
+	dl->AddCircleFilled(outScreen, 5.0f, IM_COL32(255, 255, 0, 255), 12);
 	
 	ImGui::Render();
 }
@@ -725,14 +746,16 @@ void Tempus::Renderer::DrawSceneOutlinerTab(Scene *currentScene)
 
 	m_SelectedEntityId = static_cast<int>(selectedEntityID);
 
+	ImGui::Text("Entities: %u", currentScene->GetEntityCount());
+	
 	// Add entity to scene
-	if(ImGui::Button("Add Entity"))
+	if(ImGui::Button("Add##entity"))
 	{
 		currentScene->AddEntity("Debug Entity");
 	}
 	ImGui::SameLine();
 	// Remove entity from scene
-	if(ImGui::Button("Remove Entity"))
+	if(ImGui::Button("Remove"))
 	{
 		// Disallow entity removal if marked NoDelete
 		bool bCanDeleteEntity = true;
@@ -752,9 +775,11 @@ void Tempus::Renderer::DrawSceneOutlinerTab(Scene *currentScene)
 			return;
 		}
 	}
-
 	ImGui::SameLine();
-	ImGui::Text("Entities: %u", currentScene->GetEntityCount());
+	if (ImGui::Button("Duplicate"))
+	{
+		
+	}
 
 	ImGui::Checkbox("Draw Entity Names?", &m_bDrawEntityNames);
 
@@ -792,7 +817,7 @@ void Tempus::Renderer::DrawSceneOutlinerTab(Scene *currentScene)
 			ImGui::EndCombo();
 		}
 		ImGui::SameLine();
-		if(ImGui::Button("Add")) // Add component button
+		if(ImGui::Button("Add##component")) // Add component button
 		{
 			if (selectedComponent.addComponentFunc)
 			{
@@ -868,6 +893,24 @@ void Tempus::Renderer::DrawSceneOutlinerTab(Scene *currentScene)
 					}
 				}
 				ImGui::Text("WIP");
+				ImGui::TreePop();
+			}
+		}
+		if (LightComponent* lightComp = currentScene->GetComponent<LightComponent>(selectedEntityID))
+		{
+			if (ImGui::TreeNodeEx(TempusUtils::GetClassDebugName<LightComponent>(), ImGuiTreeNodeFlags_DefaultOpen))
+			{
+				if (bCanRemoveComponent)
+				{
+					ImGui::SameLine();
+					if (ImGui::Button("Remove"))
+					{
+						currentScene->RemoveComponent<StaticMeshComponent>(selectedEntityID);
+					}
+				}
+				ImGui::SliderFloat("Radius" , &lightComp->Radius, 1.0f, 1000.0f);
+				ImGui::SliderFloat("Intensity" , &lightComp->Intensity, 1.0f, 1000.0f);
+				ImGui::ColorEdit3("Color", &lightComp->Color.r);
 				ImGui::TreePop();
 			}
 		}
@@ -1451,7 +1494,7 @@ void Tempus::Renderer::CreateDepthResources()
 void Tempus::Renderer::CreateTextureImage()
 {
 	int texWidth, texHeight, texChannels;
-	const char* path = "Tempus/res/textures/sagatha.tga";
+	const char* path = "Tempus/res/textures/grunt_diffuse.png";
 	stbi_uc* pixels = stbi_load(path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
@@ -1778,6 +1821,18 @@ void Tempus::Renderer::LoadModel(const std::string& modelName)
 				ufbx_vec3 pos = ufbx_get_vertex_vec3(&mesh->vertex_position, cornerIndex);
 				vertex.pos = glm::vec3(pos.x, pos.y, pos.z);
 
+				// Extract normals
+				if (mesh->vertex_normal.exists)
+				{
+					ufbx_vec3 normal = ufbx_get_vertex_vec3(&mesh->vertex_normal, cornerIndex);
+					vertex.normal = glm::vec3(normal.x, normal.y, normal.z);
+				}
+				else
+				{
+					vertex.normal = glm::vec3(0.0f, 0.0f, 1.0f); // Default up
+				}
+
+				// Extract uv's
 				if (mesh->vertex_uv.exists)
 				{
 					ufbx_vec2 uv = ufbx_get_vertex_vec2(&mesh->vertex_uv, cornerIndex);
@@ -2093,12 +2148,12 @@ void Tempus::Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32
 
 			// Ensure model is loaded
 			// @TODO Slow. Currently lazily loading here, will initialize beforehand once assets are setup.
-			if (!IsModelLoaded(meshComp->modelName))
+			if (!IsModelLoaded(meshComp->ModelName))
 			{
-				LoadModel(meshComp->modelName);
+				LoadModel(meshComp->ModelName);
 			}
 			
-			ModelBuffer modelBuffer = m_ModelBufferRegistry[meshComp->modelName];
+			ModelBuffer modelBuffer = m_ModelBufferRegistry[meshComp->ModelName];
 			// Bind vertex/index buffers and draw
 			VkBuffer vertexBuffers[] = { modelBuffer.vertexBuffer };
 			VkDeviceSize offsets[] = { 0 };
