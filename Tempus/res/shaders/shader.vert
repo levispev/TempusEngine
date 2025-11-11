@@ -3,8 +3,7 @@
 #version 450
 
 layout(binding = 0) uniform GlobalUBO {
-    mat4 view;
-    mat4 proj;
+    mat4 viewProj;
     vec3 lightPos;
 } global;
 
@@ -22,7 +21,7 @@ layout(location = 2) out vec3 fragPosition;
 layout(location = 3) out vec3 fragLightPos;
 
 void main() {
-    gl_Position = global.proj * global.view * object.model * vec4(inPosition, 1.0);
+    gl_Position = global.viewProj * object.model * vec4(inPosition, 1.0);
     fragTexCoord = inTexCoord;
     fragPosition = vec3(object.model * vec4(inPosition, 1.0));
     fragLightPos = global.lightPos;

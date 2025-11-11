@@ -73,8 +73,7 @@ namespace Tempus {
 
 	struct GlobalUBO
 	{
-		glm::mat4 view;
-		glm::mat4 proj;
+		glm::mat4 viewProj;
 		glm::vec3 lightPos;
 	};
 

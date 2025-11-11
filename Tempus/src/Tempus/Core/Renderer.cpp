@@ -117,7 +117,7 @@ void Tempus::Renderer::SetActiveCamera(uint32_t cameraEntityId)
 bool Tempus::Renderer::WorldToScreen(const glm::vec3 &worldPos, ImVec2 &outScreen) const
 {
 	// @TODO Technically the m_LastGlobalUbo is 1 frame behind as we render imgui before drawing the scene. Will need to adjust order
-    const glm::mat4 viewProj = m_LastGlobalUbo.proj * m_LastGlobalUbo.view;
+    const glm::mat4 viewProj = m_LastGlobalUbo.viewProj;
 
     glm::vec4 clip = viewProj * glm::vec4(worldPos, 1.0f);
     if (clip.w <= 0.0f)
@@ -291,12 +291,14 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 	camForward = camTransform.GetForwardVector();
 	
 	GlobalUBO globalUbo{};
-	globalUbo.view = glm::lookAtLH(camTransform.Position, camTransform.Position + camForward, glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::mat4 view;
+	glm::mat4 proj;
+	view = glm::lookAtLH(camTransform.Position, camTransform.Position + camForward, glm::vec3(0.0f, 0.0f, 1.0f));
 	
 	switch (camComponent.ProjectionType)
 	{
 	case CamProjectionType::Perspective:
-			globalUbo.proj = glm::perspectiveLH_ZO(glm::radians(camComponent.Fov), camComponent.AspectRatio, camComponent.NearClip, camComponent.FarClip);
+			proj = glm::perspectiveLH_ZO(glm::radians(camComponent.Fov), camComponent.AspectRatio, camComponent.NearClip, camComponent.FarClip);
 		break;
 		case CamProjectionType::Orthographic:
 			// Ortho size is the total height
@@ -308,12 +310,14 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 			float bottom = -halfHeight;
 			float top = halfHeight;
 		
-			globalUbo.proj = glm::orthoLH_ZO(left, right, bottom, top, camComponent.NearClip, camComponent.FarClip);
+			proj = glm::orthoLH_ZO(left, right, bottom, top, camComponent.NearClip, camComponent.FarClip);
 		break;
 	}
 
 	// Accounting for inverted Y coordinate between OpenGL and Vulkan
-	globalUbo.proj[1][1] *= -1;
+	proj[1][1] *= -1;
+
+	globalUbo.viewProj = proj * view;
 
 	// Temporary hard coded light for testing
 	
@@ -331,7 +335,7 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 	
 	m_LastGlobalUbo = globalUbo;
 
-	memcpy(m_GlobalUniformBuffersMapped[currentImage], &globalUbo, sizeof(globalUbo));
+	std::memcpy(m_GlobalUniformBuffersMapped[currentImage], &globalUbo, sizeof(globalUbo));
 
 	// Update per instance model UBOs
 	// @TODO In the future I will implement a way to iterate over only the entities that have specific component signatures
@@ -854,9 +858,9 @@ void Tempus::Renderer::DrawSceneOutlinerTab(Scene *currentScene)
 						currentScene->RemoveComponent<TransformComponent>(selectedEntityID);
 					}
 				}
-				ImGui::InputFloat3("Position", &transformComp->Position.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
-				ImGui::InputFloat3("Rotation", &transformComp->Rotation.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
-				ImGui::InputFloat3("Scale", &transformComp->Scale.x, "%.3f", ImGuiInputTextFlags_CharsDecimal);
+				ImGui::DragFloat3("Position", &transformComp->Position.x);
+				ImGui::DragFloat3("Rotation", &transformComp->Rotation.x);
+				ImGui::DragFloat3("Scale", &transformComp->Scale.x, 0.1f);
 				ImGui::TreePop();
 			}
 		}
