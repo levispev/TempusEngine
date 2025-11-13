@@ -94,7 +94,6 @@ R"(
 	TPS_CORE_INFO(ss.str());
 	
 	SCENE_MANAGER->CreateScene("Test Scene");
-	//SCENE_MANAGER->DoTestScene();
 
 	AppStart();
 
@@ -320,15 +319,17 @@ void Tempus::Application::UpdateEditorCamera()
 	// Cam speed up
 	if(m_InputBits.test(6))
 	{
-		m_EditorCamSpeed = 500.0f;
+		m_EditorCamSpeed = 1500.0f;
 	}
 	else if (m_InputBits.test(7))
 	{
-		m_EditorCamSpeed = 10.0f;
+		// Cam slow down
+		m_EditorCamSpeed = 30.0f;
 	}
 	else
 	{
-		m_EditorCamSpeed = 30.0f;
+		// Base camera speed
+		m_EditorCamSpeed = 500.0f;
 	}
 	
 	if (camComp && transComp)

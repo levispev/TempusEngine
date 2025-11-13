@@ -10,101 +10,114 @@
 #include "Components/TransformComponent.h"
 #include "Utils/Time.h"
 
-class SandBox : public Tempus::Application
+namespace Tempus
 {
-public:
-
-	SandBox()
+	class SandBox : public Tempus::Application
 	{
-		AppName = "Sandbox";
-	}
+	public:
 
-	~SandBox() override = default;
-
-	uint32_t bigCubeId;
-
-	virtual void AppStart() override
-	{
-		if (Tempus::Scene* scene = SCENE_MANAGER->GetActiveScene())
+		SandBox()
 		{
-			// for (int i = 0; i < 3; i++)
-			// {
-			// 	for (int j = 0; j < 3; j++)
-			// 	{
-			// 		Tempus::Entity e = scene->AddEntity("Test Entity" + std::to_string(i * 3 + j));
-			// 		e.AddComponent<Tempus::TransformComponent>(glm::vec3(1.0f));
-			// 		e.AddComponent<Tempus::StaticMeshComponent>();
-			//
-			// 		if(Tempus::TransformComponent* tc = e.GetComponent<Tempus::TransformComponent>())
-			// 		{
-			// 			tc->Position = glm::vec3((i * 2.0f) - 2, (j * 2.0f) - 2, 0.0f);
-			// 		}
-			// 	}	
-			// }
-			//
-			// Tempus::Entity bigCube = scene->AddEntity("Big Cube");
-			// bigCubeId = bigCube.GetId();
-			// bigCube.AddComponent<Tempus::TransformComponent>(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(5.0f));
-			// bigCube.AddComponent<Tempus::StaticMeshComponent>();
-			//
-			// if(Tempus::TransformComponent* tc = bigCube.GetComponent<Tempus::TransformComponent>())
-			// {
-			// 	tc->Position = glm::vec3(20.0f, 0.0f, 0.0f);
-			// }
-
-			Tempus::Entity e = scene->AddEntity("Fbx Test");
-			e.AddComponent<Tempus::TransformComponent>();
-			e.AddComponent<Tempus::StaticMeshComponent>();
-
+			AppName = "Sandbox";
 		}
-	}
 
-	virtual void AppUpdate() override
-	{
-		SDL_Event event = GetCurrentEvent();
+		~SandBox() override = default;
 
-		// if (Tempus::Scene* scene = SCENE_MANAGER->GetActiveScene())
-		// {
-		// 	if (scene->HasEntity(bigCubeId))
-		// 	{
-		// 		if (Tempus::TransformComponent* transComp = scene->GetComponent<Tempus::TransformComponent>(bigCubeId))
-		// 		{
-		// 			transComp->Position.z = sinf((float)Tempus::Time::GetSceneTime()) * 5.0f;
+		uint32_t bigCubeId;
 
-		// 			transComp->Rotation.z += 20.0f * Tempus::Time::GetDeltaTime();
-		// 			if (transComp->Rotation.z > 360.0f)
-		// 			{
-		// 				transComp->Rotation.z = 0.0f;
-		// 			}
-		// 		}
-		// 	}
-		// }
-		
-		if (event.type == SDL_KEYDOWN)
+		virtual void AppStart() override
 		{
-			if (event.key.keysym.scancode == SDL_SCANCODE_Y)
+			if (Scene* scene = SCENE_MANAGER->GetActiveScene())
 			{
-				TPS_WARN("Color Change!");
+				// for (int i = 0; i < 3; i++)
+				// {
+				// 	for (int j = 0; j < 3; j++)
+				// 	{
+				// 		Entity e = scene->AddEntity("Test Entity" + std::to_string(i * 3 + j));
+				// 		e.AddComponent<TransformComponent>(glm::vec3(1.0f));
+				// 		e.AddComponent<StaticMeshComponent>();
+				//
+				// 		if(TransformComponent* tc = e.GetComponent<TransformComponent>())
+				// 		{
+				// 			tc->Position = glm::vec3((i * 2.0f) - 2, (j * 2.0f) - 2, 0.0f);
+				// 		}
+				// 	}	
+				// }
+				//
+				// Entity bigCube = scene->AddEntity("Big Cube");
+				// bigCubeId = bigCube.GetId();
+				// bigCube.AddComponent<TransformComponent>(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(5.0f));
+				// bigCube.AddComponent<StaticMeshComponent>();
+				//
+				// if(TransformComponent* tc = bigCube.GetComponent<TransformComponent>())
+				// {
+				// 	tc->Position = glm::vec3(20.0f, 0.0f, 0.0f);
+				// }
 
-				std::random_device rd;
-				std::mt19937 gen(rd());
-				std::uniform_int_distribution<> dis(0, 255);
+				Entity e = scene->AddEntity("Fbx Test1");
+				e.AddComponent<TransformComponent>();
+				e.AddComponent<StaticMeshComponent>();
 
-				SetRenderClearColor(dis(gen), dis(gen), dis(gen), 255);
+				Entity e1 = scene->AddEntity("Fbx Test2");
+				e1.AddComponent<TransformComponent>(glm::vec3(-175.0f, 0.0f, 0.0f));
+				e1.AddComponent<StaticMeshComponent>();
 
-				if (Tempus::Scene* scene = SCENE_MANAGER->GetActiveScene())
+				Entity e2 = scene->AddEntity("Fbx Test2");
+				e2.AddComponent<TransformComponent>(glm::vec3(175.0f, 0.0f, 0.0f));
+				e2.AddComponent<StaticMeshComponent>();
+
+			}
+		}
+
+		virtual void AppUpdate() override
+		{
+			SDL_Event event = GetCurrentEvent();
+
+			// if (Scene* scene = SCENE_MANAGER->GetActiveScene())
+			// {
+			// 	if (scene->HasEntity(bigCubeId))
+			// 	{
+			// 		if (TransformComponent* transComp = scene->GetComponent<TransformComponent>(bigCubeId))
+			// 		{
+			// 			transComp->Position.z = sinf((float)Time::GetSceneTime()) * 5.0f;
+
+			// 			transComp->Rotation.z += 20.0f * Time::GetDeltaTime();
+			// 			if (transComp->Rotation.z > 360.0f)
+			// 			{
+			// 				transComp->Rotation.z = 0.0f;
+			// 			}
+			// 		}
+			// 	}
+			// }
+			
+			if (event.type == SDL_KEYDOWN)
+			{
+				if (event.key.keysym.scancode == SDL_SCANCODE_Y)
 				{
-					for (int i = 0; i < 100; i++)
+					TPS_WARN("Color Change!");
+
+					std::random_device rd;
+					std::mt19937 gen(rd());
+					std::uniform_int_distribution<> dis(0, 255);
+
+					SetRenderClearColor(dis(gen), dis(gen), dis(gen), 255);
+
+					if (Scene* scene = SCENE_MANAGER->GetActiveScene())
 					{
-						Tempus::Entity e = scene->AddEntity("Entity_" + std::to_string(i));
-						e.AddComponent<Tempus::TransformComponent>();
+						for (int i = 0; i < 100; i++)
+						{
+							Entity e = scene->AddEntity("Entity_" + std::to_string(i));
+							e.AddComponent<TransformComponent>();
+						}
 					}
 				}
 			}
 		}
-	}
 
-};
+	};
+	
+}
+
 
 Tempus::Application* Tempus::CreateApplication()
 {

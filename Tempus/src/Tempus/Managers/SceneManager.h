@@ -30,9 +30,6 @@ namespace Tempus
         bool IsUpdating() const override { return true; };
         void OnUpdate(float DeltaTime) override;
 
-        // Testing function
-        void DoTestScene();
-
     private:
 
         void CreateEditorCamera();

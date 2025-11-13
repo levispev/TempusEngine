@@ -32,35 +32,16 @@ void Tempus::SceneManager::OnUpdate(float DeltaTime)
     }
 }
 
-void Tempus::SceneManager::DoTestScene()
-{
-    if (!m_ActiveScene)
-    {
-        return;
-    }
-
-    for (int i = 0; i < 5; i++)
-    {
-        Entity e = m_ActiveScene->AddEntity("Test Entity" + std::to_string(i));
-        e.AddComponent<TransformComponent>();
-        e.AddComponent<StaticMeshComponent>();
-
-        if(TransformComponent* tc = e.GetComponent<TransformComponent>())
-        {
-            tc->Position = glm::vec3(i * 2.0f, 0.0f, 0.0f);
-        }
-    }
-
-}
-
 void Tempus::SceneManager::CreateEditorCamera()
 {
     if (m_ActiveScene)
     {
         Entity editorCam = m_ActiveScene->AddEntity("Editor Camera");
-        editorCam.AddComponent<TransformComponent>(glm::vec3(-5.0f, 0.0f, 0.0f));
-        editorCam.AddComponent<CameraComponent>();
-        editorCam.GetComponent<TransformComponent>()->Position = glm::vec3(-5.0f, 0.0f, 0.0f);
+        editorCam.AddComponent<TransformComponent>(glm::vec3(0.0f, -450.0f, 90.0f), glm::vec3(0.0f, 90.0f, 0.0f));
+        if (CameraComponent* camComp = editorCam.AddComponent<CameraComponent>())
+        {
+            camComp->FarClip = 10000.0f;
+        }
         editorCam.AddComponent<EditorDataComponent>(EditorEntityDataFlags::NoDelete | EditorEntityDataFlags::NoSerialize | EditorEntityDataFlags::NoAddComponent | EditorEntityDataFlags::NoRemoveComponent);
     }
 }

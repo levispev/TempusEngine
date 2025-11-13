@@ -17,6 +17,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 
+#include "Utils/Profiling.h"
+
 #ifdef TPS_PLATFORM_MAC
 #include "vulkan/vulkan_macos.h"
 #include "vulkan/vulkan_metal.h"
@@ -129,7 +131,7 @@ namespace Tempus {
 		GlobalUBO m_LastGlobalUbo;
 		bool m_bDrawEntityNames = false;
 		bool m_bShowSelectedEntity = true;
-		float m_EntityFocusDistance = 5.0f;
+		float m_EntityFocusDistance = 200.0f;
 
 		glm::vec3 m_LightDir;
 

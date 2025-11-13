@@ -25,16 +25,15 @@ namespace Tempus
         uint32_t GetId() const { return m_Id; }
 
         template<ValidComponent T, typename ...Args>
-        void AddComponent(Args&&... arguments)
+        T* AddComponent(Args&&... arguments)
         {
             if (m_OwnerScene)
             {
-                m_OwnerScene->AddComponent<T>(m_Id, std::forward<Args>(arguments)...);
+                return m_OwnerScene->AddComponent<T>(m_Id, std::forward<Args>(arguments)...);
             }
-            else
-            {
-                TPS_ERROR("Entity [{0}] does not belong to a scene!", m_Id);
-            }
+            
+            TPS_ERROR("Entity [{0}] does not belong to a scene!", m_Id);
+            return nullptr;
         }
 
         template<ValidComponent T>

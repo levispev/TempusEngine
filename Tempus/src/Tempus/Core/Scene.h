@@ -38,17 +38,16 @@ namespace Tempus
         }
 
         template<typename... Args>
-        void AddComponent(uint32_t entityId, Args&&... args)
+        T* AddComponent(uint32_t entityId, Args&&... args)
         {
             // By this point the Scene class should have already checked for the component existence, checking again for safety
             if (!m_ComponentArray[entityId].has_value())
             {
                 m_ComponentArray[entityId].emplace(std::forward<Args>(args)...);
+                return &m_ComponentArray[entityId].value();
             }
-            else
-            {
-                TPS_ERROR("Component already exists for entity [{0}]!", entityId);
-            }
+            TPS_ERROR("Component already exists for entity [{0}]!", entityId);
+            return nullptr;
         }
 
         void RemoveComponent(uint32_t entityId) override
@@ -98,12 +97,12 @@ namespace Tempus
         double GetSceneTime() const { return m_SceneTime; }
         
         template<ValidComponent T, typename ...Args>
-        void AddComponent(uint32_t id, Args&&... arguments)
+        T* AddComponent(uint32_t id, Args&&... arguments)
         {
             if (!m_Entities.contains(id))
             {
                 TPS_ERROR("Entity of ID [{0}] does not exist!", id);
-                return;
+                return nullptr;
             }
             
             ComponentId componentId = T::GetId();
@@ -112,7 +111,7 @@ namespace Tempus
             if (m_EntityComponents[id].test(componentId))
             {
                 TPS_ERROR("{1} already exists for entity [{0}]!", id, TempusUtils::GetClassDebugName<T>());
-                return;
+                return nullptr;
             }
             
             // Create pool if it doesn't exist
@@ -123,12 +122,13 @@ namespace Tempus
 
             // Add component to the pool
             auto* pool = static_cast<ComponentPool<T>*>(m_ComponentPools[componentId].get());
-            pool->AddComponent(id, std::forward<Args>(arguments)...);
+            T* component = pool->AddComponent(id, std::forward<Args>(arguments)...);
             
             // Update signature
             m_EntityComponents[id].set(componentId);
             
             TPS_TRACE("{2} [{0}] added to entity [{1}]", componentId, m_EntityNames[id], TempusUtils::GetClassDebugName<T>());
+            return component;
         }
         
         std::vector<std::string> GetEntityNames() const

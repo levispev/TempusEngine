@@ -607,7 +607,8 @@ void Tempus::Renderer::DrawProfilerDataWindow(Scene* currentScene)
 	ImGui::Begin("Profiler Timings");
 
 		bResetSlowestTimes = ImGui::Button("Reset Slowest Times");
-	
+
+		// Retrieve profiling data for current frame
 		std::vector<Profiling::ProfilingData> data = Profiling::GetProfilingData();
 
 		std::ranges::sort(data.begin(), data.end(), [](const auto& a, const auto& b)
@@ -876,9 +877,21 @@ void Tempus::Renderer::DrawSceneOutlinerTab(Scene *currentScene)
 						currentScene->RemoveComponent<CameraComponent>(selectedEntityID);
 					}
 				}
-				ImGui::Text("Projection Type: %s", cameraComp->ProjectionType == CamProjectionType::Perspective ? "Perspective" : "Orthographic");
+				//ImGui::Text("Projection Type: %s", cameraComp->ProjectionType == CamProjectionType::Perspective ? "Perspective" : "Orthographic");
+				ImGui::Text("Projection Type:");
+				ImGui::SameLine();
+				std::string projLabel = cameraComp->ProjectionType == CamProjectionType::Perspective ? "Perspective" : "Orthographic";
+				if (ImGui::Button(projLabel.c_str()))
+				{
+					// Swap projection type
+					cameraComp->ProjectionType = static_cast<CamProjectionType>((static_cast<int>(cameraComp->ProjectionType) + 1) % 2);
+				}
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::SetTooltip("Press to toggle projection type");
+				}
 				ImGui::SliderFloat("FOV", &cameraComp->Fov, 1.0f, 179.0f, "%.3f");
-				ImGui::Text("Ortho Size: %.1f", cameraComp->OrthoSize);
+				ImGui::SliderFloat("Ortho Size", &cameraComp->OrthoSize, 1.0f, 1000.0f, "%.1f");
 				ImGui::SliderFloat("Near Clip", &cameraComp->NearClip, 0.1f, 10.0f, "%.1f");
 				ImGui::SliderFloat("Far Clip", &cameraComp->FarClip, 10.0f, 10000.0f, "%.1f");
 				ImGui::TreePop();
@@ -1622,15 +1635,8 @@ void Tempus::Renderer::CreateIndexBuffer(VkBuffer& buffer, VkDeviceMemory& buffe
 
 void Tempus::Renderer::CreateUniformBuffers()
 {
-	// Calculate UBO aligment
 	VkPhysicalDeviceProperties deviceProperties;
 	vkGetPhysicalDeviceProperties(m_PhysicalDevice, &deviceProperties);
-	size_t minUboAlignment = deviceProperties.limits.minUniformBufferOffsetAlignment;
-	m_DynamicAlignment = sizeof(ObjectUBO);
-	if (minUboAlignment > 0) 
-	{
-		m_DynamicAlignment = (m_DynamicAlignment + minUboAlignment - 1) & ~(minUboAlignment - 1);
-	}
 	
 	VkDeviceSize globalBufferSize = sizeof(GlobalUBO);
 	m_GlobalUniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
@@ -1646,6 +1652,14 @@ void Tempus::Renderer::CreateUniformBuffers()
 	}
 
 	// Dynamic UBO (per object model data)
+	// Calculate UBO aligment
+	size_t minUboAlignment = deviceProperties.limits.minUniformBufferOffsetAlignment;
+	m_DynamicAlignment = sizeof(ObjectUBO);
+	if (minUboAlignment > 0) 
+	{
+		m_DynamicAlignment = (m_DynamicAlignment + minUboAlignment - 1) & ~(minUboAlignment - 1);
+	}
+	
 	VkDeviceSize dynamicBufferSize = m_DynamicAlignment * m_MaxObjects;
 	CreateBuffer(dynamicBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 		m_DynamicUniformBuffer, m_DynamicUniformBufferMemory);
