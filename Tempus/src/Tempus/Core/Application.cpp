@@ -236,6 +236,12 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 				m_Renderer->FocusSelectedEntity();
 			}
 		}
+
+		if (event.key.keysym.scancode == SDL_SCANCODE_F11)
+		{
+			m_Window->SetFullscreen(!m_Window->IsFullscreen());
+		}
+		
 	}
 	else if (event.type == SDL_KEYUP)
 	{

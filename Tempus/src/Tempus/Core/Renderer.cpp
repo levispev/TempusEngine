@@ -175,7 +175,7 @@ void Tempus::Renderer::OnEvent(const SDL_Event& event)
 	{
 		if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) 
 		{
-			TPS_CORE_WARN("Window resized! [{}x{}]", event.window.data1, event.window.data2);
+			TPS_CORE_INFO("Window resized! [{}x{}]", event.window.data1, event.window.data2);
 		}
 	}
 }
@@ -193,7 +193,6 @@ void Tempus::Renderer::DrawFrame()
 	// Check if swapchain has been invalidated
 	if (result == VK_ERROR_OUT_OF_DATE_KHR)
 	{
-		TPS_CORE_WARN("Swapchain out of date!");
 		RecreateSwapChain();
 		return;
 	}
@@ -247,7 +246,6 @@ void Tempus::Renderer::DrawFrame()
 
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_FramebufferResized)
 	{
-		TPS_CORE_WARN("Swapchain out of date!");
 		m_FramebufferResized = false;
 		RecreateSwapChain();
 	}
@@ -424,7 +422,11 @@ void Tempus::Renderer::DrawImGui()
 
 		if (ImGui::BeginMenu("View")) 
 		{
-			if (ImGui::MenuItem("Fullscreen")) {  }
+			bool bIsFullScreen = m_Window->IsFullscreen();
+			if (ImGui::MenuItem("Fullscreen", "F11", bIsFullScreen)) 
+			{
+				m_Window->SetFullscreen(!bIsFullScreen);
+			}
 			ImGui::EndMenu();
 		}
 
@@ -877,7 +879,6 @@ void Tempus::Renderer::DrawSceneOutlinerTab(Scene *currentScene)
 						currentScene->RemoveComponent<CameraComponent>(selectedEntityID);
 					}
 				}
-				//ImGui::Text("Projection Type: %s", cameraComp->ProjectionType == CamProjectionType::Perspective ? "Perspective" : "Orthographic");
 				ImGui::Text("Projection Type:");
 				ImGui::SameLine();
 				std::string projLabel = cameraComp->ProjectionType == CamProjectionType::Perspective ? "Perspective" : "Orthographic";
@@ -2020,6 +2021,15 @@ VkImageView Tempus::Renderer::CreateImageView(VkImage image, VkFormat format, Vk
 
 void Tempus::Renderer::RecreateSwapChain()
 {
+	SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(m_PhysicalDevice);
+	VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities);
+
+	if (extent.width == 0 || extent.height == 0)
+	{
+		m_FramebufferResized = false;
+		return;
+	}
+	
 	TPS_CORE_INFO("Recreating swapchain!");
 
 	vkDeviceWaitIdle(m_Device);

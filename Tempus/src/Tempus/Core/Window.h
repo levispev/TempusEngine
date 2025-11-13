@@ -26,6 +26,8 @@ namespace Tempus {
 		uint32_t GetHeight() const { return m_Height; }
 
 		void SetIcon(const char* path);
+		void SetFullscreen(bool bEnabled);
+		inline bool IsFullscreen() const;
 
 	private:
 
