@@ -28,11 +28,12 @@ namespace Tempus {
 		virtual ~Application();
 		void Run();
 
-		static void RequestExit()
+		static void RequestExit(const std::string& reason = "None given")
 		{
 			SDL_Event quitEvent;
 			quitEvent.type = SDL_QUIT;
 			SDL_PushEvent(&quitEvent);
+			TPS_INFO("Exit requested: {0}", reason);
 		}
 
 		template<typename T>

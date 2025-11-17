@@ -199,13 +199,13 @@ void Tempus::Application::EventUpdate()
 		if (CurrentEvent.type == SDL_QUIT)
 		{
 			bShouldQuit = true;
+			return;
 		}
-		else
-		{
-			// @TODO Temporarily manually managing input here
-			ProcessInput(CurrentEvent);
-			EVENT_DISPATCHER->Propagate(CurrentEvent);
-		}
+
+		// @TODO Temporarily manually managing input here
+		ProcessInput(CurrentEvent);
+		EVENT_DISPATCHER->Propagate(CurrentEvent);
+		
 	}
 
 	// If the mouse is captured, then update the editor camera
@@ -228,20 +228,24 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 			m_InputBits.set(m_InputMap[event.key.keysym.scancode]);	
 		}
 
-		// Entity focus bound on F
-		if(event.key.keysym.scancode == SDL_SCANCODE_F)
+		switch (event.key.keysym.scancode)
 		{
+		// Entity focus bound on F
+		case SDL_SCANCODE_F:
 			if(m_Renderer)
 			{
 				m_Renderer->FocusSelectedEntity();
 			}
+			break;
+		case SDL_SCANCODE_F11:
+			if (m_Window)
+			{
+				m_Window->SetFullscreen(!m_Window->IsFullscreen());
+			}
+			break;
+		default:
+			break;
 		}
-
-		if (event.key.keysym.scancode == SDL_SCANCODE_F11)
-		{
-			m_Window->SetFullscreen(!m_Window->IsFullscreen());
-		}
-		
 	}
 	else if (event.type == SDL_KEYUP)
 	{
