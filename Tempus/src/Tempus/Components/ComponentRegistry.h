@@ -84,6 +84,12 @@ namespace TPS_Private
             };
             
             RegisteredComponents.emplace_back(data);
+
+            std::sort(RegisteredComponents.begin(), RegisteredComponents.end(), [](const Tempus::ComponentTypeInfo& a, const Tempus::ComponentTypeInfo& b)
+            {
+                return a.id < b.id;
+            });
+            
             ComponentMap[data.id] = data;
 
             return metadata;

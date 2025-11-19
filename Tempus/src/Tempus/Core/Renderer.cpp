@@ -780,6 +780,10 @@ void Tempus::Renderer::DrawShaderReloadButton()
 		ImGui::PopStyleColor();
 		ImGui::EndTooltip();
 	}
+	else if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("Shortcut: F6");
+	}
 }
 
 void Tempus::Renderer::DrawSceneOutlinerTab(Scene *currentScene)

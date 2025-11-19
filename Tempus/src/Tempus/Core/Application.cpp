@@ -191,6 +191,7 @@ void Tempus::Application::EventUpdate()
 {
 	m_MouseDeltaX = 0;
 	m_MouseDeltaY = 0;
+	m_SavedMouseScrolls = 0;
 	
 	while (SDL_PollEvent(&CurrentEvent))
 	{
@@ -208,11 +209,8 @@ void Tempus::Application::EventUpdate()
 		
 	}
 
-	// If the mouse is captured, then update the editor camera
-	if (SDL_GetRelativeMouseMode() == SDL_TRUE)
-	{
-		UpdateEditorCamera();
-	}
+	UpdateEditorCamera();
+	
 }
 
 void Tempus::Application::ProcessInput(SDL_Event event)
@@ -296,7 +294,14 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 	{
 		ProcessMouseMovement(event);
 	}
-
+	else if (event.type == SDL_MOUSEWHEEL)
+	{
+		if (io.WantCaptureMouse)
+		{
+			return;
+		}
+		m_SavedMouseScrolls += event.wheel.y;
+	}
 }
 
 void Tempus::Application::ProcessMouseMovement(SDL_Event event)
@@ -310,8 +315,6 @@ void Tempus::Application::ProcessMouseMovement(SDL_Event event)
 
 void Tempus::Application::UpdateEditorCamera()
 {
-	TPS_SCOPED_TIMER();
-	
 	Scene* activeScene = SCENE_MANAGER->GetActiveScene();
 	if (!activeScene)
 	{
@@ -344,23 +347,30 @@ void Tempus::Application::UpdateEditorCamera()
 	
 	if (camComp && transComp)
 	{
-		// Forward / Back Movement
-		transComp->Position += transComp->GetForwardVector() * (m_InputBits.test(0) * (Time::GetUnscaledDeltaTime() * m_EditorCamSpeed));
-		transComp->Position -= transComp->GetForwardVector() * (m_InputBits.test(2) * (Time::GetUnscaledDeltaTime() * m_EditorCamSpeed));
-		// Right / Left Movement
-		transComp->Position -= transComp->GetRightVector() * (m_InputBits.test(1) * (Time::GetUnscaledDeltaTime() * m_EditorCamSpeed));
-		transComp->Position += transComp->GetRightVector() * (m_InputBits.test(3) * (Time::GetUnscaledDeltaTime() * m_EditorCamSpeed));
-		// Up / Down Movement
-		transComp->Position.z -= m_InputBits.test(4) * (Time::GetUnscaledDeltaTime() * m_EditorCamSpeed);
-		transComp->Position.z += m_InputBits.test(5) * (Time::GetUnscaledDeltaTime() * m_EditorCamSpeed);
-		// Pitch rotation
-		transComp->Rotation.x += m_MouseDeltaY * m_MouseSensitivity;
-		transComp->Rotation.x = glm::clamp(transComp->Rotation.x, -89.0f, 89.0f);
-		// Yaw Rotation
-		transComp->Rotation.y += m_MouseDeltaX * m_MouseSensitivity;
-		if (transComp->Rotation.y > 360.0f || transComp->Rotation.y < -360.0f)
+		if (SDL_GetRelativeMouseMode() == SDL_TRUE)
 		{
-			transComp->Rotation.y = 0.0f;
+			// Forward / Back Movement
+			transComp->Position += transComp->GetForwardVector() * (m_InputBits.test(0) * (Time::GetUnscaledDeltaTime() * m_EditorCamSpeed));
+			transComp->Position -= transComp->GetForwardVector() * (m_InputBits.test(2) * (Time::GetUnscaledDeltaTime() * m_EditorCamSpeed));
+			// Right / Left Movement
+			transComp->Position -= transComp->GetRightVector() * (m_InputBits.test(1) * (Time::GetUnscaledDeltaTime() * m_EditorCamSpeed));
+			transComp->Position += transComp->GetRightVector() * (m_InputBits.test(3) * (Time::GetUnscaledDeltaTime() * m_EditorCamSpeed));
+			// Up / Down Movement
+			transComp->Position.z -= m_InputBits.test(4) * (Time::GetUnscaledDeltaTime() * m_EditorCamSpeed);
+			transComp->Position.z += m_InputBits.test(5) * (Time::GetUnscaledDeltaTime() * m_EditorCamSpeed);
+			// Pitch rotation
+			transComp->Rotation.x += m_MouseDeltaY * m_MouseSensitivity;
+			transComp->Rotation.x = glm::clamp(transComp->Rotation.x, -89.0f, 89.0f);
+			// Yaw Rotation
+			transComp->Rotation.y += m_MouseDeltaX * m_MouseSensitivity;
+			if (transComp->Rotation.y > 360.0f || transComp->Rotation.y < -360.0f)
+			{
+				transComp->Rotation.y = 0.0f;
+			}
+		}
+		else // Scroll movement when mouse is not captured
+		{
+			transComp->Position += transComp->GetForwardVector() * (static_cast<float>(m_SavedMouseScrolls) * 50.0f);
 		}
 	}
 }
