@@ -14,6 +14,7 @@
 #include <array>
 #include <bitset>
 #include "imgui/imgui.h"
+#include <future>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 
@@ -101,6 +102,13 @@ namespace Tempus {
 		glm::vec3 color;
 	};
 
+	struct ShaderCompileResult
+	{
+		int exitCode;
+		std::string output;
+		float duration;
+	};
+
 	class TEMPUS_API Renderer : public IEventListener {
 
 	public:
@@ -118,7 +126,7 @@ namespace Tempus {
 		void FocusSelectedEntity() { FocusEntity(m_SelectedEntityId); }
 		void FocusEntity(uint32_t entityId);
 
-		float ReloadShaders();
+		std::future<ShaderCompileResult> ReloadShadersAsync();
 
 		const int MAX_FRAMES_IN_FLIGHT = 3;
 
@@ -134,6 +142,8 @@ namespace Tempus {
 		bool m_bDrawEntityNames = false;
 		bool m_bShowSelectedEntity = true;
 		float m_EntityFocusDistance = 200.0f;
+
+		bool m_bAutoShaderReload = false;
 
 		glm::vec3 m_LightDir;
 
@@ -244,10 +254,13 @@ namespace Tempus {
 		void DrawProfilerDataWindow(Scene* currentScene);
 		void DrawAllEntityNames(Scene* currentScene);
 		void DrawEntityName(Scene* currentScene, uint32_t entId, ImU32 color);
+		void DrawShaderReloadWindow();
 		void DrawShaderReloadButton();
 
 		ImFont* m_DefaultFont = nullptr;
 		ImFont* m_LargeFont = nullptr;
+
+		void OnShaderReloadComplete(const ShaderCompileResult& result);
 		
 	private:
 

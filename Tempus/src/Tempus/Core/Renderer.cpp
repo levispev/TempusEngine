@@ -169,45 +169,57 @@ void Tempus::Renderer::FocusEntity(uint32_t entityId)
 	}
 }
 
-float Tempus::Renderer::ReloadShaders()
+std::future<Tempus::ShaderCompileResult> Tempus::Renderer::ReloadShadersAsync()
 {
-	auto start = std::chrono::high_resolution_clock::now();
-	TPS_CORE_INFO("Recompiling shaders...");
-
-	// Run the batch script to recompile shaders
+	return std::async(std::launch::async, [this]() -> ShaderCompileResult
+	{
+		auto start = std::chrono::high_resolution_clock::now();
+		TPS_CORE_INFO("Recompiling shaders...");
 
 #if TPS_PLATFORM_WINDOWS
-	const char* compileScript = "CompileShaders.bat";
+		const char* compileScript = "CompileShaders.bat 2>&1";
 #elif TPS_PLATFORM_MAC
-	const char* compileScript = "./CompileShadersMac.sh";
+		const char* compileScript = "./CompileShadersMac.sh 2>&1";
 #endif
 
-	int result = system(compileScript);
-    
-	if (result != 0)
-	{
-		TPS_CORE_ERROR("Failed to compile shaders!");
-		return -1.0f;
-	}
+		std::stringstream output;
+		int exitCode = 0;
 
-	TPS_CORE_INFO("Shaders compiled successfully. Reloading pipeline...");
+#if TPS_PLATFORM_WINDOWS
+		FILE* pipe = _popen(compileScript, "r");
+#else
+		FILE* pipe = popen(compileScript, "r");
+#endif
 
-	// Wait for GPU to finish
-	vkDeviceWaitIdle(m_Device);
+		if (pipe)
+		{
+			char buffer[128];
+			while (fgets(buffer, sizeof(buffer), pipe) != nullptr)
+			{
+				// Store shader script output in buffer
+				output << buffer;
+			}
+#if TPS_PLATFORM_WINDOWS
+			exitCode = _pclose(pipe);
+#else
+			exitCode = pclose(pipe);
+#endif
+		}
+		else
+		{
+			exitCode = -1;
+		}
 
-	// Destroy old pipeline
-	vkDestroyPipeline(m_Device, m_GraphicsPipeline, nullptr);
-	vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
+		float duration = -1.0f;
+		// If the compile succeeded, set the duration
+		if (exitCode == 0)
+		{
+			auto end = std::chrono::high_resolution_clock::now();
+			duration = std::chrono::duration<float, std::milli>(end - start).count();
+		}
 
-	// Recreate pipeline with newly compiled shaders
-	CreateGraphicsPipeline();
-
-	auto end = std::chrono::high_resolution_clock::now();
-	float duration = std::chrono::duration<float, std::milli>(end - start).count();
-
-	TPS_CORE_INFO("Shaders reloaded successfully! Took {0} ms", duration);
-
-	return duration;
+		return ShaderCompileResult{ exitCode, output.str(), duration };
+	});
 }
 
 void Tempus::Renderer::OnEvent(const SDL_Event& event)
@@ -417,6 +429,7 @@ void Tempus::Renderer::DrawImGui()
 	static bool bShowProfiler = true;
 	static bool bShowDemoWindow = false;
 	static bool bShowDebugWindow = false;
+	static bool bShowShaderReloadWindow = true;
 
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplSDL2_NewFrame();
@@ -452,6 +465,7 @@ void Tempus::Renderer::DrawImGui()
 			ImGui::SeparatorText("Editor");
 			ImGui::MenuItem("Scene", nullptr, &bShowScene);
 			ImGui::MenuItem("Profiler", nullptr, &bShowProfiler);
+			ImGui::MenuItem("Shader Reload", nullptr, &bShowShaderReloadWindow);
 			ImGui::SeparatorText("Misc");
 			ImGui::MenuItem("App Stats", nullptr, &bShowAppStats);
 			ImGui::MenuItem("Device Info", nullptr, &bShowDeviceInfo);
@@ -477,8 +491,6 @@ void Tempus::Renderer::DrawImGui()
 			if (ImGui::MenuItem("Force Crash")) { TPS_CORE_CRITICAL("Force engine crash!"); }
 			ImGui::EndMenu();
 		}
-
-		DrawShaderReloadButton();
 		
 		ImGui::EndMainMenuBar();
 	}
@@ -553,6 +565,10 @@ void Tempus::Renderer::DrawImGui()
 		if (bShowScene)
 		{
 			DrawSceneWindow(currentScene);
+		}
+		if (bShowShaderReloadWindow)
+		{
+			DrawShaderReloadWindow();
 		}
 		if (bShowProfiler)
 		{
@@ -755,29 +771,56 @@ void Tempus::Renderer::DrawEntityName(Scene* currentScene, uint32_t entId, ImU32
 	}
 }
 
+void Tempus::Renderer::DrawShaderReloadWindow()
+{
+	ImGui::Begin("Shader Hot Reload");
+		ImGui::Text("Shortcut: F6");
+		DrawShaderReloadButton();
+		// @TODO Auto reload on file update
+		//ImGui::SameLine();
+		//ImGui::Checkbox("Auto Reload?", &m_bAutoShaderReload);
+	ImGui::End();
+}
+
 void Tempus::Renderer::DrawShaderReloadButton()
 {
 	ImGui::SetNextItemShortcut(ImGuiKey_F6, ImGuiInputFlags_RouteGlobal);
-	static float CompileSucessPopupTime = 0.0f;
-	static float CompileDuration = 0.0f;
-	if (ImGui::Button("Reload Shaders")) 
+	static std::future<ShaderCompileResult> compileFuture;
+	static bool bIsCompiling = false;
+
+	if (ImGui::Button(bIsCompiling ? "Compiling..." : "Reload Shaders", ImVec2(150.0f, 20.0f)))
 	{
-		CompileDuration = ReloadShaders();
-		CompileSucessPopupTime = 2.0f; // Show success popup for 2 seconds
+		if (!bIsCompiling)
+		{
+			compileFuture = ReloadShadersAsync();
+			bIsCompiling = true;
+		}
 	}
 
-	if (CompileSucessPopupTime >= 0.0f)
+	static float ResultPopupTime = 0.0f;
+	static ShaderCompileResult compileResult;
+	
+	// Check if compilation finished
+	if (bIsCompiling && compileFuture.valid() && compileFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+	{
+		compileResult = compileFuture.get();
+		OnShaderReloadComplete(compileResult);
+		bIsCompiling = false;
+		// Time to display popup
+		ResultPopupTime = 2.0f;
+	}
+
+	if (!bIsCompiling && ResultPopupTime > 0.0f)
 	{
 		ImVec2 buttonPos = ImGui::GetItemRectMin();
 		ImVec2 buttonSize = ImGui::GetItemRectSize();
-	        
+		        
 		ImGui::SetNextWindowPos(ImVec2(buttonPos.x, buttonPos.y + buttonSize.y + 5.0f));
 		ImGui::BeginTooltip();
-		CompileSucessPopupTime -= Time::GetDeltaTime();
-		if (CompileDuration >= 0.0f)
+		if (compileResult.duration >= 0.0f)
 		{
 			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
-			ImGui::Text("Success! (%.0f ms)", CompileDuration);
+			ImGui::Text("Success! (%.0f ms)", compileResult.duration);
 		}
 		else
 		{
@@ -786,11 +829,28 @@ void Tempus::Renderer::DrawShaderReloadButton()
 		}
 		ImGui::PopStyleColor();
 		ImGui::EndTooltip();
+		ResultPopupTime -= Time::GetDeltaTime();
 	}
-	else if (ImGui::IsItemHovered())
+}
+
+void Tempus::Renderer::OnShaderReloadComplete(const ShaderCompileResult& result)
+{
+	if (result.exitCode != 0)
 	{
-		ImGui::SetTooltip("Shortcut: F6");
+		TPS_CORE_ERROR("Failed to compile shaders!");
+		TPS_CORE_ERROR("Compiler output:\n{0}", result.output);
+		return;
 	}
+
+	TPS_CORE_INFO("Shaders compiled successfully. Reloading pipeline...");
+	TPS_CORE_INFO("Compiler output:\n{0}", result.output);
+
+	vkDeviceWaitIdle(m_Device);
+	vkDestroyPipeline(m_Device, m_GraphicsPipeline, nullptr);
+	vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
+	CreateGraphicsPipeline();
+
+	TPS_CORE_INFO("Shaders reloaded successfully! Took {0} ms", result.duration);
 }
 
 void Tempus::Renderer::DrawSceneOutlinerTab(Scene *currentScene)
@@ -1527,7 +1587,7 @@ void Tempus::Renderer::CreateGraphicsPipeline()
 	pipelineInfo.layout = m_PipelineLayout;
 	pipelineInfo.renderPass = m_RenderPass;
 	pipelineInfo.subpass = 0;
-	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
+	pipelineInfo.basePipelineHandle = m_GraphicsPipeline;
 	pipelineInfo.basePipelineIndex = -1; // Optional
 
 	if (vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_GraphicsPipeline) != VK_SUCCESS) 
