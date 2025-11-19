@@ -23,4 +23,3 @@ if %errorlevel% neq 0 (
 )
 
 echo Successfully compiled shaders.
-PAUSE

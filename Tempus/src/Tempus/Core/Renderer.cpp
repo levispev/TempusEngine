@@ -169,6 +169,40 @@ void Tempus::Renderer::FocusEntity(uint32_t entityId)
 	}
 }
 
+float Tempus::Renderer::ReloadShaders()
+{
+	auto start = std::chrono::high_resolution_clock::now();
+	TPS_CORE_INFO("Recompiling shaders...");
+
+	// Run the batch script to recompile shaders
+	int result = system("CompileShaders.bat");
+    
+	if (result != 0)
+	{
+		TPS_CORE_ERROR("Failed to compile shaders!");
+		return -1.0f;
+	}
+
+	TPS_CORE_INFO("Shaders compiled successfully. Reloading pipeline...");
+
+	// Wait for GPU to finish
+	vkDeviceWaitIdle(m_Device);
+
+	// Destroy old pipeline
+	vkDestroyPipeline(m_Device, m_GraphicsPipeline, nullptr);
+	vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
+
+	// Recreate pipeline with newly compiled shaders
+	CreateGraphicsPipeline();
+
+	auto end = std::chrono::high_resolution_clock::now();
+	float duration = std::chrono::duration<float, std::milli>(end - start).count();
+
+	TPS_CORE_INFO("Shaders reloaded successfully! Took {0} ms", duration);
+
+	return duration;
+}
+
 void Tempus::Renderer::OnEvent(const SDL_Event& event)
 {
 	if (event.type == SDL_WINDOWEVENT) 
@@ -437,6 +471,8 @@ void Tempus::Renderer::DrawImGui()
 			ImGui::EndMenu();
 		}
 
+		DrawShaderReloadButton();
+		
 		ImGui::EndMainMenuBar();
 	}
 
@@ -712,6 +748,40 @@ void Tempus::Renderer::DrawEntityName(Scene* currentScene, uint32_t entId, ImU32
 	}
 }
 
+void Tempus::Renderer::DrawShaderReloadButton()
+{
+	ImGui::SetNextItemShortcut(ImGuiKey_F6, ImGuiInputFlags_RouteGlobal);
+	static float CompileSucessPopupTime = 0.0f;
+	static float CompileDuration = 0.0f;
+	if (ImGui::Button("Reload Shaders")) 
+	{
+		CompileDuration = ReloadShaders();
+		CompileSucessPopupTime = 2.0f; // Show success popup for 2 seconds
+	}
+
+	if (CompileSucessPopupTime >= 0.0f)
+	{
+		ImVec2 buttonPos = ImGui::GetItemRectMin();
+		ImVec2 buttonSize = ImGui::GetItemRectSize();
+	        
+		ImGui::SetNextWindowPos(ImVec2(buttonPos.x, buttonPos.y + buttonSize.y + 5.0f));
+		ImGui::BeginTooltip();
+		CompileSucessPopupTime -= Time::GetDeltaTime();
+		if (CompileDuration >= 0.0f)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
+			ImGui::Text("Success! (%.0f ms)", CompileDuration);
+		}
+		else
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(231, 0, 0, 255));
+			ImGui::Text("Failed!");
+		}
+		ImGui::PopStyleColor();
+		ImGui::EndTooltip();
+	}
+}
+
 void Tempus::Renderer::DrawSceneOutlinerTab(Scene *currentScene)
 {
 	// --- Scene outliner
@@ -782,11 +852,13 @@ void Tempus::Renderer::DrawSceneOutlinerTab(Scene *currentScene)
 			return;
 		}
 	}
-	ImGui::SameLine();
-	if (ImGui::Button("Duplicate"))
-	{
-		
-	}
+
+	// @TODO Entity Duplication
+	// ImGui::SameLine();
+	// if (ImGui::Button("Duplicate"))
+	// {
+	// 	
+	// }
 
 	ImGui::Checkbox("Draw Entity Names?", &m_bDrawEntityNames);
 

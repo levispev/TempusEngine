@@ -118,6 +118,8 @@ namespace Tempus {
 		void FocusSelectedEntity() { FocusEntity(m_SelectedEntityId); }
 		void FocusEntity(uint32_t entityId);
 
+		float ReloadShaders();
+
 		const int MAX_FRAMES_IN_FLIGHT = 3;
 
 	private:
@@ -242,6 +244,7 @@ namespace Tempus {
 		void DrawProfilerDataWindow(Scene* currentScene);
 		void DrawAllEntityNames(Scene* currentScene);
 		void DrawEntityName(Scene* currentScene, uint32_t entId, ImU32 color);
+		void DrawShaderReloadButton();
 
 		ImFont* m_DefaultFont = nullptr;
 		ImFont* m_LargeFont = nullptr;
