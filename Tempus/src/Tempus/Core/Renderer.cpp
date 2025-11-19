@@ -175,7 +175,14 @@ float Tempus::Renderer::ReloadShaders()
 	TPS_CORE_INFO("Recompiling shaders...");
 
 	// Run the batch script to recompile shaders
-	int result = system("CompileShaders.bat");
+
+#if TPS_PLATFORM_WINDOWS
+	const char* compileScript = "CompileShaders.bat";
+#elif TPS_PLATFORM_MAC
+	const char* compileScript = "./CompileShadersMac.sh";
+#endif
+
+	int result = system(compileScript);
     
 	if (result != 0)
 	{

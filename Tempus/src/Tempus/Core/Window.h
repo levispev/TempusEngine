@@ -27,7 +27,7 @@ namespace Tempus {
 
 		void SetIcon(const char* path);
 		void SetFullscreen(bool bEnabled);
-		inline bool IsFullscreen() const;
+		bool IsFullscreen() const;
 
 	private:
 
