@@ -19,15 +19,15 @@
         TPS_STATIC_ASSERT((id) >= 0 && (id) <= std::numeric_limits<Tempus::ComponentId>::max(), "Component ID must be a positive integer <= 255"); \
         public: \
         static constexpr ComponentId GetId() { return m_Id; } \
-        static ComponentMetaData GetMetaData() { return m_MetaData; } \
+        static ComponentMetaFlags GetMetaData() { return m_MetaData; } \
         private: \
         static constexpr ComponentId m_Id = id; \
-        static const inline ComponentMetaData m_MetaData = TPS_Private::ComponentRegistry::Register<type>(id, ##__VA_ARGS__);
+        static const inline ComponentMetaFlags m_MetaData = TPS_Private::ComponentRegistry::Register<type>(id __VA_OPT__(,) __VA_ARGS__);
 
 namespace Tempus
 {
     // Component meta data flags
-    enum class ComponentMetaData : uint8_t
+    enum class ComponentMetaFlags : uint8_t
     {
         None = 0,
         // Disallow this component from being added in the editor
@@ -37,39 +37,39 @@ namespace Tempus
         // Restrict this component to only 1 per entity
         NoDuplicate = BIT(2)
     };
-    ENUM_CLASS_FLAGS(ComponentMetaData);
+    ENUM_CLASS_FLAGS(ComponentMetaFlags);
+    
+    struct ComponentTypeInfo
+    {
+        std::string name;
+        ComponentId id;
+        ComponentMetaFlags metadata = ComponentMetaFlags::None;
+        std::function<void(Scene*, uint32_t)> addComponentFunc;
+        std::function<void(Scene*, uint32_t)> removeComponentFunc;
+    };
 }
 
 namespace TPS_Private
 {
     struct ComponentRegistry
     {
-        struct ComponentTypeInfo
-        {
-            std::string name;
-            Tempus::ComponentId id;
-            Tempus::ComponentMetaData metadata = Tempus::ComponentMetaData::None;
-            std::function<void(Tempus::Scene*, uint32_t)> addComponentFunc;
-            std::function<void(Tempus::Scene*, uint32_t)> removeComponentFunc;
-        };
-
         // I am unable to use the ValidComponent concept here as it's called before the class is fully created
         template<typename T>
-        static Tempus::ComponentMetaData Register(Tempus::ComponentId id, Tempus::ComponentMetaData metadata = Tempus::ComponentMetaData::None)
+        static Tempus::ComponentMetaFlags Register(Tempus::ComponentId id, Tempus::ComponentMetaFlags metadata = Tempus::ComponentMetaFlags::None)
         {
             // Component ID's must be unique
             if (ComponentIds.contains(id))
             {
                 // Throwing an exception here instead of a critical log as the logger is not initialized yet
                 throw std::runtime_error(std::format("Duplicate component ID's detected! {0}", id));
-                return Tempus::ComponentMetaData::None;
+                return Tempus::ComponentMetaFlags::None;
             }
 
             // Insert new unique ID
             ComponentIds.insert(id);
 
             // Reflection data
-            ComponentTypeInfo data;
+            Tempus::ComponentTypeInfo data;
             data.name = Tempus::TempusUtils::GetClassDebugName<T>();
             data.id = id;
             data.metadata = metadata;
@@ -80,7 +80,7 @@ namespace TPS_Private
             };
             data.removeComponentFunc = [](Tempus::Scene* scene, uint32_t entityId)
             {
-              scene->RemoveComponent<T>(entityId);  
+                scene->RemoveComponent<T>(entityId);  
             };
             
             RegisteredComponents.emplace_back(data);
@@ -92,19 +92,19 @@ namespace TPS_Private
         static std::vector<std::string> GetRegisteredComponentNames()
         {
             std::vector<std::string> componentNames;
-            for (const ComponentTypeInfo& info : RegisteredComponents)
+            for (const Tempus::ComponentTypeInfo& info : RegisteredComponents)
             {
                 componentNames.emplace_back(info.name);
             }
             return componentNames;
         }
 
-        static const std::vector<ComponentTypeInfo>& GetRegisteredComponents()
+        static const std::vector<Tempus::ComponentTypeInfo>& GetRegisteredComponents()
         {
             return RegisteredComponents;
         }
 
-        static ComponentTypeInfo GetComponentTypeFromId(Tempus::ComponentId id)
+        static Tempus::ComponentTypeInfo GetComponentTypeFromId(Tempus::ComponentId id)
         {
             if (ComponentMap.contains(id))
             {
@@ -115,8 +115,8 @@ namespace TPS_Private
         }
 
         private:
-        static inline std::vector<ComponentTypeInfo> RegisteredComponents;
-        static inline std::map<Tempus::ComponentId, ComponentTypeInfo> ComponentMap;
+        static inline std::vector<Tempus::ComponentTypeInfo> RegisteredComponents;
+        static inline std::map<Tempus::ComponentId, Tempus::ComponentTypeInfo> ComponentMap;
         static inline std::unordered_set<Tempus::ComponentId> ComponentIds;
     };
 }

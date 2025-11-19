@@ -27,7 +27,7 @@ namespace Tempus
     // @TODO In the future this component will have special metadata that prevents it from being manually added in the editor
     class TEMPUS_API EditorDataComponent : public Component
     {
-        DECLARE_COMPONENT(EditorDataComponent, 3, ComponentMetaData::NoEditorAdd | ComponentMetaData::NoSerialize)
+        DECLARE_COMPONENT(EditorDataComponent, 3, ComponentMetaFlags::NoEditorAdd | ComponentMetaFlags::NoSerialize)
         TPS_DEBUG_NAME("Editor Data Component")
         
     public:

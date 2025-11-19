@@ -878,14 +878,14 @@ void Tempus::Renderer::DrawSceneOutlinerTab(Scene *currentScene)
 	// Component list dropdown
 	if (bCanAddComponents)
 	{
-		static TPS_Private::ComponentRegistry::ComponentTypeInfo selectedComponent;
+		static ComponentTypeInfo selectedComponent;
 		if (ImGui::BeginCombo(" ", selectedComponent.name.c_str()))
 		{
 			const auto& registeredComponents = TPS_Private::ComponentRegistry::GetRegisteredComponents();
 			for (const auto& component : registeredComponents)
 			{
 				// If the component has not been specifically marked as no editor add
-				if (!EnumCheckFlag(component.metadata, ComponentMetaData::NoEditorAdd))
+				if (!EnumCheckFlag(component.metadata, ComponentMetaFlags::NoEditorAdd))
 				{
 					if (ImGui::Selectable(component.name.c_str()))
 					{
