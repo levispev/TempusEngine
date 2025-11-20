@@ -385,6 +385,9 @@ void Tempus::Application::AppUpdate()
 
 void Tempus::Application::Cleanup()
 {
+	// Explicitly resetting as it uses an SDL function on cleanup
+	m_Window.reset();
+	
 	SDL_Vulkan_UnloadLibrary();
 	SDL_Quit();
 

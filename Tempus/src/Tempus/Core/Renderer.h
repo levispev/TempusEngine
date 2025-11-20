@@ -126,7 +126,7 @@ namespace Tempus {
 		void FocusSelectedEntity() { FocusEntity(m_SelectedEntityId); }
 		void FocusEntity(uint32_t entityId);
 
-		std::future<ShaderCompileResult> ReloadShadersAsync();
+		void ReloadShaders();
 
 		const int MAX_FRAMES_IN_FLIGHT = 3;
 
@@ -143,7 +143,11 @@ namespace Tempus {
 		bool m_bShowSelectedEntity = true;
 		float m_EntityFocusDistance = 200.0f;
 
+		std::future<ShaderCompileResult> m_ShaderCompileResult;
+		ShaderCompileResult m_LastShaderCompileResult;
+		bool m_bShaderReloading = false;
 		bool m_bAutoShaderReload = false;
+		float m_ShaderResultPopupTime = 0.0f;
 
 		glm::vec3 m_LightDir;
 
@@ -260,6 +264,9 @@ namespace Tempus {
 		ImFont* m_DefaultFont = nullptr;
 		ImFont* m_LargeFont = nullptr;
 
+		std::future<ShaderCompileResult> ReloadShadersAsync();
+		void ShaderReloadUpdate();
+		void ShaderAutoReloadUpdate();
 		void OnShaderReloadComplete(const ShaderCompileResult& result);
 		
 	private:

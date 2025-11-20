@@ -55,6 +55,18 @@ Tempus::Renderer::~Renderer()
 
 void Tempus::Renderer::Update(float DeltaTime)
 {
+	// Update for async shader reload
+	if (m_bShaderReloading)
+	{
+		ShaderReloadUpdate();
+	}
+
+	// Auto shader reloading
+	if (m_bAutoShaderReload)
+	{
+		ShaderAutoReloadUpdate();
+	}
+	
 	DrawImGui();
 	DrawFrame();
 }
@@ -169,6 +181,12 @@ void Tempus::Renderer::FocusEntity(uint32_t entityId)
 	}
 }
 
+void Tempus::Renderer::ReloadShaders()
+{
+	m_bShaderReloading = true;
+	m_ShaderCompileResult = ReloadShadersAsync();
+}
+
 std::future<Tempus::ShaderCompileResult> Tempus::Renderer::ReloadShadersAsync()
 {
 	return std::async(std::launch::async, [this]() -> ShaderCompileResult
@@ -220,6 +238,34 @@ std::future<Tempus::ShaderCompileResult> Tempus::Renderer::ReloadShadersAsync()
 
 		return ShaderCompileResult{ exitCode, output.str(), duration };
 	});
+}
+
+void Tempus::Renderer::ShaderReloadUpdate()
+{
+	if (m_ShaderCompileResult.valid() && m_ShaderCompileResult.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+	{
+		m_LastShaderCompileResult = m_ShaderCompileResult.get();
+		OnShaderReloadComplete(m_LastShaderCompileResult);
+	}
+}
+
+void Tempus::Renderer::ShaderAutoReloadUpdate()
+{
+	std::string vertPath = std::string(TPS_SHADER_DIR) + "/shader.vert";
+	std::string fragPath = std::string(TPS_SHADER_DIR) + "/shader.frag";
+	
+	static std::filesystem::file_time_type lastTimeVert = std::filesystem::last_write_time(vertPath);
+	static std::filesystem::file_time_type lastTimeFrag = std::filesystem::last_write_time(fragPath);
+
+	auto currentVert = std::filesystem::last_write_time(vertPath);
+	auto currentFrag = std::filesystem::last_write_time(fragPath);
+
+	if (currentVert != lastTimeVert || currentFrag != lastTimeFrag)
+	{
+		lastTimeVert = currentVert;
+		lastTimeFrag = currentFrag;
+		ReloadShaders();
+	}
 }
 
 void Tempus::Renderer::OnEvent(const SDL_Event& event)
@@ -774,53 +820,37 @@ void Tempus::Renderer::DrawEntityName(Scene* currentScene, uint32_t entId, ImU32
 void Tempus::Renderer::DrawShaderReloadWindow()
 {
 	ImGui::Begin("Shader Hot Reload");
-		ImGui::Text("Shortcut: F6");
+		ImGui::Text("Shortcut: F4");
 		DrawShaderReloadButton();
 		// @TODO Auto reload on file update
-		//ImGui::SameLine();
-		//ImGui::Checkbox("Auto Reload?", &m_bAutoShaderReload);
+		ImGui::SameLine();
+		ImGui::Checkbox("Auto Reload?", &m_bAutoShaderReload);
 	ImGui::End();
 }
 
 void Tempus::Renderer::DrawShaderReloadButton()
 {
-	ImGui::SetNextItemShortcut(ImGuiKey_F6, ImGuiInputFlags_RouteGlobal);
-	static std::future<ShaderCompileResult> compileFuture;
-	static bool bIsCompiling = false;
+	ImGui::SetNextItemShortcut(ImGuiKey_F4, ImGuiInputFlags_RouteGlobal);
 
-	if (ImGui::Button(bIsCompiling ? "Compiling..." : "Reload Shaders", ImVec2(150.0f, 20.0f)))
+	if (ImGui::Button(m_bShaderReloading ? "Compiling..." : "Reload Shaders", ImVec2(150.0f, 20.0f)))
 	{
-		if (!bIsCompiling)
+		if (!m_bShaderReloading)
 		{
-			compileFuture = ReloadShadersAsync();
-			bIsCompiling = true;
+			ReloadShaders();
 		}
 	}
-
-	static float ResultPopupTime = 0.0f;
-	static ShaderCompileResult compileResult;
 	
-	// Check if compilation finished
-	if (bIsCompiling && compileFuture.valid() && compileFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
-	{
-		compileResult = compileFuture.get();
-		OnShaderReloadComplete(compileResult);
-		bIsCompiling = false;
-		// Time to display popup
-		ResultPopupTime = 2.0f;
-	}
-
-	if (!bIsCompiling && ResultPopupTime > 0.0f)
+	if (m_ShaderResultPopupTime > 0.0f)
 	{
 		ImVec2 buttonPos = ImGui::GetItemRectMin();
 		ImVec2 buttonSize = ImGui::GetItemRectSize();
 		        
 		ImGui::SetNextWindowPos(ImVec2(buttonPos.x, buttonPos.y + buttonSize.y + 5.0f));
 		ImGui::BeginTooltip();
-		if (compileResult.duration >= 0.0f)
+		if (m_LastShaderCompileResult.duration >= 0.0f)
 		{
 			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
-			ImGui::Text("Success! (%.0f ms)", compileResult.duration);
+			ImGui::Text("Success! (%.0f ms)", m_LastShaderCompileResult.duration);
 		}
 		else
 		{
@@ -829,12 +859,15 @@ void Tempus::Renderer::DrawShaderReloadButton()
 		}
 		ImGui::PopStyleColor();
 		ImGui::EndTooltip();
-		ResultPopupTime -= Time::GetDeltaTime();
+		m_ShaderResultPopupTime -= Time::GetDeltaTime();
 	}
 }
 
 void Tempus::Renderer::OnShaderReloadComplete(const ShaderCompileResult& result)
 {
+	m_ShaderResultPopupTime = 2.0f;
+	m_bShaderReloading = false;
+	
 	if (result.exitCode != 0)
 	{
 		TPS_CORE_ERROR("Failed to compile shaders!");
