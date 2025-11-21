@@ -205,6 +205,7 @@ void Tempus::Application::EventUpdate()
 
 		// @TODO Temporarily manually managing input here
 		ProcessInput(CurrentEvent);
+		AppEvent(CurrentEvent);
 		EVENT_DISPATCHER->Propagate(CurrentEvent);
 		
 	}

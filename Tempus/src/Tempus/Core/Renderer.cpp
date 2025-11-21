@@ -537,6 +537,9 @@ void Tempus::Renderer::DrawImGui()
 			if (ImGui::MenuItem("Force Crash")) { TPS_CORE_CRITICAL("Force engine crash!"); }
 			ImGui::EndMenu();
 		}
+
+		//ImGui::Separator();
+		//ImGui::Text("Current Scene: %s", SCENE_MANAGER->GetActiveScene() ? SCENE_MANAGER->GetActiveScene()->GetName().c_str() : "None");
 		
 		ImGui::EndMainMenuBar();
 	}
@@ -581,6 +584,21 @@ void Tempus::Renderer::DrawImGui()
 			ImGui::Text("Swapchain extent: %ux%u", m_SwapChainExtent.width, m_SwapChainExtent.height);
 			ImGui::Text("Delta Time: %f", Time::GetUnscaledDeltaTime());
 			ImGui::Text("Time: %f", Time::GetAppTime());
+			static constexpr int frameTimeCount = 64;
+			static float frameTimes[frameTimeCount] = { 0.0f };
+			static int values_offset = 0;
+			static double refresh_time = 0.0;
+			if (refresh_time == 0.0)
+			{
+				refresh_time = ImGui::GetTime();
+			}
+			while (refresh_time < ImGui::GetTime()) // Create data at fixed 60 Hz rate
+			{
+				frameTimes[values_offset] = 1000.0f / ImGui::GetIO().Framerate;
+				values_offset = (values_offset + 1) % IM_ARRAYSIZE(frameTimes);
+				refresh_time += 1.0f / 60.0f;
+			}
+			ImGui::PlotLines("Frame Time (ms)", frameTimes, frameTimeCount, values_offset, nullptr, 0.0f, 1000.0f / 60.0f, ImVec2(0, 17));
 		ImGui::End();
 	}
 
@@ -904,10 +922,11 @@ void Tempus::Renderer::DrawSceneOutlinerTab(Scene *currentScene)
 
 	for (const uint32_t entID : entIDs)
 	{
-		std::string label = std::format("[{}] {}", entID, currentScene->GetEntityName(entID));
+		std::string label = currentScene->GetEntityName(entID) + "##" + std::to_string(entID);
 		if (ImGui::Selectable(label.c_str(), selectedEntityID == entID))
 		{
 			selectedEntityID = entID;
+			
 			// If we are re-selecting the same entity, focus it
 			if (std::cmp_equal(selectedEntityID, m_SelectedEntityId))
 			{

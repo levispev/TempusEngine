@@ -56,9 +56,9 @@ namespace Tempus {
 
 		virtual void AppStart();
 		virtual void AppUpdate();
+		virtual void AppEvent(const SDL_Event& event) {};
 		virtual void Cleanup();
 
-		SDL_Event GetCurrentEvent() const { return CurrentEvent; }
 		void SetRenderClearColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 		Window* GetWindow() const { return m_Window.get(); }
 
