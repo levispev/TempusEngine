@@ -4,11 +4,10 @@
 #include "Tempus/Core/Scene.h"
 #include "Tempus/Managers/SceneManager.h"
 #include "Tempus/Entity/Entity.h"
-#include <random>
+#include "Tempus/Utils/Random.h"
 
 #include "Components/StaticMeshComponent.h"
 #include "Components/TransformComponent.h"
-#include "Utils/Time.h"
 
 namespace Tempus
 {
@@ -50,12 +49,8 @@ namespace Tempus
 				if (event.key.keysym.scancode == SDL_SCANCODE_Y)
 				{
 					TPS_WARN("Color Change!");
-
-					std::random_device rd;
-					std::mt19937 gen(rd());
-					std::uniform_int_distribution<> dis(0, 255);
-
-					SetRenderClearColor(dis(gen), dis(gen), dis(gen), 255);
+					
+					SetRenderClearColor(Random::RandRange(0, 255), Random::RandRange(0, 255), Random::RandRange(0, 255), 255);
 
 					if (Scene* scene = SCENE_MANAGER->GetActiveScene())
 					{
@@ -71,6 +66,7 @@ namespace Tempus
 
 		virtual void AppUpdate() override
 		{
+			
 		}
 
 	};
