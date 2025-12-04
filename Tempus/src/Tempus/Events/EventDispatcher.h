@@ -6,7 +6,7 @@
 #include <set>
 
 #include "Event.h"
-#include "sdl/SDL.h"
+#include "SDL3/SDL.h"
 
 #define EVENT_DISPATCHER EventDispatcher::GetInstance()
 

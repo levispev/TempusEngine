@@ -10,7 +10,7 @@
 #include <typeindex>
 #include <bitset>
 #include <unordered_set>
-#include "sdl/SDL.h"
+#include "SDL3/SDL.h"
 #include "Utils/TempusUtils.h"
 
 namespace Tempus {
@@ -31,7 +31,7 @@ namespace Tempus {
 		static void RequestExit(const std::string& reason = "None given")
 		{
 			SDL_Event quitEvent;
-			quitEvent.type = SDL_QUIT;
+			quitEvent.type = SDL_EVENT_QUIT;
 			SDL_PushEvent(&quitEvent);
 			TPS_INFO("Exit requested: {0}", reason);
 		}

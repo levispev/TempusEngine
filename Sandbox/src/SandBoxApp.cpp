@@ -44,9 +44,9 @@ namespace Tempus
 
 		virtual void AppEvent(const SDL_Event& event) override
 		{
-			if (event.type == SDL_KEYDOWN)
+			if (event.type == SDL_EVENT_KEY_DOWN)
 			{
-				if (event.key.keysym.scancode == SDL_SCANCODE_Y)
+				if (event.key.scancode == SDL_SCANCODE_Y)
 				{
 					TPS_WARN("Color Change!");
 					

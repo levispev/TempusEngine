@@ -4,7 +4,7 @@
 
 #include "Core.h"
 
-#include "sdl/SDL.h"
+#include "SDL3/SDL.h"
 #include <vector>
 #include "vulkan/vulkan.h"
 #include <optional>

@@ -5,16 +5,16 @@
 #include "Window.h"
 #include "Log.h"
 #include "Utils/FileUtils.h"
-#include "sdl/SDL_vulkan.h"
+#include "SDL3/SDL_vulkan.h"
 #include <iostream>
 #include <set>
 #include <sstream>
 #include <algorithm> 
 #include "imgui/imgui.h"
-#include "imgui/imgui_impl_sdl2.h"
+#include "imgui/imgui_impl_sdl3.h"
 #include "imgui/imgui_impl_vulkan.h"
 #include <vulkan/vk_enum_string_helper.h>
-#include "sdl/SDL.h"
+#include "SDL3/SDL.h"
 #define GLM_FORCE_RADIANS
 // Vulkan uses 0 - 1 depth range. Default is 1 - 0 (OpenGl)
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -270,12 +270,9 @@ void Tempus::Renderer::ShaderAutoReloadUpdate()
 
 void Tempus::Renderer::OnEvent(const SDL_Event& event)
 {
-	if (event.type == SDL_WINDOWEVENT) 
+	if (event.type == SDL_EVENT_WINDOW_RESIZED) 
 	{
-		if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) 
-		{
-			TPS_CORE_INFO("Window resized! [{}x{}]", event.window.data1, event.window.data2);
-		}
+		TPS_CORE_INFO("Window resized! [{}x{}]", event.window.data1, event.window.data2);
 	}
 }
 
@@ -478,7 +475,7 @@ void Tempus::Renderer::DrawImGui()
 	static bool bShowShaderReloadWindow = true;
 
 	ImGui_ImplVulkan_NewFrame();
-	ImGui_ImplSDL2_NewFrame();
+	ImGui_ImplSDL3_NewFrame();
 	ImGui::NewFrame();
 
 	//ImGui::ShowStyleEditor();
@@ -555,7 +552,7 @@ void Tempus::Renderer::DrawImGui()
 		if (ImGui::BeginPopupModal("About", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove)) 
 		{
 			ImGui::Text("Tempus Engine v0.0.1");
-			ImGui::Text("Built with SDL2 and ImGui");
+			ImGui::Text("Built with SDL3 and ImGui");
 			ImGui::Text("Created by Levi Spevakow");
 			ImGui::Separator();
 
@@ -2283,7 +2280,7 @@ void Tempus::Renderer::InitImGui()
 		TPS_CORE_CRITICAL("Invalid window!");
 	}
 
-	ImGui_ImplSDL2_InitForVulkan(m_Window->GetNativeWindow());
+	ImGui_ImplSDL3_InitForVulkan(m_Window->GetNativeWindow());
 
 	ImGui_ImplVulkan_InitInfo initInfo = {};
 	initInfo.Instance = m_VkInstance;
@@ -2512,7 +2509,7 @@ VkShaderModule Tempus::Renderer::CreateShaderModule(const std::vector<unsigned c
 
 void Tempus::Renderer::CreateSurface(Tempus::Window* window)
 {
-	if(!window || !SDL_Vulkan_CreateSurface(window->GetNativeWindow(), m_VkInstance, &m_VkSurface))
+	if(!window || !SDL_Vulkan_CreateSurface(window->GetNativeWindow(), m_VkInstance, nullptr, &m_VkSurface))
 	{
 		TPS_CORE_CRITICAL("Failed to create surface!");
 	}
@@ -2631,7 +2628,7 @@ VkExtent2D Tempus::Renderer::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR &ca
 	int width, height;
 	// The drawable size (pixels) may differ from the window size (screen coordinates) on high DPI displays (Mac Retina)
 	// Vulkan wants exact pixel size, not screen coordinates
-	SDL_Vulkan_GetDrawableSize(m_Window->GetNativeWindow(), &width, &height);
+	SDL_GetWindowSizeInPixels(m_Window->GetNativeWindow(), &width, &height);
 
 	VkExtent2D actualExtent = 
 	{
@@ -2746,14 +2743,16 @@ std::vector<const char*> Tempus::Renderer::GetRequiredExtensions()
 {
 	uint32_t extensionCount = 0;
 
-	// Get extension count
-	SDL_Vulkan_GetInstanceExtensions(nullptr, &extensionCount, nullptr);
+	// Get extensions
+	const char* const* sdlExtentions = SDL_Vulkan_GetInstanceExtensions(&extensionCount);
 
-	std::vector<const char*> extensions(extensionCount);
-
-	// Get minimum required extensions
-	SDL_Vulkan_GetInstanceExtensions(nullptr, &extensionCount, extensions.data());
-
+	if (!sdlExtentions) 
+	{
+		TPS_CORE_CRITICAL("Failed to get SDL Vulkan extensions!");
+	}
+	
+	std::vector<const char*> extensions(sdlExtentions, sdlExtentions + extensionCount);
+	
 	if (m_bEnableValidationLayers) 
 	{
 		// Adding debug extension if validation layers are enabled
@@ -3044,7 +3043,7 @@ void Tempus::Renderer::Cleanup()
 	vkDeviceWaitIdle(m_Device);
 
 	ImGui_ImplVulkan_Shutdown();
-	ImGui_ImplSDL2_Shutdown();
+	ImGui_ImplSDL3_Shutdown();
 	ImGui::DestroyContext();
 	vkDestroyDescriptorPool(m_Device, m_ImguiPool, nullptr);
 

@@ -53,8 +53,7 @@ project "Tempus"
         links
         {
             "vulkan-1",
-            "SDL2",
-            "SDL2main"
+            "SDL3"
         }
 
         defines
@@ -207,7 +206,7 @@ project "Sandbox"
 
         postbuildcommands
         {
-            "{COPYFILE} %{wks.location}/Tempus/vendor/bin/sdl/SDL2.dll %{cfg.targetdir}"
+            "{COPYFILE} %{wks.location}/Tempus/vendor/bin/sdl/SDL3.dll %{cfg.targetdir}"
         }
 
     filter {"system:windows", "configurations:Dist"}

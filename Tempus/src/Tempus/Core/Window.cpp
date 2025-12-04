@@ -25,7 +25,7 @@ bool Tempus::Window::Init(const char* title,
 
 	m_Width = static_cast<uint32_t>(w);
 	m_Height = static_cast<uint32_t>(h);
-	m_Window = SDL_CreateWindow(windowTitle.c_str(), x, y, w, h, flags);
+	m_Window = SDL_CreateWindow(windowTitle.c_str(), w, h, flags);
 
 	return m_Window;
 }
@@ -46,7 +46,7 @@ void Tempus::Window::SetIcon(const char* path)
 		return;
 	}
 
-	SDL_Surface* iconSurface = SDL_CreateRGBSurfaceWithFormatFrom(imageData, width, height, 32, 4 * width, SDL_PIXELFORMAT_RGBA32);
+	SDL_Surface* iconSurface = SDL_CreateSurfaceFrom(width, height, SDL_PIXELFORMAT_RGBA32, imageData, 4 * width);
 
 	if (!iconSurface)
 	{
@@ -58,7 +58,7 @@ void Tempus::Window::SetIcon(const char* path)
 	if (m_Window) 
 	{
 		SDL_SetWindowIcon(m_Window, iconSurface);
-		SDL_FreeSurface(iconSurface);
+		SDL_DestroySurface(iconSurface);
 		stbi_image_free(imageData);
 	}
 }
@@ -67,11 +67,11 @@ void Tempus::Window::SetFullscreen(bool bEnabled)
 {
 	if (bEnabled)
 	{
-		SDL_SetWindowFullscreen(m_Window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+		SDL_SetWindowFullscreen(m_Window, true);
 	}
 	else
 	{
-		SDL_SetWindowFullscreen(m_Window, 0);
+		SDL_SetWindowFullscreen(m_Window, false);
 	}
 }
 
@@ -79,8 +79,8 @@ bool Tempus::Window::IsFullscreen() const
 {
 	if (m_Window)
 	{
-		return (SDL_GetWindowFlags(m_Window) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
-	}
+		return SDL_GetWindowFlags(m_Window) & SDL_WINDOW_FULLSCREEN;
+	}	
 
 	return false;
 }

@@ -11,11 +11,11 @@
 #include "Components/CameraComponent.h"
 #include "Events/EventDispatcher.h"
 
-#include "sdl/SDL_vulkan.h"
+#include "SDL3/SDL_vulkan.h"
 #include "Utils/FileUtils.h"
 
 #include "imgui/imgui.h"
-#include "imgui/imgui_impl_sdl2.h"
+#include "imgui/imgui_impl_sdl3.h"
 
 #include "Managers/SceneManager.h"
 #include "Entity/Entity.h"
@@ -109,7 +109,7 @@ R"(
 void Tempus::Application::InitWindow()
 {
 	// Window creation
-	if (!m_Window || !m_Window->Init(AppName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE))
+	if (!m_Window || !m_Window->Init(AppName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_RESIZABLE))
 	{
 		TPS_CORE_CRITICAL("Failed to initialize window!");
 	}
@@ -134,20 +134,17 @@ void Tempus::Application::InitRenderer()
 
 void Tempus::Application::InitSDL()
 {
-	SDL_SetMainReady();
-
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0)
+	if (!SDL_Init(SDL_INIT_VIDEO))
 	{
 		TPS_CORE_CRITICAL("Failed to initialize SDL: {0}", SDL_GetError());
 	}
 
-	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
+	SDL_SetLogPriorities(SDL_LOG_PRIORITY_VERBOSE);
 
-	SDL_version version;
-	SDL_GetVersion(&version);
-	TPS_CORE_INFO("Initialized SDL version {0}.{1}.{2}", version.major, version.minor, version.patch);
+	int version = SDL_GetVersion();
+	TPS_CORE_INFO("Initialized SDL version {0}.{1}.{2}", SDL_VERSIONNUM_MAJOR(version), SDL_VERSIONNUM_MINOR(version), SDL_VERSIONNUM_MICRO(version));
 
-	if (SDL_Vulkan_LoadLibrary(nullptr)) 
+	if (!SDL_Vulkan_LoadLibrary(nullptr)) 
 	{
 		TPS_CORE_CRITICAL("Failed to load Vulkan library: {0}", SDL_GetError());
 	}
@@ -195,9 +192,9 @@ void Tempus::Application::EventUpdate()
 	
 	while (SDL_PollEvent(&CurrentEvent))
 	{
-		ImGui_ImplSDL2_ProcessEvent(&CurrentEvent);
+		ImGui_ImplSDL3_ProcessEvent(&CurrentEvent);
 
-		if (CurrentEvent.type == SDL_QUIT)
+		if (CurrentEvent.type == SDL_EVENT_QUIT)
 		{
 			bShouldQuit = true;
 			return;
@@ -218,16 +215,16 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 {
 	ImGuiIO& io = ImGui::GetIO();
 
-	if (event.type == SDL_KEYDOWN) // Temporary input handling 
+	if (event.type == SDL_EVENT_KEY_DOWN) // Temporary input handling 
 	{
-		char key = (char)event.key.keysym.sym;
+		char key = (char)event.key.scancode;
 		//TPS_CORE_TRACE("DOWN: {0}", (int)event.key.keysym.scancode);
-		if(m_InputMap.contains(event.key.keysym.scancode))
+		if(m_InputMap.contains(event.key.scancode))
 		{
-			m_InputBits.set(m_InputMap[event.key.keysym.scancode]);	
+			m_InputBits.set(m_InputMap[event.key.scancode]);	
 		}
 
-		switch (event.key.keysym.scancode)
+		switch (event.key.scancode)
 		{
 		// Entity focus bound on F
 		case SDL_SCANCODE_F:
@@ -246,16 +243,16 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 			break;
 		}
 	}
-	else if (event.type == SDL_KEYUP)
+	else if (event.type == SDL_EVENT_KEY_UP)
 	{
-		char key = (char)event.key.keysym.sym;
+		char key = (char)event.key.scancode;
 		//TPS_CORE_TRACE("UP: {0}", (int)event.key.keysym.scancode);
-		if(m_InputMap.contains(event.key.keysym.scancode))
+		if(m_InputMap.contains(event.key.scancode))
 		{
-			m_InputBits.reset(m_InputMap[event.key.keysym.scancode]);	
+			m_InputBits.reset(m_InputMap[event.key.scancode]);	
 		}
 	}
-	else if (event.type == SDL_MOUSEBUTTONDOWN)
+	else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
 	{
 		// Ignore if hovering over ImGui element
 		if(io.WantCaptureMouse)
@@ -264,14 +261,14 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 		}
 		if (event.button.button == m_CatchMouseButton)
 		{
-			SDL_SetRelativeMouseMode(SDL_TRUE);
-			SDL_SetWindowMouseGrab(m_Window->GetNativeWindow(), SDL_TRUE);
+			SDL_SetWindowRelativeMouseMode(m_Window->GetNativeWindow(), true);
+			SDL_SetWindowMouseGrab(m_Window->GetNativeWindow(), true);
 			// Store current x & y for warp back on release
 			m_SavedMouseX = event.motion.x;
 			m_SavedMouseY = event.motion.y;
 		}
 	}
-	else if (event.type == SDL_MOUSEBUTTONUP)
+	else if (event.type == SDL_EVENT_MOUSE_BUTTON_UP)
 	{
 		// Ignore if hovering over ImGui element
 		if(io.WantCaptureMouse)
@@ -280,22 +277,22 @@ void Tempus::Application::ProcessInput(SDL_Event event)
 		}
 		if (event.button.button == m_CatchMouseButton)
 		{
-			if (SDL_GetRelativeMouseMode() == SDL_TRUE)
+			if (SDL_GetWindowRelativeMouseMode(m_Window->GetNativeWindow()))
 			{
 				// Warp cursor back to location on mouse catch
 				SDL_WarpMouseInWindow(m_Window->GetNativeWindow(), m_SavedMouseX, m_SavedMouseY);
 				m_LastMouseX = m_SavedMouseX;
 				m_LastMouseY = m_SavedMouseY;
 			}
-			SDL_SetRelativeMouseMode(SDL_FALSE);
-			SDL_SetWindowMouseGrab(m_Window->GetNativeWindow(), SDL_FALSE);
+			SDL_SetWindowRelativeMouseMode(m_Window->GetNativeWindow(), false);
+			SDL_SetWindowMouseGrab(m_Window->GetNativeWindow(), false);
 		}
 	}
-	else if (event.type == SDL_MOUSEMOTION)
+	else if (event.type == SDL_EVENT_MOUSE_MOTION)
 	{
 		ProcessMouseMovement(event);
 	}
-	else if (event.type == SDL_MOUSEWHEEL)
+	else if (event.type == SDL_EVENT_MOUSE_WHEEL)
 	{
 		if (io.WantCaptureMouse)
 		{
@@ -348,7 +345,7 @@ void Tempus::Application::UpdateEditorCamera()
 	
 	if (camComp && transComp)
 	{
-		if (SDL_GetRelativeMouseMode() == SDL_TRUE)
+		if (SDL_GetWindowRelativeMouseMode(m_Window->GetNativeWindow()))
 		{
 			// Forward / Back Movement
 			transComp->Position += transComp->GetForwardVector() * (m_InputBits.test(0) * (Time::GetUnscaledDeltaTime() * m_EditorCamSpeed));
