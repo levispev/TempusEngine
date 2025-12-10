@@ -47,10 +47,10 @@ namespace Tempus {
 			return nullptr;
 		}
 
-		uint32_t GetMouseX() const { return m_LastMouseX; }
-		uint32_t GetMouseY() const { return m_LastMouseY; }
-		int32_t GetMouseDeltaX() const { return m_MouseDeltaX; }
-		int32_t GetMouseDeltaY() const { return m_MouseDeltaY; }
+		float GetMouseX() const { return m_LastMouseX; }
+		float GetMouseY() const { return m_LastMouseY; }
+		float GetMouseDeltaX() const { return m_MouseDeltaX; }
+		float GetMouseDeltaY() const { return m_MouseDeltaY; }
 
 	protected:
 
@@ -92,10 +92,10 @@ namespace Tempus {
 		void ProcessMouseMovement(SDL_Event event);
 		void UpdateEditorCamera();
 		static inline std::bitset<8> m_InputBits;
-		int32_t m_LastMouseX = 0, m_LastMouseY = 0;
-		int32_t m_MouseDeltaX = 0, m_MouseDeltaY = 0;
-		int32_t m_SavedMouseX = 0, m_SavedMouseY = 0;
-		int32_t m_SavedMouseScrolls = 0;
+		float m_LastMouseX = 0.0f, m_LastMouseY = 0.0f;
+		float m_MouseDeltaX = 0.0f, m_MouseDeltaY = 0.0f;
+		float m_SavedMouseX = 0.0f, m_SavedMouseY = 0.0f;
+		float m_SavedMouseScrolls = 0.0f;
 		float m_MouseSensitivity;
 		uint8_t m_CatchMouseButton;
 		float m_EditorCamSpeed = 10.0f;
