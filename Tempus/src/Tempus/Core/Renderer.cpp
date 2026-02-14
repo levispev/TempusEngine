@@ -193,12 +193,8 @@ std::future<Tempus::ShaderCompileResult> Tempus::Renderer::ReloadShadersAsync()
 	{
 		auto start = std::chrono::high_resolution_clock::now();
 		TPS_CORE_INFO("Recompiling shaders...");
-
-#if TPS_PLATFORM_WINDOWS
-		const char* compileScript = "CompileShaders.bat 2>&1";
-#elif TPS_PLATFORM_MAC
-		const char* compileScript = "./CompileShadersMac.sh 2>&1";
-#endif
+		
+		const char* compileScript = TPS_SHADER_COMPILE_SCRIPT;
 
 		std::stringstream output;
 		int exitCode = 0;
@@ -236,7 +232,7 @@ std::future<Tempus::ShaderCompileResult> Tempus::Renderer::ReloadShadersAsync()
 			duration = std::chrono::duration<float, std::milli>(end - start).count();
 		}
 
-		return ShaderCompileResult{ exitCode, output.str(), duration };
+		return ShaderCompileResult{ output.str(), exitCode, duration };
 	});
 }
 
@@ -251,8 +247,8 @@ void Tempus::Renderer::ShaderReloadUpdate()
 
 void Tempus::Renderer::ShaderAutoReloadUpdate()
 {
-	std::string vertPath = std::string(TPS_SHADER_DIR) + "/shader.vert";
-	std::string fragPath = std::string(TPS_SHADER_DIR) + "/shader.frag";
+	static std::string vertPath = std::string(TPS_SHADER_DIR) + "/shader.vert";
+	static std::string fragPath = std::string(TPS_SHADER_DIR) + "/shader.frag";
 	
 	static std::filesystem::file_time_type lastTimeVert = std::filesystem::last_write_time(vertPath);
 	static std::filesystem::file_time_type lastTimeFrag = std::filesystem::last_write_time(fragPath);
@@ -580,7 +576,7 @@ void Tempus::Renderer::DrawImGui()
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 			ImGui::Text("Swapchain extent: %ux%u", m_SwapChainExtent.width, m_SwapChainExtent.height);
 			ImGui::Text("Delta Time: %f", Time::GetUnscaledDeltaTime());
-			ImGui::Text("Time: %f", Time::GetAppTime());
+			ImGui::Text("Engine Time: %f", Time::GetAppTime());
 			static constexpr int frameTimeCount = 64;
 			static float frameTimes[frameTimeCount] = { 0.0f };
 			static int values_offset = 0;
@@ -671,7 +667,7 @@ void Tempus::Renderer::DrawImGui()
 			if(bVisualizeMousePos)
 			{
 				ImDrawList* dl = ImGui::GetForegroundDrawList();
-				dl->AddCircleFilled(ImVec2(static_cast<float>(GApp->GetMouseX()), static_cast<float>(GApp->GetMouseY())), 10.0f, IM_COL32(255, 0, 0, 255));
+				dl->AddCircleFilled(ImVec2(GApp->GetMouseX(), GApp->GetMouseY()), 10.0f, IM_COL32(255, 0, 0, 255));
 			}
 
 			static bool bSimulateLag = false;
@@ -688,8 +684,8 @@ void Tempus::Renderer::DrawImGui()
 			}
 		
 			ImGui::Separator();
-			ImGui::Text("X: %.4u Y: %.4u", GApp->GetMouseX(), GApp->GetMouseY());
-			ImGui::Text("Delta X: %.2i Delta Y: %.2i", GApp->GetMouseDeltaX(),GApp->GetMouseDeltaY());
+			ImGui::Text("X: %.4f Y: %.4f", GApp->GetMouseX(), GApp->GetMouseY());
+			ImGui::Text("Delta X: %.2f Delta Y: %.2f", GApp->GetMouseDeltaX(),GApp->GetMouseDeltaY());
 		ImGui::End();
 	}
 
@@ -837,7 +833,6 @@ void Tempus::Renderer::DrawShaderReloadWindow()
 	ImGui::Begin("Shader Hot Reload");
 		ImGui::Text("Shortcut: F4");
 		DrawShaderReloadButton();
-		// @TODO Auto reload on file update
 		ImGui::SameLine();
 		ImGui::Checkbox("Auto Reload?", &m_bAutoShaderReload);
 	ImGui::End();
@@ -904,7 +899,7 @@ void Tempus::Renderer::OnShaderReloadComplete(const ShaderCompileResult& result)
 void Tempus::Renderer::DrawSceneOutlinerTab(Scene *currentScene)
 {
 	// --- Scene outliner
-	static uint32_t selectedEntityID = 0;	
+	static uint32_t selectedEntityID = 0;
     
 	ImGui::BeginChild("EntityList", ImVec2(0, 300), true);
 
@@ -1070,6 +1065,10 @@ void Tempus::Renderer::DrawSceneOutlinerTab(Scene *currentScene)
 					{
 						currentScene->RemoveComponent<CameraComponent>(selectedEntityID);
 					}
+				}
+				if (ImGui::Button("Set Active Camera"))
+				{
+					SetActiveCamera(selectedEntityID);
 				}
 				ImGui::Text("Projection Type:");
 				ImGui::SameLine();
@@ -2060,7 +2059,7 @@ void Tempus::Renderer::LoadModel(const std::string& modelName)
 		}
 	}
 	
-    TPS_CORE_INFO("Loaded FBX: {} ({} vertices, {} indices)", modelPath, vertices.size(), indices.size());
+    TPS_CORE_INFO("Loaded FBX: {0} ({1} vertices, {2} indices)", modelPath, vertices.size(), indices.size());
 
 	VkBuffer vertexBuffer = VK_NULL_HANDLE;
 	VkDeviceMemory vertexBufferMemory = VK_NULL_HANDLE;
@@ -2069,7 +2068,7 @@ void Tempus::Renderer::LoadModel(const std::string& modelName)
 	VkDeviceMemory indexBufferMemory = VK_NULL_HANDLE;
 	CreateIndexBuffer(indexBuffer, indexBufferMemory, indices);
 	
-	m_ModelBufferRegistry[modelName] = ModelBuffer{ vertexBuffer, vertexBufferMemory, indexBuffer, indexBufferMemory, static_cast<uint32_t>(indices.size()) };
+	m_ModelBufferRegistry[modelName] = ModelBuffer{vertexBufferMemory, indexBufferMemory, vertexBuffer, indexBuffer, static_cast<uint32_t>(indices.size()) };
 
     ufbx_free_scene(scene);
 }

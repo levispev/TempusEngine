@@ -12,6 +12,7 @@
 	#define VK_USE_PLATFORM_WIN32_KHR
 	#define PLATFORM_SURFACE_EXTENSION_NAME VK_KHR_WIN32_SURFACE_EXTENSION_NAME
 	#define DESIRED_VK_LAYER "VK_LAYER_KHRONOS_validation"
+	#define TPS_SHADER_COMPILE_SCRIPT "CompileShaders.bat 2>&1"
 
 #elif TPS_PLATFORM_MAC
 	#ifdef TPS_BUILD_DLL
@@ -23,6 +24,7 @@
 	#define VK_USE_PLATFORM_MACOS_MVK
 	#define PLATFORM_SURFACE_EXTENSION_NAME VK_MVK_MACOS_SURFACE_EXTENSION_NAME
 	#define DESIRED_VK_LAYER "MoltenVK"
+	#define TPS_SHADER_COMPILE_SCRIPT "./CompileShadersMac.sh 2>&1"
 	
 #else
 #error Tempus only supports Windows and Mac!

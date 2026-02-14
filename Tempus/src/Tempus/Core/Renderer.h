@@ -70,7 +70,7 @@ namespace Tempus {
 
 		bool operator==(const Vertex& other) const
 		{
-			return pos == other.pos && texCoord == other.texCoord;
+			return pos == other.pos && texCoord == other.texCoord && normal == other.normal;
 		}
 	};
 
@@ -87,10 +87,10 @@ namespace Tempus {
 
 	struct ModelBuffer
 	{
-		VkBuffer vertexBuffer;
 		VkDeviceMemory vertexBufferMemory;
-		VkBuffer indexBuffer;
 		VkDeviceMemory indexBufferMemory;
+		VkBuffer vertexBuffer;
+		VkBuffer indexBuffer;
 		uint32_t indexCount;
 	};
 
@@ -104,8 +104,8 @@ namespace Tempus {
 
 	struct ShaderCompileResult
 	{
-		int exitCode;
 		std::string output;
+		int exitCode;
 		float duration;
 	};
 
