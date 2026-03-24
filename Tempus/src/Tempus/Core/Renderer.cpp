@@ -383,7 +383,12 @@ void Tempus::Renderer::UpdateUniformBuffer(uint32_t currentImage)
 	GlobalUBO globalUbo{};
 	glm::mat4 view;
 	glm::mat4 proj;
-	view = glm::lookAtLH(camTransform.Position, camTransform.Position + camForward, glm::vec3(0.0f, 0.0f, 1.0f));
+	
+	// Up vector for roll value
+	glm::vec3 baseUp = glm::vec3(0.0f, 0.0f, 1.0f);
+	glm::vec3 camUp = glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f),  glm::radians(camTransform.Rotation.z), camForward) * baseUp;
+	
+	view = glm::lookAtLH(camTransform.Position, camTransform.Position + camForward, camUp);
 	
 	switch (camComponent.ProjectionType)
 	{
@@ -469,6 +474,7 @@ void Tempus::Renderer::DrawImGui()
 	static bool bShowDemoWindow = false;
 	static bool bShowDebugWindow = false;
 	static bool bShowShaderReloadWindow = true;
+	static bool bShowComponentRegistry = false;
 
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplSDL3_NewFrame();
@@ -508,8 +514,9 @@ void Tempus::Renderer::DrawImGui()
 			ImGui::SeparatorText("Misc");
 			ImGui::MenuItem("App Stats", nullptr, &bShowAppStats);
 			ImGui::MenuItem("Device Info", nullptr, &bShowDeviceInfo);
+			ImGui::MenuItem("Component Registry", nullptr, &bShowComponentRegistry);
 			ImGui::SeparatorText("Testing");
-			ImGui::MenuItem("Demo", nullptr, &bShowDemoWindow);
+			ImGui::MenuItem("ImGui Demo", nullptr, &bShowDemoWindow);
 			ImGui::MenuItem("Debug", nullptr, &bShowDebugWindow);
 			ImGui::EndMenu();
 		}
@@ -686,6 +693,30 @@ void Tempus::Renderer::DrawImGui()
 			ImGui::Separator();
 			ImGui::Text("X: %.4f Y: %.4f", GApp->GetMouseX(), GApp->GetMouseY());
 			ImGui::Text("Delta X: %.2f Delta Y: %.2f", GApp->GetMouseDeltaX(),GApp->GetMouseDeltaY());
+		ImGui::End();
+	}
+	
+	if (bShowComponentRegistry)
+	{
+		ImGui::Begin("Component Registry");
+			const auto& registry = TPS_Private::ComponentRegistry::GetRegisteredComponents();
+			for (const auto& compData : registry)
+			{
+				if (ImGui::TreeNode(compData.name.c_str()))
+				{
+					ImGui::Text("ID: %i", compData.id);
+					ImGui::Text("Flags:");
+					for (int i = 0; i < 8; i++) {
+						ComponentMetaFlags flag = static_cast<ComponentMetaFlags>(1 << i);
+						if (EnumCheckFlag(compData.metadata, flag)) {
+							ImGui::SameLine();
+							ImGui::Text("%s", GetEnumName(flag));
+						}
+					}
+					ImGui::TreePop();
+				}
+				ImGui::Separator();
+			}
 		ImGui::End();
 	}
 
@@ -1114,7 +1145,7 @@ void Tempus::Renderer::DrawSceneOutlinerTab(Scene *currentScene)
 					ImGui::SameLine();
 					if (ImGui::Button("Remove"))
 					{
-						currentScene->RemoveComponent<StaticMeshComponent>(selectedEntityID);
+						currentScene->RemoveComponent<LightComponent>(selectedEntityID);
 					}
 				}
 				ImGui::SliderFloat("Radius" , &lightComp->Radius, 1.0f, 1000.0f);

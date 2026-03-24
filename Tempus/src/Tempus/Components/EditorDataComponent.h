@@ -24,7 +24,6 @@ namespace Tempus
     };
     ENUM_CLASS_FLAGS(EditorEntityDataFlags);
 
-    // @TODO In the future this component will have special metadata that prevents it from being manually added in the editor
     class TEMPUS_API EditorDataComponent : public Component
     {
         DECLARE_COMPONENT(EditorDataComponent, 3, ComponentMetaFlags::NoEditorAdd | ComponentMetaFlags::NoSerialize)

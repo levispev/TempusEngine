@@ -38,14 +38,15 @@ namespace Tempus
         NoDuplicate = BIT(2)
     };
     ENUM_CLASS_FLAGS(ComponentMetaFlags);
+    DECLARE_ENUM_NAMES(ComponentMetaFlags, "No Editor Add", "No Serialize", "No Duplicate");
     
     struct ComponentTypeInfo
     {
         std::string name;
+        void(*addComponentFunc)(Scene*, uint32_t);
+        void(*removeComponentFunc)(Scene*, uint32_t);
         ComponentId id;
         ComponentMetaFlags metadata = ComponentMetaFlags::None;
-        std::function<void(Scene*, uint32_t)> addComponentFunc;
-        std::function<void(Scene*, uint32_t)> removeComponentFunc;
     };
 }
 
@@ -74,11 +75,11 @@ namespace TPS_Private
             data.id = id;
             data.metadata = metadata;
             // Templated function pointer for adding the component to a scene
-            data.addComponentFunc = [](Tempus::Scene* scene, uint32_t entityId)
+            data.addComponentFunc = +[](Tempus::Scene* scene, uint32_t entityId)
             {   
                 scene->AddComponent<T>(entityId);
             };
-            data.removeComponentFunc = [](Tempus::Scene* scene, uint32_t entityId)
+            data.removeComponentFunc = +[](Tempus::Scene* scene, uint32_t entityId)
             {
                 scene->RemoveComponent<T>(entityId);  
             };
@@ -90,8 +91,6 @@ namespace TPS_Private
                 return a.id < b.id;
             });
             
-            ComponentMap[data.id] = data;
-
             return metadata;
         }
 
@@ -112,9 +111,11 @@ namespace TPS_Private
 
         static Tempus::ComponentTypeInfo GetComponentTypeFromId(Tempus::ComponentId id)
         {
-            if (ComponentMap.contains(id))
+            if (id < RegisteredComponents.size())
             {
-                return ComponentMap.at(id);
+                // Ensure the component at the desired index corresponds to the ID.
+                TPS_ASSERT(RegisteredComponents[id].id == id, "Component registry list is sorted incorrectly!")
+                return RegisteredComponents[id];
             }
 
             TPS_CRITICAL("Component ID [{0}] not found in registry!", id);
@@ -122,7 +123,6 @@ namespace TPS_Private
 
         private:
         static inline std::vector<Tempus::ComponentTypeInfo> RegisteredComponents;
-        static inline std::map<Tempus::ComponentId, Tempus::ComponentTypeInfo> ComponentMap;
         static inline std::unordered_set<Tempus::ComponentId> ComponentIds;
     };
 }

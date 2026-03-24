@@ -11,7 +11,7 @@
 extern Tempus::Application* Tempus::CreateApplication();
 
 // @TODO Use WinMain
-int main(int argc, char** argv)
+inline int main(int argc, char** argv)
 {
 	auto app = Tempus::CreateApplication();
 
