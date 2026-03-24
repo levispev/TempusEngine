@@ -691,7 +691,7 @@ void Tempus::Renderer::DrawImGui()
 			}
 		
 			ImGui::Separator();
-			ImGui::Text("X: %.4f Y: %.4f", GApp->GetMouseX(), GApp->GetMouseY());
+			ImGui::Text("X: %.0f Y: %.0f", GApp->GetMouseX(), GApp->GetMouseY());
 			ImGui::Text("Delta X: %.2f Delta Y: %.2f", GApp->GetMouseDeltaX(),GApp->GetMouseDeltaY());
 		ImGui::End();
 	}
@@ -705,13 +705,24 @@ void Tempus::Renderer::DrawImGui()
 				if (ImGui::TreeNode(compData.name.c_str()))
 				{
 					ImGui::Text("ID: %i", compData.id);
-					ImGui::Text("Flags:");
-					for (int i = 0; i < 8; i++) {
-						ComponentMetaFlags flag = static_cast<ComponentMetaFlags>(1 << i);
-						if (EnumCheckFlag(compData.metadata, flag)) {
-							ImGui::SameLine();
-							ImGui::Text("%s", GetEnumName(flag));
+					if (ImGui::TreeNodeEx("Metadata Flags", ImGuiTreeNodeFlags_DefaultOpen))
+					{
+						// If the component has any flags
+						if (compData.metadata > ComponentMetaFlags::None)
+						{
+							for (int i = 0; i < 8; i++) {
+								ComponentMetaFlags flag = static_cast<ComponentMetaFlags>(1 << i);
+								if (EnumCheckFlag(compData.metadata, flag)) 
+								{
+									ImGui::Text("%s", GetEnumName(flag));
+								}
+							}
 						}
+						else
+						{
+							ImGui::Text("None");
+						}
+						ImGui::TreePop();
 					}
 					ImGui::TreePop();
 				}
@@ -977,6 +988,7 @@ void Tempus::Renderer::DrawSceneOutlinerTab(Scene *currentScene)
 		currentScene->AddEntity("Debug Entity");
 	}
 	ImGui::SameLine();
+	
 	// Remove entity from scene
 	if(ImGui::Button("Remove"))
 	{
